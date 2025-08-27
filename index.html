@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Colossus - Climbing Analytics</title>
+    
+    <!-- PWA Configuration -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#000000" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Colossus" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    
+    <!-- Prevent zoom on mobile -->
+    <meta name="format-detection" content="telephone=no" />
+    <style>
+      /* Hide scrollbars utility class */
+      .hide-scrollbar {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .hide-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      
+      /* Pull-to-refresh indicator transition */
+      .ptr-indicator {
+        transition: transform 200ms ease, opacity 200ms ease;
+      }
+      
+      /* Mobile viewport fixes */
+      html, body {
+        height: 100%;
+        overflow-x: hidden;
+      }
+      
+      /* Use dvh (dynamic viewport height) for better mobile support */
+      .min-h-screen-mobile {
+        min-height: 100vh;
+        min-height: 100dvh; /* Dynamic viewport height for mobile */
+      }
+      
+      /* Safe area handling for notched devices */
+      .safe-area-top {
+        padding-top: env(safe-area-inset-top);
+      }
+      
+      .safe-area-bottom {
+        padding-bottom: env(safe-area-inset-bottom);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((registrationError) => {
+              console.log('SW registration failed: ', registrationError);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>

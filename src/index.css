@@ -1,0 +1,51 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, "SF Pro Text", Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0a0a0a;
+  color: white;
+  /* Improve mobile scrolling */
+  -webkit-overflow-scrolling: touch;
+  /* Prevent overscroll bounce on iOS */
+  overscroll-behavior: none;
+}
+
+/* Hide scrollbars utility class */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pull-to-refresh indicator transition */
+.ptr-indicator {
+  transition: transform 200ms ease, opacity 200ms ease;
+}
+
+/* Improved mobile sticky positioning */
+.sticky {
+  position: -webkit-sticky;
+  position: sticky;
+}
+
+/* Better mobile touch support */
+.smooth-scroll {
+  scroll-behavior: smooth;
+}
+
+/* Optimize for mobile touch targets */
+button, [role="button"] {
+  touch-action: manipulation;
+}
