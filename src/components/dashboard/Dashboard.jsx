@@ -30,7 +30,6 @@ const Dashboard = ({
   onNavigateToProgress,
   onNavigateToAccount,
   onViewAchievements,
-  onViewTour,
   onLogout
 }) => {
   const avail = metricAvailability || getMetricAvailability(userData.totalSessions, userData.totalClimbs);
@@ -160,7 +159,6 @@ const Dashboard = ({
           }
         }}
         onLogout={onLogout}
-        onViewTour={onViewTour}
         activeItem="Dashboard"
       />
     </div>

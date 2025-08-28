@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Progress from '../ui/Progress.jsx';
+import { roundRPE } from '../../utils/index.js';
 
 // SessionCard component extracted from sessions.html
 // Preserves exact dark theme styling, collapsible animations, and data visualization
@@ -8,30 +9,24 @@ const SessionCard = ({ session, index }) => {
   const [open, setOpen] = useState(false);
   
   return (
-    <div className="bg-card border border-border rounded-col p-4 hover:border-white/10 transition">
-      <button className="w-full text-left min-h-[44px]" onClick={() => setOpen(o => !o)}>
-        <div className="flex items-center justify-between">
-          <div className="font-semibold flex items-center gap-2">
-            {session.date}
-            <span className="text-xs text-graytxt">
-              {open ? '▼' : '▶'}
-            </span>
-          </div>
-          <div className="text-sm text-graytxt">{session.duration}</div>
-        </div>
-        <div className="text-sm text-graytxt mt-1">
-          <span className="text-white">{session.climbs} climbs</span> • {session.medianGrade} median • {session.style} focus
-        </div>
-      </button>
+    <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setOpen(!open)}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="font-semibold text-base">{session.date}</div>
+        <div className="text-sm text-graytxt">{session.duration}</div>
+      </div>
+      <div className="text-sm text-graytxt">
+        <span className="text-white">{session.climbs} climbs</span> • {session.medianGrade} median • {session.style} focus
+      </div>
       
-      <div className={`transition-[max-height,opacity] duration-300 ease-out overflow-hidden ${open ? 'max-h-[1200px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="mt-3 grid gap-4">
+      {/* Expandable content */}
+      {open && (
+        <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
           {/* Grade Distribution */}
-          <div>
-            <div className="text-sm text-white font-semibold mb-2 text-center">Grade Distribution</div>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
             {session.grades.map((g, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{g.label}</span>
                   <span>{g.val}% ({g.count || 0})</span>
                 </div>
@@ -43,11 +38,11 @@ const SessionCard = ({ session, index }) => {
           </div>
 
           {/* Style Distribution */}
-          <div>
-            <div className="text-sm text-white font-semibold mb-2 text-center">Style Distribution</div>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="text-sm text-white font-semibold mb-3 text-center">Style Distribution</div>
             {session.styles.map((s, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{s.label}</span>
                   <span>{s.val}% ({s.count || 0})</span>
                 </div>
@@ -59,11 +54,11 @@ const SessionCard = ({ session, index }) => {
           </div>
 
           {/* Wall Angles */}
-          <div>
-            <div className="text-sm text-white font-semibold mb-2 text-center">Wall Angle Distribution</div>
+          <div className="border border-border/30 rounded-lg p-3">
+            <div className="text-sm text-white font-semibold mb-3 text-center">Wall Angle Distribution</div>
             {session.angles.map((w, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{w.label}</span>
                   <span>{w.val}% ({w.count || 0})</span>
                 </div>
@@ -75,11 +70,11 @@ const SessionCard = ({ session, index }) => {
           </div>
 
           {/* Boulder vs Board Distribution */}
-          <div>
-            <div className="text-sm text-white font-semibold mb-2 text-center">Boulder vs Board</div>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="text-sm text-white font-semibold mb-3 text-center">Boulder vs Board</div>
             {session.types?.map((t, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1">
+                <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{t.label}</span>
                   <span>{t.val}% ({t.count || 0})</span>
                 </div>
@@ -90,41 +85,62 @@ const SessionCard = ({ session, index }) => {
             ))}
           </div>
 
-          {/* Average RPE */}
-          <div>
-            <div className="text-sm text-white font-semibold mb-2 text-center">Average RPE</div>
+          {/* Average Perceived Effort */}
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="text-sm text-white font-semibold mb-3 text-center">Average Perceived Effort</div>
             <div className="flex items-center gap-3">
-              <div className="flex-1"><Progress value={session.avgRPE} max={10} /></div>
-              <div className="text-sm">{session.avgRPE}/10</div>
+              <div className="flex-1">
+                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                  <div className="h-full bg-white/70" style={{width: `${Math.min((roundRPE(session.avgRPE) / 10) * 100, 100)}%`}}></div>
+                </div>
+              </div>
+              <div className="text-sm">{roundRPE(session.avgRPE)}/10</div>
             </div>
           </div>
-        </div>
 
-        {/* Individual Climbs List */}
-        <div className="mt-4">
-          <div className="text-sm text-white font-semibold mb-2 text-center">Individual Climbs</div>
-          <ul className="space-y-2">
-            {session.climbList.map((c, i) => (
-              <li key={i} className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2">
-                <div className="flex items-center gap-2">
-                  <div className="text-lg font-bold text-white">{c.grade}</div>
-                  <div className="text-xs text-graytxt px-1.5 py-0.5 rounded border border-border/40">
-                    {c.type === 'BOARD' ? 'Board' : 'Boulder'}
+          {/* Individual Climbs List */}
+          <div className="mt-4">
+            <div className="text-sm text-white font-semibold mb-2 text-center">Individual Climbs</div>
+            <ul className="space-y-2">
+              {session.climbList.map((c, i) => (
+                <li key={i} className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-lg font-bold text-white">{c.grade}</div>
+                    <div className="text-sm text-graytxt px-1.5 py-0.5 rounded border border-border/40">
+                      {c.type === 'BOARD' ? 'Board' : 'Boulder'}
+                    </div>
                   </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm text-white">
-                    {c.allStyles && c.allStyles.length > 0 ? c.allStyles.join(', ') : c.style} {c.angle}
+                  <div className="text-right">
+                    <div className="text-sm text-white">
+                      {c.allStyles && c.allStyles.length > 0 ? c.allStyles.join(', ') : c.style} {c.angle}
+                    </div>
+                    <div className="text-sm text-graytxt">
+                      Perceived Effort: {roundRPE(c.rpe)} • Att: {c.attempts}
+                    </div>
                   </div>
-                  <div className="text-xs text-graytxt">
-                    RPE: {c.rpe} • Att: {c.attempts}
-                  </div>
-                </div>
-              </li>
+                </li>
             ))}
-          </ul>
+            </ul>
+          </div>
         </div>
-      </div>
+      )}
+
+              {/* Expand/Collapse arrow at bottom center */}
+        <div className="flex justify-center mt-2">
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </div>
     </div>
   );
 };

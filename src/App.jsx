@@ -8,6 +8,7 @@ import ProgressPage from './components/progress/ProgressPage.jsx';
 import TrackClimb from './components/tracker/TrackClimb.jsx';
 import AccountPage from './components/account/AccountPage.jsx';
 import { getCleanInitialData, getCleanInitialSessions } from './utils/appReset.js';
+import { roundRPE } from './utils/index.js';
 
 // Inner component that has access to auth context
 const AppContent = () => {
@@ -16,7 +17,7 @@ const AppContent = () => {
   // Initialize with completely clean data
   const [userData, setUserData] = useState(getCleanInitialData());
   const [sessions, setSessions] = useState(getCleanInitialSessions());
-  const [showTourRequested, setShowTourRequested] = useState(false);
+
 
   // Recalculate existing sessions to include new distribution data
   React.useEffect(() => {
@@ -51,14 +52,7 @@ const AppContent = () => {
     }));
   };
 
-  // Handle welcome tour completion
-  const handleWelcomeTourComplete = () => {
-    setUserData(prev => ({
-      ...prev,
-      hasSeenWelcomeTour: true
-    }));
-    setShowTourRequested(false); // Reset the manual tour request
-  };
+
 
   // Navigation handlers
   const handleNavigateToTracker = () => setCurrentPage('tracker');
@@ -80,10 +74,7 @@ const AppContent = () => {
     }
   };
 
-  // Tour handler
-  const handleViewTour = () => {
-    setShowTourRequested(true);
-  };
+
 
   // Calculate session distributions with all possible values
   const calculateSessionDistributions = (climbList) => {
@@ -188,7 +179,7 @@ const AppContent = () => {
         climbs: todaySession.climbs + 1,
         climbList: updatedClimbList,
         timestamp: timestamp, // Update session timestamp
-        avgRPE: updatedClimbList.reduce((sum, c) => sum + c.rpe, 0) / updatedClimbList.length,
+        avgRPE: roundRPE(updatedClimbList.reduce((sum, c) => sum + c.rpe, 0) / updatedClimbList.length),
         ...distributions
       };
       
@@ -215,7 +206,7 @@ const AppContent = () => {
         climbs: 1,
         medianGrade: climbData.grade,
         style: normalizedStyle,
-        avgRPE: climbData.rpe,
+        avgRPE: roundRPE(climbData.rpe),
         climbList: climbList,
         ...distributions
       };
@@ -240,9 +231,7 @@ const AppContent = () => {
   // For new users: check local state for onboarding completion
   const needsOnboarding = !hasProfile;
   
-  // Welcome tour only for NEW users who just completed onboarding OR existing users who clicked "View Tour"
-  const isNewUser = hasProfile && userData.hasCompletedOnboarding;
-  const needsWelcomeTour = (isNewUser && !userData.hasSeenWelcomeTour) || showTourRequested;
+  // Tour feature disabled - skip welcome tour
   
   // If loading auth state, show nothing (Supabase handles this quickly)
   if (loading) {
@@ -271,18 +260,11 @@ const AppContent = () => {
                 <OnboardingApp
                   initialState="signup"
                   onAccountCreation={handleAccountCreation}
-                  onWelcomeTourComplete={handleWelcomeTourComplete}
                 />
               ) : needsOnboarding ? (
                 <OnboardingApp
                   initialState="personal"
                   onAccountCreation={handleAccountCreation}
-                  onWelcomeTourComplete={handleWelcomeTourComplete}
-                />
-              ) : needsWelcomeTour ? (
-                <OnboardingApp
-                  initialState="welcome"
-                  onWelcomeTourComplete={handleWelcomeTourComplete}
                 />
               ) : (
                 (() => {
@@ -333,7 +315,6 @@ const AppContent = () => {
                           onNavigateToSessions={handleNavigateToSessions}
                           onNavigateToProgress={handleNavigateToProgress}
                           onNavigateToAccount={handleNavigateToAccount}
-                          onViewTour={handleViewTour}
                           onLogout={handleLogout}
                         />
                       );

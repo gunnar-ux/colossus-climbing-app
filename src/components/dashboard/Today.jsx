@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { readinessTextColor, readinessGradient, loadColor } from '../../utils/index.js';
 
 // Today component extracted from dashboard HTML
-// Preserves exact readiness indicators and load management logic
+// Expandable CRS card with tour information and proper mobile font sizes
 
 const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioData }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
   // Determine display state based on CRS data availability
   const isCalibrating = sessions < 5;
   const hasNoData = sessions < 3;
@@ -22,11 +24,11 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
 
   return (
     <section className="px-5 pt-4">
-      <div className="bg-card border border-border rounded-col p-4 hover:border-white/10 transition">
+      <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-base">Climb Readiness</h3>
           {hasNoData ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-gray-600/40 text-gray-400">
+            <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA
             </span>
           ) : sessions >= 5 && loadRatioData ? (
@@ -71,6 +73,58 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
             </div>
           </>
         )}
+
+        {/* Expandable section with CRS & Load information */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+            <div className="space-y-3">
+              <div>
+                <div className="text-sm mb-1">
+                  <span className="text-white">Readiness Score: </span>
+                </div>
+                <p className="text-sm text-graytxt leading-relaxed mb-2">
+                  Daily readiness (0-100) based on recent training & recovery time.
+                </p>
+                <div className="text-sm text-graytxt space-y-1">
+                  <div>• <span className="text-green">67-100:</span> Optimal readiness - peak performance</div>
+                  <div>• <span className="text-yellow">34-66:</span> Moderate readiness - balanced training</div>
+                  <div>• <span className="text-red">0-33:</span> Limited readiness - focus on recovery</div>
+                </div>
+              </div>
+              
+              <div>
+                <div className="text-sm mb-1">
+                  <span className="text-white">Load Ratio: </span>
+                </div>
+                <p className="text-sm text-graytxt leading-relaxed mb-2">
+                  7-day vs 28-day training load comparison to prevent overtraining.
+                </p>
+                <div className="text-sm text-graytxt space-y-1">
+                  <div>• <span className="text-green">0.8-1.2x:</span> Optimal training load</div>
+                  <div>• <span className="text-yellow">1.2-1.5x:</span> High load - monitor recovery</div>
+                  <div>• <span className="text-red">1.5x+:</span> Overreaching - reduce intensity</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expand/Collapse arrow at bottom center */}
+        <div className="flex justify-center mt-2">
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </div>
       </div>
     </section>
   );

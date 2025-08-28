@@ -24,7 +24,7 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
         <div className="flex items-center justify-between mb-1">
           <div className="font-semibold">Recommended Training</div>
           {hasNoData ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-gray-600/40 text-gray-400">
+            <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA
             </span>
           ) : isCalibrating ? (
@@ -35,13 +35,13 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
         </div>
         
         {hasNoData || isCalibrating ? (
-          <div className="text-sm text-graytxt mb-3">
-            Volume: {rec.volume} • Max RPE: {rec.rpe}
+          <div className="text-sm mb-3">
+            <span className="text-white">Volume:</span> <span className="text-graytxt">{rec.volume}</span> • <span className="text-white">Max RPE:</span> <span className="text-graytxt">{rec.rpe}</span>
           </div>
         ) : (
           <>
-            <div className="text-sm text-graytxt">
-              {rec.type} • Volume: {rec.volume} • RPE: {rec.rpe}
+            <div className="text-sm">
+              <span className="text-graytxt">{rec.type}</span> • <span className="text-white">Volume:</span> <span className="text-graytxt">{rec.volume}</span> • <span className="text-white">RPE:</span> <span className="text-graytxt">{rec.rpe}</span>
             </div>
             {rec.note && (
               <div className="text-xs text-orange mt-1">⚠️ {rec.note}</div>
@@ -56,7 +56,7 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
           onClick={handleStartClick} 
           className="w-full px-4 py-2 bg-white text-black rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
         >
-          Start
+          Track
         </button>
       </div>
     </section>

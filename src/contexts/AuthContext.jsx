@@ -16,95 +16,62 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [isDemo, setIsDemo] = useState(false)
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user || null)
-      setLoading(false)
-    })
-
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user || null)
-      setLoading(false)
+    // Check for existing local user session
+    try {
+      const storedUser = localStorage.getItem('currentUser')
+      const isAuth = localStorage.getItem('isAuthenticated')
       
-      if (session?.user) {
-        // Try to load user profile
-        try {
-          const { data, error } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single()
-          
-          if (data && !error) {
-            setProfile(data)
-          } else {
-            setProfile(null)
-            
-            // Check if there's pending profile data to create
-            await createPendingProfile(session.user.id)
-          }
-        } catch (error) {
-          setProfile(null)
-        }
-      } else {
-        setProfile(null)
+      if (isAuth === 'true' && storedUser) {
+        const userData = JSON.parse(storedUser)
+        setUser(userData)
+        setProfile(userData)
       }
-    })
-
-    return () => {
-      subscription?.unsubscribe()
+    } catch (error) {
+      console.log('Error loading stored user:', error)
+    } finally {
+      setLoading(false)
     }
   }, [])
 
-  // Auth methods
-  const signUp = async (email, password) => {
+  // Simple local auth methods
+  const signUp = async (userData) => {
     try {
-
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      })
-      
-      if (error) {
-        return { success: false, error: error.message }
+      const user = {
+        id: userData.id || `user_${Date.now()}`,
+        name: userData.name || '', // Optional name field
+        email: userData.email,
+        createdAt: new Date().toISOString()
       }
       
-      return { success: true, user: data.user }
+      localStorage.setItem('currentUser', JSON.stringify(user))
+      localStorage.setItem('isAuthenticated', 'true')
+      
+      setUser(user)
+      setProfile(user)
+      
+      return { success: true, user }
     } catch (error) {
       return { success: false, error: error.message }
     }
   }
 
-  const signIn = async (email, password) => {
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      })
-      
-      if (error) {
-        return { success: false, error: error.message }
-      }
-      
-      return { success: true, user: data.user }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+  const signIn = async (userData) => {
+    // For now, sign in and sign up do the same thing
+    return signUp(userData)
   }
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut()
-      if (error) throw error
+      localStorage.removeItem('currentUser')
+      localStorage.removeItem('isAuthenticated')
       
       setUser(null)
       setProfile(null)
+      setIsDemo(false)
+      
       return { success: true }
     } catch (error) {
       return { success: false, error: error.message }
@@ -115,102 +82,42 @@ export function AuthProvider({ children }) {
     if (!user) return { success: false, error: 'Not authenticated' }
     
     try {
-      // Ensure required fields are present
-      const safeUpdates = {
-        email: user.email, // Always include email for database constraint
-        name: updates.name || 'Climber', // Ensure name is never empty
+      const updatedUser = {
+        ...user,
         ...updates
       }
       
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({
-          id: user.id,
-          ...safeUpdates
-        })
-        .select()
-        .single()
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser))
+      setUser(updatedUser)
+      setProfile(updatedUser)
       
-      if (error) {
-        return { success: false, error: error.message }
-      }
-      
-      setProfile(data)
-      return { success: true, user: data }
+      return { success: true, user: updatedUser }
     } catch (error) {
       return { success: false, error: error.message }
     }
   }
 
   const updateEmail = async (newEmail) => {
-    if (!user) return { success: false, error: 'Not authenticated' }
-    
-    try {
-      const { error } = await supabase.auth.updateUser({
-        email: newEmail
-      })
-      
-      if (error) {
-        return { success: false, error: error.message }
-      }
-      
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+    return updateProfile({ email: newEmail })
   }
 
   const updatePassword = async (newPassword) => {
-    if (!user) return { success: false, error: 'Not authenticated' }
-    
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password: newPassword
-      })
-      
-      if (error) {
-        return { success: false, error: error.message }
-      }
-      
-      return { success: true }
-    } catch (error) {
-      return { success: false, error: error.message }
-    }
+    // For testing, we don't store passwords
+    return { success: true }
   }
 
   // Helper function to create profile from pending data stored in localStorage
-  const createPendingProfile = async (userId) => {
+  const createPendingProfile = async () => {
     try {
       const pendingData = localStorage.getItem('pendingProfileData')
       if (!pendingData) return
       
       const profileData = JSON.parse(pendingData)
-      
-      // Get the current user's email from Supabase auth
-      const { data: authUser } = await supabase.auth.getUser()
-      
-      const { data, error } = await supabase
-        .from('users')
-        .upsert({
-          id: userId,
-          email: authUser?.user?.email, // Include email for database constraint
-          name: profileData.name || 'Climber', // Ensure name is never empty
-          ...profileData
-        })
-        .select()
-        .single()
-      
-      if (error) {
-        console.error('Profile creation error:', error)
-        return
-      }
-      
-      setProfile(data)
+      await updateProfile(profileData)
       
       // Clean up pending data
       localStorage.removeItem('pendingProfileData')
     } catch (error) {
-      // Silently handle errors in profile creation
       console.error('createPendingProfile error:', error)
     }
   }
@@ -221,6 +128,7 @@ export function AuthProvider({ children }) {
     profile,
     loading,
     isAuthenticated: !!user,
+    isDemo,
     
     // Methods
     signUp,

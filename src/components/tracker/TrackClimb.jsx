@@ -163,8 +163,8 @@ const TrackClimb = ({ onBack, onClimbLogged }) => {
           </ButtonGrid>
         </Section>
 
-        {/* RPE */}
-        <Section title="RPE">
+        {/* Effort */}
+        <Section title="EFFORT">
           <ButtonGrid cols={5}>
             {RPES.map((n) => (
               <RPEButton 

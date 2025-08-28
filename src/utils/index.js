@@ -23,3 +23,9 @@ export const getMetricAvailability = (sessions, climbs) => ({
   gradeProgression: climbs >= 30,
   allMetrics: sessions >= 3 && climbs >= 30
 });
+
+// Round RPE values to nearest 0.5 (e.g., 7.2 becomes 7.0, 7.3 becomes 7.5)
+export const roundRPE = (rpe) => {
+  if (typeof rpe !== 'number' || isNaN(rpe)) return 0;
+  return Math.round(rpe * 2) / 2;
+};

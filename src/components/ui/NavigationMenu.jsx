@@ -1,4 +1,4 @@
-const NavigationMenu = ({ isOpen, onClose, onNavigateTo, onLogout, onViewTour, activeItem = 'Dashboard' }) => {
+const NavigationMenu = ({ isOpen, onClose, onNavigateTo, onLogout, activeItem = 'Dashboard' }) => {
   if (!isOpen) return null;
 
   const menuItems = [
@@ -7,7 +7,6 @@ const NavigationMenu = ({ isOpen, onClose, onNavigateTo, onLogout, onViewTour, a
     { label: 'Progress', route: '/progress', icon: 'trophy' },
     { label: 'Track Climb', route: '/track', icon: 'plus' },
     { type: 'separator' },
-    { label: 'View Tour', action: 'view-tour', icon: 'info' },
     { label: 'Account', route: '/account', icon: 'user' },
     { label: 'Logout', action: 'logout', icon: 'logout' }
   ];
@@ -24,8 +23,6 @@ const NavigationMenu = ({ isOpen, onClose, onNavigateTo, onLogout, onViewTour, a
         return <><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></>;
       case 'user':
         return <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>;
-      case 'info':
-        return <><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></>;
       case 'logout':
         return <><path d="m9 21 5-5-5-5"/><path d="M20 16h-7a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4h7"/></>;
       default:
@@ -48,9 +45,6 @@ const NavigationMenu = ({ isOpen, onClose, onNavigateTo, onLogout, onViewTour, a
     } else if (item.action === 'logout') {
       // Handle logout action
       onLogout?.();
-    } else if (item.action === 'view-tour') {
-      // Handle view tour action
-      onViewTour?.();
     }
   };
 

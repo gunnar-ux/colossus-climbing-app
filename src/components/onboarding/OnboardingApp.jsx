@@ -11,7 +11,6 @@ import Dashboard from '../dashboard/Dashboard.jsx';
 const OnboardingApp = ({ 
   initialState = 'signup',
   onAccountCreation,
-  onWelcomeTourComplete,
   onNavigateToTracker,
   onNavigateToSessions,
   onViewAchievements 
@@ -78,16 +77,7 @@ const OnboardingApp = ({
     );
   }
 
-  if (appState === 'welcome') {
-    return (
-      <WelcomePage onComplete={() => {
-        setAppState('dashboard');
-        if (onWelcomeTourComplete) {
-          onWelcomeTourComplete();
-        }
-      }} />
-    );
-  }
+  // Tour feature disabled - skip welcome state
 
   if (appState === 'achievements') {
     return (
