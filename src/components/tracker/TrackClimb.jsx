@@ -9,9 +9,11 @@ import {
   StyleButton, 
   AttemptButton 
 } from './TrackerButtons.jsx';
+import BottomNavigation from '../ui/BottomNavigation.jsx';
+import Header from '../ui/Header.jsx';
 import '../../styles/tracker-animations.css';
 
-const TrackClimb = ({ onBack, onClimbLogged }) => {
+const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToAccount, onLogout }) => {
   // State
   const [type, setType] = useState("BOULDER");
   const [grade, setGrade] = useState(null);
@@ -57,7 +59,7 @@ const TrackClimb = ({ onBack, onClimbLogged }) => {
   };
 
   return (
-    <div className="min-h-screen bg-white text-black flex flex-col relative safe-area-top max-w-[430px] mx-auto">
+    <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-white">
       {/* Success Animation Overlay */}
       {saving && (
         <div className="fixed inset-0 bg-white z-[60] flex items-center justify-center">
@@ -102,24 +104,15 @@ const TrackClimb = ({ onBack, onClimbLogged }) => {
         </div>
       )}
 
-      {/* Header */}
-      <header className="px-6 pt-6 pb-3">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={onBack}
-            className="p-2 -ml-2 text-gray-500 hover:text-black transition" 
-            aria-label="Back"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18l-6-6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-          <h1 className="text-2xl font-bold text-black">Track Your Climb</h1>
-        </div>
-      </header>
+      <Header 
+        title="TRACK"
+        lightMode={true}
+        showCloseButton={true}
+        onCloseClick={() => onNavigateToDashboard?.()}
+      />
 
       {/* Content */}
-      <div className="flex-1 px-6 space-y-3 pb-20 overflow-hidden">
+      <div className="flex-1 px-6 space-y-3 pb-20 overflow-y-auto">
         
         {/* Type */}
         <Section title="TYPE">
@@ -221,6 +214,21 @@ const TrackClimb = ({ onBack, onClimbLogged }) => {
           {saving ? "✓ SAVED" : "TRACK"}
         </button>
       </div>
+
+      <BottomNavigation 
+        activeItem="Dashboard"
+        onNavigateTo={(route) => {
+          if (route === '/dashboard') {
+            onNavigateToDashboard?.();
+          } else if (route === '/sessions') {
+            onNavigateToSessions?.();
+          } else if (route === '/progress') {
+            onNavigateToProgress?.();
+          } else if (route === '/account') {
+            onNavigateToAccount?.();
+          }
+        }}
+      />
      </div>
    );
 };

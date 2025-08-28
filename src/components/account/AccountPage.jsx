@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Header from '../ui/Header.jsx';
+import BottomNavigation from '../ui/BottomNavigation.jsx';
 
 // Account management page - allows users to update their profile information
 // Includes email, password, personal info, and physical stats sections
 
-const AccountPage = ({ onNavigateBack }) => {
+const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToTracker, onLogout }) => {
   const { user, profile, updateProfile, updateEmail, updatePassword } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -208,9 +209,7 @@ const AccountPage = ({ onNavigateBack }) => {
     return (
       <div className="min-h-screen-mobile flex flex-col safe-area-top bg-bg">
         <Header 
-          title="ACCOUNT" 
-          showBackButton={true} 
-          onBackClick={onNavigateBack}
+          title="ACCOUNT"
         />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
@@ -225,9 +224,7 @@ const AccountPage = ({ onNavigateBack }) => {
   return (
     <div className="min-h-screen-mobile flex flex-col safe-area-top bg-bg">
       <Header 
-        title="ACCOUNT" 
-        showBackButton={true} 
-        onBackClick={onNavigateBack}
+        title="ACCOUNT"
       />
 
       <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
@@ -545,8 +542,23 @@ const AccountPage = ({ onNavigateBack }) => {
         </section>
 
         {/* Bottom spacing */}
-        <div className="h-8" />
+        <div className="h-20" />
       </div>
+
+      <BottomNavigation 
+        activeItem="Account"
+        onNavigateTo={(route) => {
+          if (route === '/dashboard') {
+            onNavigateToDashboard?.();
+          } else if (route === '/sessions') {
+            onNavigateToSessions?.();
+          } else if (route === '/progress') {
+            onNavigateToProgress?.();
+          } else if (route === '/account') {
+            // Already on account
+          }
+        }}
+      />
     </div>
   );
 };

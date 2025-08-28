@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
-import NavigationMenu from '../ui/NavigationMenu.jsx';
+import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 
 import { getMetricAvailability, clamp } from '../../utils/index.js';
@@ -33,7 +33,7 @@ const Dashboard = ({
   onLogout
 }) => {
   const avail = metricAvailability || getMetricAvailability(userData.totalSessions, userData.totalClimbs);
-  const [menuOpen, setMenuOpen] = useState(false);
+
   
   // Use real CRS score or fallback to hardcoded for demo
   const currentScore = crsData ? crsData.score : 55;
@@ -87,7 +87,7 @@ const Dashboard = ({
   };
 
   return (
-    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative">
+    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
       {/* Pull-to-refresh indicator */}
       <div 
         className={`ptr-indicator flex items-center justify-center text-xs text-graytxt h-10 ${pull > 0 ? 'opacity-100' : 'opacity-0'}`} 
@@ -97,7 +97,6 @@ const Dashboard = ({
       </div>
 
       <Header 
-        onMenuClick={() => setMenuOpen(true)} 
         onTitleClick={handleScrollToTop}
       />
       
@@ -139,27 +138,22 @@ const Dashboard = ({
         </div>
       </section>
       
-      <div className="h-24" />
+      <div className="h-20" />
       <FAB onClick={handleFABClick} />
       
-      <NavigationMenu 
-        isOpen={menuOpen} 
-        onClose={() => setMenuOpen(false)}
+      <BottomNavigation 
+        activeItem="Dashboard"
         onNavigateTo={(route) => {
-          if (route === '/track') {
-            onNavigateToTracker?.();
+          if (route === '/dashboard') {
+            // Already on dashboard
           } else if (route === '/sessions') {
             onNavigateToSessions?.();
           } else if (route === '/progress') {
             onNavigateToProgress?.();
           } else if (route === '/account') {
             onNavigateToAccount?.();
-          } else if (route === '/dashboard') {
-            // Already on dashboard
           }
         }}
-        onLogout={onLogout}
-        activeItem="Dashboard"
       />
     </div>
   );

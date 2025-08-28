@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
-import NavigationMenu from '../ui/NavigationMenu.jsx';
+import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 import SessionStats from './SessionStats.jsx';
 import SessionCard from './SessionCard.jsx';
@@ -9,8 +9,7 @@ import SessionCard from './SessionCard.jsx';
 // SessionsPage component extracted from sessions.html
 // Preserves exact dark theme styling, layout, and interactive behavior
 
-const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNavigateToProgress }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
+const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNavigateToProgress, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
 
   const handleBackClick = () => {
@@ -31,21 +30,17 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
   };
 
   return (
-    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative">
-      {/* Spacing to match dashboard pull-to-refresh indicator position */}
-      <div className="h-10" />
+    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
+
       
       <Header 
         title="SESSIONS"
-        showBackButton={true}
-        onBackClick={handleBackClick}
-        onMenuClick={() => setMenuOpen(true)} 
         onTitleClick={handleScrollToTop}
       />
       
       <SessionStats sessions={sessions} />
       
-      <section className="pt-4 pb-24">
+      <section className="pt-4 pb-20">
         <div className="mx-5 space-y-3">
           {sessions.map((session, i) => (
             <SessionCard key={i} session={session} index={i} />
@@ -55,35 +50,19 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
 
       <FAB onClick={handleFABClick} />
       
-      <NavigationMenu 
-        isOpen={menuOpen} 
-        onClose={() => setMenuOpen(false)}
+      <BottomNavigation 
+        activeItem="Sessions"
         onNavigateTo={(route) => {
-          if (route === '/track') {
-            onNavigateToTracker?.();
-          } else if (route === '/dashboard') {
-            onNavigateBack?.();
-          } else if (route === '/progress') {
-            onNavigateToProgress?.();
+          if (route === '/dashboard') {
+            onNavigateToDashboard?.();
           } else if (route === '/sessions') {
             // Already on sessions
+          } else if (route === '/progress') {
+            onNavigateToProgress?.();
+          } else if (route === '/account') {
+            onNavigateToAccount?.();
           }
         }}
-        onDevAction={(action) => {
-          if (action === 'reset-onboarding') {
-            localStorage.clear();
-            window.location.reload();
-          } else if (action === 'show-signup') {
-            localStorage.clear();
-            window.location.href = '/';
-          } else if (action === 'show-welcome') {
-            localStorage.setItem('colossus-user-data', JSON.stringify({
-              name: 'Test User', hasCompletedOnboarding: true, hasSeenWelcomeTour: false
-            }));
-            window.location.href = '/';
-          }
-        }}
-        activeItem="Sessions"
       />
     </div>
   );

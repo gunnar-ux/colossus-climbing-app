@@ -25,7 +25,7 @@ const ThisWeekContent = () => {
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-base flex items-center gap-2">
             This Week
-            <span className="text-xs text-graytxt">
+            <span className="text-sm text-graytxt">
               {open ? '▼' : '▶'}
             </span>
           </h3>
@@ -50,7 +50,7 @@ const ThisWeekContent = () => {
             <div className="text-sm text-white font-semibold mb-2 text-center">Grade Distribution</div>
             {grades.map((g, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}%</span></div>
+                <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}%</span></div>
                 <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                   <div className="h-full bg-white/70" style={{width: `${g.val}%`}}></div>
                 </div>
@@ -62,7 +62,7 @@ const ThisWeekContent = () => {
             <div className="text-sm text-white font-semibold mb-2 text-center">Style Distribution</div>
             {styles.map((s, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}%</span></div>
+                <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}%</span></div>
                 <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                   <div className="h-full bg-white/60" style={{width: `${s.val}%`}}></div>
                 </div>
@@ -74,7 +74,7 @@ const ThisWeekContent = () => {
             <div className="text-sm text-white font-semibold mb-2 text-center">Wall Angle Distribution</div>
             {angles.map((a, i) => (
               <div key={i} className="mb-2">
-                <div className="flex justify-between text-xs mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}%</span></div>
+                <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}%</span></div>
                 <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                   <div className="h-full bg-white/50" style={{width: `${a.val}%`}}></div>
                 </div>

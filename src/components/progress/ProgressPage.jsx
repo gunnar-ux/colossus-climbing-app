@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
-import NavigationMenu from '../ui/NavigationMenu.jsx';
+import BottomNavigation from '../ui/BottomNavigation.jsx';
 import { LineChart, Trend } from '../ui/Charts.jsx';
 
 // Progress & Achievements page component
 // Displays climbing progress, achievement milestones, and performance trends
 
-const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker, onNavigateToSessions }) => {
-  const [menuOpen, setMenuOpen] = useState(false);
+const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker, onNavigateToSessions, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
 
   const handleBackClick = () => {
@@ -109,17 +108,13 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
   const pointsInCurrentLevel = totalPoints % 150;
 
   return (
-    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative">
-      {/* Spacing to match dashboard layout */}
-      <div className="h-10" />
+    <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
+
       
-      <Header 
-        title="PROGRESS"
-        showBackButton={true}
-        onBackClick={handleBackClick}
-        onMenuClick={() => setMenuOpen(true)} 
-        onTitleClick={handleScrollToTop}
-      />
+              <Header 
+          title="PROGRESS"
+          onTitleClick={handleScrollToTop}
+        />
 
       {/* Level Progress Card - Top Priority */}
       <section className="px-5 pt-4">
@@ -251,35 +246,21 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         )}
       </section>
       
-      <NavigationMenu 
-        isOpen={menuOpen} 
-        onClose={() => setMenuOpen(false)}
+      <div className="h-20" />
+      
+      <BottomNavigation 
+        activeItem="Progress"
         onNavigateTo={(route) => {
-          if (route === '/track') {
-            onNavigateToTracker?.();
-          } else if (route === '/dashboard') {
-            onNavigateBack?.();
+          if (route === '/dashboard') {
+            onNavigateToDashboard?.();
           } else if (route === '/sessions') {
             onNavigateToSessions?.();
           } else if (route === '/progress') {
             // Already on progress
+          } else if (route === '/account') {
+            onNavigateToAccount?.();
           }
         }}
-        onDevAction={(action) => {
-          if (action === 'reset-onboarding') {
-            localStorage.clear();
-            window.location.reload();
-          } else if (action === 'show-signup') {
-            localStorage.clear();
-            window.location.href = '/';
-          } else if (action === 'show-welcome') {
-            localStorage.setItem('colossus-user-data', JSON.stringify({
-              name: 'Test User', hasCompletedOnboarding: true, hasSeenWelcomeTour: false
-            }));
-            window.location.href = '/';
-          }
-        }}
-        activeItem="Progress"
       />
     </div>
   );

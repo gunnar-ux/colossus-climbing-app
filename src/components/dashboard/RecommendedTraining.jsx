@@ -24,11 +24,11 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
         <div className="flex items-center justify-between mb-1">
           <div className="font-semibold">Recommended Training</div>
           {hasNoData ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
+            <span className="px-2 py-1 text-sm rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA
             </span>
           ) : isCalibrating ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-orange/20 text-orange">
+            <span className="px-2 py-1 text-sm rounded-full bg-orange/20 text-orange">
               CALIBRATING
             </span>
           ) : null}
@@ -44,10 +44,10 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
               <span className="text-graytxt">{rec.type}</span> • <span className="text-white">Volume:</span> <span className="text-graytxt">{rec.volume}</span> • <span className="text-white">RPE:</span> <span className="text-graytxt">{rec.rpe}</span>
             </div>
             {rec.note && (
-              <div className="text-xs text-orange mt-1">⚠️ {rec.note}</div>
+              <div className="text-sm text-orange mt-1">⚠️ {rec.note}</div>
             )}
             {rec.focus && (
-              <div className="text-xs text-graytxt mt-1 mb-3">{rec.focus}</div>
+              <div className="text-sm text-graytxt mt-1 mb-3">{rec.focus}</div>
             )}
           </>
         )}

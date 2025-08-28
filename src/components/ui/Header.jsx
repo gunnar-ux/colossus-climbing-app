@@ -1,4 +1,10 @@
-const Header = ({ onMenuClick, title = "DASHBOARD", showBackButton = false, onBackClick, onTitleClick }) => {
+const Header = ({ 
+  title = "DASHBOARD", 
+  onTitleClick, 
+  lightMode = false,
+  showCloseButton = false,
+  onCloseClick
+}) => {
   const handleTitleClick = () => {
     // Scroll to top when title is clicked
     if (onTitleClick) {
@@ -8,47 +14,30 @@ const Header = ({ onMenuClick, title = "DASHBOARD", showBackButton = false, onBa
     }
   };
 
+  const backgroundColor = lightMode ? 'white' : '#0a0a0a';
+  const textColor = lightMode ? 'text-black' : 'text-white hover:text-white/80';
+
   return (
-    <header className="sticky top-0 z-20 bg-bg/95 backdrop-blur-md supports-[backdrop-filter]:bg-bg/80 border-b border-border/20 safe-area-inset-top">
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between relative">
-        {showBackButton ? (
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={onBackClick}
-              className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center hover:bg-white/10 active:scale-95 transition" 
-              aria-label="Back"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m15 18-6-6 6-6"/>
-              </svg>
-            </button>
-            <button 
-              onClick={handleTitleClick}
-              className="text-xl font-semibold hover:text-white/80 transition-colors cursor-pointer"
-              aria-label="Scroll to top"
-            >
-              {title}
-            </button>
-          </div>
-        ) : (
+    <header className="sticky top-0 z-20 safe-area-inset-top" style={{ backgroundColor }}>
+      <div className="px-5 pt-4 pb-3 flex items-center justify-center relative">
+        {showCloseButton && (
           <button 
-            onClick={handleTitleClick}
-            className="text-xl font-semibold hover:text-white/80 transition-colors cursor-pointer"
-            aria-label="Scroll to top"
+            onClick={onCloseClick}
+            className="absolute left-5 w-9 h-9 flex items-center justify-center hover:opacity-70 active:scale-95 transition" 
+            aria-label="Close"
           >
-            {title}
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={lightMode ? "black" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" x2="6" y1="6" y2="18"/>
+              <line x1="6" x2="18" y1="6" y2="18"/>
+            </svg>
           </button>
         )}
         <button 
-          onClick={onMenuClick} 
-          className="w-9 h-9 rounded-full bg-card border border-border flex items-center justify-center hover:bg-white/10 active:scale-95 transition" 
-          aria-label="Menu"
+          onClick={handleTitleClick}
+          className={`text-xl font-semibold transition-colors cursor-pointer ${textColor}`}
+          aria-label="Scroll to top"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="3" x2="21" y1="6" y2="6"/>
-            <line x1="3" x2="21" y1="12" y2="12"/>
-            <line x1="3" x2="21" y1="18" y2="18"/>
-          </svg>
+          {title}
         </button>
       </div>
     </header>

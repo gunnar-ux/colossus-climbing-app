@@ -276,6 +276,11 @@ const AppContent = () => {
                           onClimbLogged={(climbData) => {
                             handleClimbLogged(climbData);
                           }}
+                          onNavigateToDashboard={handleNavigateToDashboard}
+                          onNavigateToSessions={handleNavigateToSessions}
+                          onNavigateToProgress={handleNavigateToProgress}
+                          onNavigateToAccount={handleNavigateToAccount}
+                          onLogout={handleLogout}
                         />
                       );
                     case 'sessions':
@@ -285,6 +290,8 @@ const AppContent = () => {
                           onNavigateBack={handleNavigateToDashboard}
                           onNavigateToTracker={handleNavigateToTracker}
                           onNavigateToProgress={handleNavigateToProgress}
+                          onNavigateToDashboard={handleNavigateToDashboard}
+                          onNavigateToAccount={handleNavigateToAccount}
                         />
                       );
                     case 'progress':
@@ -295,12 +302,19 @@ const AppContent = () => {
                           onNavigateBack={handleNavigateToDashboard}
                           onNavigateToTracker={handleNavigateToTracker}
                           onNavigateToSessions={handleNavigateToSessions}
+                          onNavigateToDashboard={handleNavigateToDashboard}
+                          onNavigateToAccount={handleNavigateToAccount}
                         />
                       );
                     case 'account':
                       return (
                         <AccountPage 
                           onNavigateBack={handleNavigateToDashboard}
+                          onNavigateToDashboard={handleNavigateToDashboard}
+                          onNavigateToSessions={handleNavigateToSessions}
+                          onNavigateToProgress={handleNavigateToProgress}
+                          onNavigateToTracker={handleNavigateToTracker}
+                          onLogout={handleLogout}
                         />
                       );
                     case 'dashboard':

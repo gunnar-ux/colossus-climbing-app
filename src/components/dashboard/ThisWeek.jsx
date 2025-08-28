@@ -44,8 +44,8 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
         
         {/* Flash Rate and Avg Grade - always shown */}
         <div className="mt-3 flex items-center justify-between text-sm">
-          <div><span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? '68%' : '--'}</span> {available && <span className="text-green-400 text-xs">+12%</span>}</div>
-          <div><span className="text-white">Avg Grade:</span> <span className="text-graytxt font-medium">{available ? 'V4.5' : '--'}</span> {available && <span className="text-green-400 text-xs">+0.3</span>}</div>
+          <div><span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? '68%' : '--'}</span> {available && <span className="text-green-400 text-sm">+12%</span>}</div>
+          <div><span className="text-white">Avg Grade:</span> <span className="text-graytxt font-medium">{available ? 'V4.5' : '--'}</span> {available && <span className="text-green-400 text-sm">+0.3</span>}</div>
         </div>
         
         {!available && (

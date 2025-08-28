@@ -16,7 +16,7 @@ export const BarChart = ({ values = [10, 20, 30], labels = [], height = 90, onCl
           <g key={i}>
             <rect x={x} y={y} width={barW} height={h} rx="4" className="fill-white/70" />
             {labels[i] && (
-              <text x={x + barW / 2} y={height - 5} textAnchor="middle" className="fill-gray-300 text-[10px]">{labels[i]}</text>
+              <text x={x + barW / 2} y={height - 2} textAnchor="middle" className="fill-gray-300 text-sm">{labels[i]}</text>
             )}
           </g>
         );
@@ -64,7 +64,7 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
         return (
           <g key={i}>
             <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-            <text x={padding - 5} y={y + 3} textAnchor="end" className="fill-gray-400 text-[9px]">{formatValue(val)}</text>
+            <text x={padding - 5} y={y + 3} textAnchor="end" className="fill-gray-400 text-sm">{formatValue(val)}</text>
           </g>
         );
       })}
@@ -79,7 +79,7 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
       
       {/* Labels */}
       {labels.map((label, i) => (
-        <text key={i} x={points[i]?.x} y={height - 5} textAnchor="middle" className="fill-gray-300 text-[10px]">{label}</text>
+        <text key={i} x={points[i]?.x} y={height - 2} textAnchor="middle" className="fill-gray-300 text-sm">{label}</text>
       ))}
     </svg>
   );

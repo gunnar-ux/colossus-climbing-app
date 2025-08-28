@@ -28,17 +28,17 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-base">Climb Readiness</h3>
           {hasNoData ? (
-            <span className="px-2 py-1 text-xs rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
+            <span className="px-2 py-1 text-sm rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA
             </span>
           ) : sessions >= 5 && loadRatioData ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-white/15 text-xs text-white/90">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-white/15 text-sm text-white/90">
               <span className="text-graytxt">Load</span>
               <span className={`font-semibold ${loadColor(currentLoadRatio)}`}>{currentLoadRatio.toFixed(1)}x</span>
               <span className="text-graytxt">baseline</span>
             </span>
           ) : (
-            <span className={`px-2 py-1 text-xs rounded-full ${
+            <span className={`px-2 py-1 text-sm rounded-full ${
               crsStatus === 'building' ? 'bg-blue/20 text-blue' : 
               crsStatus === 'calibrating' ? 'bg-orange/20 text-orange' : 
               'bg-green/20 text-green'
