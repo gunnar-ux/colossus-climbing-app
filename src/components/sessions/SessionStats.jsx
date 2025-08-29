@@ -12,7 +12,7 @@ const SessionStats = ({ sessions }) => {
   const totalMinutes = totalTime % 60;
 
   return (
-    <section className="px-5 pt-4">
+    <section className="px-5 pt-6">
       <div className="bg-card border border-border rounded-col p-4">
         <h2 className="font-semibold text-base mb-3">Session Summary</h2>
         <div className="grid grid-cols-2 gap-4 text-center">

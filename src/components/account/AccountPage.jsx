@@ -41,6 +41,9 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
   const [unitHeight, setUnitHeight] = useState('ft');
   const [unitWeight, setUnitWeight] = useState('lbs');
   const [unitApeIndex, setUnitApeIndex] = useState('in');
+  
+  // Tab state
+  const [activeTab, setActiveTab] = useState('email');
 
   // Load profile data on mount
   useEffect(() => {
@@ -207,11 +210,11 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
 
   if (loading) {
     return (
-      <div className="min-h-screen-mobile flex flex-col safe-area-top bg-bg">
+      <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
         <Header 
           title="ACCOUNT"
         />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
             <div className="text-xl font-semibold mb-2">Loading...</div>
             <div className="text-graytxt">Getting your account info</div>
@@ -222,16 +225,16 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
   }
 
   return (
-    <div className="min-h-screen-mobile flex flex-col safe-area-top bg-bg">
+    <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
       <Header 
         title="ACCOUNT"
       />
 
-      <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
+      <div className="px-6 py-6 pb-20">
         
         {/* Status Messages */}
         {(success || error) && (
-          <div className={`p-3 rounded-col border-l-4 ${
+          <div className={`p-3 rounded-col border-l-4 mb-6 ${
             success ? 'bg-green/5 border-green text-green' : 'bg-red-500/5 border-red-400 text-red-400'
           }`}>
             <div className="flex items-start gap-2">
@@ -241,305 +244,389 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
           </div>
         )}
 
-        {/* Email Section */}
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Email Address</h2>
-          <div className="bg-card border border-border rounded-col p-4 space-y-4">
-            <div>
-              <label className="block text-sm text-graytxt mb-2">Current Email</label>
-              <div className="text-white">{user?.email}</div>
+        {/* User Info Card */}
+        <div className="bg-card border border-border rounded-col p-6 mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+              <span className="text-2xl font-bold text-white">
+                {personalForm.name ? personalForm.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'C'}
+              </span>
             </div>
-            
             <div>
-              <label className="block text-sm font-medium text-white mb-2">New Email</label>
-              <input 
-                type="email" 
-                value={emailForm.newEmail}
-                onChange={e => updateEmailForm('newEmail', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="new@email.com"
-              />
+              <h3 className="text-xl font-bold text-white">{personalForm.name || 'Climber'}</h3>
+              <p className="text-graytxt">{user?.email}</p>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Confirm New Email</label>
-              <input 
-                type="email" 
-                value={emailForm.confirmEmail}
-                onChange={e => updateEmailForm('confirmEmail', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="Confirm new email"
-              />
-            </div>
-
-            <button 
-              onClick={saveEmail}
-              disabled={saving || !emailForm.newEmail || emailForm.newEmail === user?.email}
-              className={`w-full py-3 rounded-col font-semibold transition ${
-                saving || !emailForm.newEmail || emailForm.newEmail === user?.email
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-            >
-              {saving ? 'Updating...' : 'Update Email'}
-            </button>
           </div>
-        </section>
-
-        {/* Password Section */}
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Password</h2>
-          <div className="bg-card border border-border rounded-col p-4 space-y-4">
+          
+          <div className="grid grid-cols-2 gap-4 text-sm">
             <div>
-              <label className="block text-sm font-medium text-white mb-2">New Password</label>
-              <input 
-                type="password" 
-                value={passwordForm.newPassword}
-                onChange={e => updatePasswordForm('newPassword', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="At least 6 characters"
-              />
+              <span className="text-graytxt">Age:</span>
+              <span className="text-white ml-2">{personalForm.age || '--'}</span>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-white mb-2">Confirm New Password</label>
-              <input 
-                type="password" 
-                value={passwordForm.confirmPassword}
-                onChange={e => updatePasswordForm('confirmPassword', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="Confirm new password"
-              />
+              <span className="text-graytxt">Gender:</span>
+              <span className="text-white ml-2">{personalForm.gender || '--'}</span>
             </div>
-
-            <button 
-              onClick={savePassword}
-              disabled={saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6}
-              className={`w-full py-3 rounded-col font-semibold transition ${
-                saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-            >
-              {saving ? 'Updating...' : 'Update Password'}
-            </button>
+            <div>
+              <span className="text-graytxt">Height:</span>
+              <span className="text-white ml-2">
+                {(() => {
+                  // Check if we have valid feet/inches data
+                  if (physicalForm.height.feet && physicalForm.height.inches && 
+                      !isNaN(physicalForm.height.feet) && !isNaN(physicalForm.height.inches)) {
+                    return `${physicalForm.height.feet}'${physicalForm.height.inches}"`;
+                  }
+                  // Check if we have valid cm data
+                  if (physicalForm.height.cm && !isNaN(physicalForm.height.cm)) {
+                    return `${physicalForm.height.cm}cm`;
+                  }
+                  // Check if we can convert from stored profile data
+                  if (profile?.height_cm && !isNaN(profile.height_cm)) {
+                    const feet = Math.floor(profile.height_cm / 30.48);
+                    const inches = Math.round((profile.height_cm / 2.54) % 12);
+                    return unitHeight === 'ft' ? `${feet}'${inches}"` : `${profile.height_cm}cm`;
+                  }
+                  return '--';
+                })()}
+              </span>
+            </div>
+            <div>
+              <span className="text-graytxt">Weight:</span>
+              <span className="text-white ml-2">
+                {(() => {
+                  // Check if we have valid weight data
+                  if (physicalForm.weight.value && !isNaN(physicalForm.weight.value)) {
+                    return `${physicalForm.weight.value}${unitWeight}`;
+                  }
+                  // Check if we can convert from stored profile data
+                  if (profile?.weight_kg && !isNaN(profile.weight_kg)) {
+                    const weightLbs = Math.round(profile.weight_kg * 2.20462);
+                    return unitWeight === 'lbs' ? `${weightLbs}lbs` : `${profile.weight_kg}kg`;
+                  }
+                  return '--';
+                })()}
+              </span>
+            </div>
           </div>
-        </section>
+        </div>
 
-        {/* Personal Information Section */}
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Personal Information</h2>
-          <div className="bg-card border border-border rounded-col p-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Name</label>
-              <input 
-                type="text" 
-                value={personalForm.name}
-                onChange={e => updatePersonalForm('name', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="Your name"
-              />
-            </div>
+        {/* Tabs */}
+        <div className="mb-8">
+          <div className="flex bg-card border border-border rounded-col p-1">
+            {[
+              { id: 'email', label: 'Email' },
+              { id: 'password', label: 'Password' },
+              { id: 'personal', label: 'Personal' },
+              { id: 'physical', label: 'Physical' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
+                  activeTab === tab.id
+                    ? 'bg-white text-black'
+                    : 'text-graytxt hover:text-white'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-            <div className="grid grid-cols-2 gap-4">
+        {/* Active Form Section */}
+        <div className="space-y-4">
+          {activeTab === 'email' && (
+            <>
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Age</label>
+                <label className="block text-sm text-graytxt mb-2">Current Email</label>
+                <div className="text-white text-base">{user?.email}</div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">New Email</label>
                 <input 
-                  type="number" 
-                  value={personalForm.age}
-                  onChange={e => updatePersonalForm('age', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                  placeholder="Age"
+                  type="email" 
+                  value={emailForm.newEmail}
+                  onChange={e => updateEmailForm('newEmail', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="new@email.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">Gender</label>
-                <div className="relative">
-                  <select 
-                    value={personalForm.gender}
-                    onChange={e => updatePersonalForm('gender', e.target.value)}
-                    className="w-full min-h-[52px] p-4 pr-12 rounded-col bg-bg border border-border text-white focus:border-white/30 transition appearance-none"
-                  >
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Non-binary">Non-binary</option>
-                    <option value="Prefer not to say">Prefer not to say</option>
-                  </select>
-                  <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-graytxt">
-                      <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                <label className="block text-sm font-medium text-white mb-2">Confirm New Email</label>
+                <input 
+                  type="email" 
+                  value={emailForm.confirmEmail}
+                  onChange={e => updateEmailForm('confirmEmail', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="Confirm new email"
+                />
+              </div>
+
+              <button 
+                onClick={saveEmail}
+                disabled={saving || !emailForm.newEmail || emailForm.newEmail === user?.email}
+                className={`w-full py-3 rounded-col font-semibold transition ${
+                  saving || !emailForm.newEmail || emailForm.newEmail === user?.email
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {saving ? 'Updating...' : 'Update Email'}
+              </button>
+            </>
+          )}
+
+          {activeTab === 'password' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">New Password</label>
+                <input 
+                  type="password" 
+                  value={passwordForm.newPassword}
+                  onChange={e => updatePasswordForm('newPassword', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="At least 6 characters"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Confirm New Password</label>
+                <input 
+                  type="password" 
+                  value={passwordForm.confirmPassword}
+                  onChange={e => updatePasswordForm('confirmPassword', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="Confirm new password"
+                />
+              </div>
+
+              <button 
+                onClick={savePassword}
+                disabled={saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6}
+                className={`w-full py-3 rounded-col font-semibold transition ${
+                  saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {saving ? 'Updating...' : 'Update Password'}
+              </button>
+            </>
+          )}
+
+          {activeTab === 'personal' && (
+            <>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Name</label>
+                <input 
+                  type="text" 
+                  value={personalForm.name}
+                  onChange={e => updatePersonalForm('name', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Age</label>
+                  <input 
+                    type="number" 
+                    value={personalForm.age}
+                    onChange={e => updatePersonalForm('age', e.target.value)}
+                    className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                    placeholder="Age"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-white mb-2">Gender</label>
+                  <div className="relative">
+                    <select 
+                      value={personalForm.gender}
+                      onChange={e => updatePersonalForm('gender', e.target.value)}
+                      className="w-full min-h-[52px] p-4 pr-12 rounded-col bg-card border border-border text-white focus:border-white/30 transition appearance-none"
+                    >
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Non-binary">Non-binary</option>
+                      <option value="Prefer not to say">Prefer not to say</option>
+                    </select>
+                    <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-graytxt">
+                        <path d="M6 9l6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-white mb-2">Location</label>
-              <input 
-                type="text" 
-                value={personalForm.location}
-                onChange={e => updatePersonalForm('location', e.target.value)}
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="City, State/Country"
-              />
-            </div>
-
-            <button 
-              onClick={savePersonalInfo}
-              disabled={saving}
-              className={`w-full py-3 rounded-col font-semibold transition ${
-                saving
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-            >
-              {saving ? 'Updating...' : 'Update Personal Info'}
-            </button>
-          </div>
-        </section>
-
-        {/* Physical Stats Section */}
-        <section>
-          <h2 className="text-lg font-semibold mb-4">Physical Stats</h2>
-          <div className="bg-card border border-border rounded-col p-4 space-y-4">
-            
-            {/* Height */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-white">Height</label>
-                <div className="flex gap-1 text-xs font-medium">
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitHeight === 'ft' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitHeight('ft')}
-                  >
-                    ft/in
-                  </button>
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitHeight === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitHeight('cm')}
-                  >
-                    cm
-                  </button>
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">Location</label>
+                <input 
+                  type="text" 
+                  value={personalForm.location}
+                  onChange={e => updatePersonalForm('location', e.target.value)}
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="City, State/Country"
+                />
               </div>
-              {unitHeight === 'ft' ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <input 
-                      type="number" 
-                      value={physicalForm.height.feet} 
-                      onChange={e => updatePhysicalForm('height', {...physicalForm.height, feet: e.target.value})} 
-                      className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                      placeholder="0"
-                    />
-                    <label className="text-xs text-graytxt mt-1 block text-center font-medium">feet</label>
-                  </div>
-                  <div>
-                    <input 
-                      type="number" 
-                      value={physicalForm.height.inches} 
-                      onChange={e => updatePhysicalForm('height', {...physicalForm.height, inches: e.target.value})} 
-                      className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                      placeholder="0"
-                    />
-                    <label className="text-xs text-graytxt mt-1 block text-center font-medium">inches</label>
+
+              <button 
+                onClick={savePersonalInfo}
+                disabled={saving}
+                className={`w-full py-3 rounded-col font-semibold transition ${
+                  saving
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {saving ? 'Updating...' : 'Update Personal Info'}
+              </button>
+            </>
+          )}
+
+          {activeTab === 'physical' && (
+            <>
+              {/* Height */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-white">Height</label>
+                  <div className="flex gap-1 text-xs font-medium">
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitHeight === 'ft' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitHeight('ft')}
+                    >
+                      ft/in
+                    </button>
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitHeight === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitHeight('cm')}
+                    >
+                      cm
+                    </button>
                   </div>
                 </div>
-              ) : (
+                {unitHeight === 'ft' ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <input 
+                        type="number" 
+                        value={physicalForm.height.feet} 
+                        onChange={e => updatePhysicalForm('height', {...physicalForm.height, feet: e.target.value})} 
+                        className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                        placeholder="0"
+                      />
+                      <label className="text-xs text-graytxt mt-1 block text-center font-medium">feet</label>
+                    </div>
+                    <div>
+                      <input 
+                        type="number" 
+                        value={physicalForm.height.inches} 
+                        onChange={e => updatePhysicalForm('height', {...physicalForm.height, inches: e.target.value})} 
+                        className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                        placeholder="0"
+                      />
+                      <label className="text-xs text-graytxt mt-1 block text-center font-medium">inches</label>
+                    </div>
+                  </div>
+                ) : (
+                  <input 
+                    type="number" 
+                    value={physicalForm.height.cm} 
+                    onChange={e => updatePhysicalForm('height', {...physicalForm.height, cm: e.target.value})} 
+                    className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                    placeholder="0"
+                  />
+                )}
+              </div>
+
+              {/* Weight */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-white">Weight</label>
+                  <div className="flex gap-1 text-xs font-medium">
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitWeight === 'lbs' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitWeight('lbs')}
+                    >
+                      lbs
+                    </button>
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitWeight === 'kg' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitWeight('kg')}
+                    >
+                      kg
+                    </button>
+                  </div>
+                </div>
                 <input 
                   type="number" 
-                  value={physicalForm.height.cm} 
-                  onChange={e => updatePhysicalForm('height', {...physicalForm.height, cm: e.target.value})} 
-                  className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                  placeholder="0"
+                  value={physicalForm.weight.value} 
+                  onChange={e => updatePhysicalForm('weight', {value: e.target.value, unit: unitWeight})} 
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="0" 
                 />
-              )}
-            </div>
-
-            {/* Weight */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-white">Weight</label>
-                <div className="flex gap-1 text-xs font-medium">
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitWeight === 'lbs' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitWeight('lbs')}
-                  >
-                    lbs
-                  </button>
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitWeight === 'kg' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitWeight('kg')}
-                  >
-                    kg
-                  </button>
-                </div>
               </div>
-              <input 
-                type="number" 
-                value={physicalForm.weight.value} 
-                onChange={e => updatePhysicalForm('weight', {value: e.target.value, unit: unitWeight})} 
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="0" 
-              />
-            </div>
 
-            {/* Ape Index */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="block text-sm font-medium text-white">Ape Index</label>
-                <div className="flex gap-1 text-xs font-medium">
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitApeIndex === 'in' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitApeIndex('in')}
-                  >
-                    in
-                  </button>
-                  <button 
-                    className={`px-3 py-1 rounded-col transition ${
-                      unitApeIndex === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
-                    }`} 
-                    onClick={() => setUnitApeIndex('cm')}
-                  >
-                    cm
-                  </button>
+              {/* Ape Index */}
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block text-sm font-medium text-white">Ape Index</label>
+                  <div className="flex gap-1 text-xs font-medium">
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitApeIndex === 'in' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitApeIndex('in')}
+                    >
+                      in
+                    </button>
+                    <button 
+                      className={`px-3 py-1 rounded-col transition ${
+                        unitApeIndex === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
+                      }`} 
+                      onClick={() => setUnitApeIndex('cm')}
+                    >
+                      cm
+                    </button>
+                  </div>
                 </div>
+                <input 
+                  type="number" 
+                  value={physicalForm.apeIndex} 
+                  onChange={e => updatePhysicalForm('apeIndex', e.target.value)} 
+                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  placeholder="0" 
+                />
               </div>
-              <input 
-                type="number" 
-                value={physicalForm.apeIndex} 
-                onChange={e => updatePhysicalForm('apeIndex', e.target.value)} 
-                className="w-full min-h-[52px] p-4 rounded-col bg-bg border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
-                placeholder="0" 
-              />
-            </div>
 
-            <button 
-              onClick={savePhysicalStats}
-              disabled={saving}
-              className={`w-full py-3 rounded-col font-semibold transition ${
-                saving
-                  ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                  : 'bg-white text-black hover:bg-gray-100'
-              }`}
-            >
-              {saving ? 'Updating...' : 'Update Physical Stats'}
-            </button>
-          </div>
-        </section>
+              <button 
+                onClick={savePhysicalStats}
+                disabled={saving}
+                className={`w-full py-3 rounded-col font-semibold transition ${
+                  saving
+                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
+              >
+                {saving ? 'Updating...' : 'Update Physical Stats'}
+              </button>
+            </>
+          )}
+        </div>
 
         {/* Bottom spacing */}
         <div className="h-20" />

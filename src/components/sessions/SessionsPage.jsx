@@ -6,8 +6,7 @@ import SessionStats from './SessionStats.jsx';
 import SessionCard from './SessionCard.jsx';
 
 
-// SessionsPage component extracted from sessions.html
-// Preserves exact dark theme styling, layout, and interactive behavior
+// SessionsPage component - standardized with consistent header behavior
 
 const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNavigateToProgress, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
@@ -31,8 +30,6 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
 
   return (
     <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
-
-      
       <Header 
         title="SESSIONS"
         onTitleClick={handleScrollToTop}

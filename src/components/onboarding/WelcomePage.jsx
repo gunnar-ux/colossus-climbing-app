@@ -401,7 +401,7 @@ const WelcomePage = ({ onComplete }) => {
   };
 
   return (
-    <div className="min-h-screen-mobile flex flex-col safe-area-top max-w-[430px] mx-auto">
+    <div className="min-h-screen-mobile flex flex-col pt-safe-top max-w-[430px] mx-auto">
       {/* Header with navigation */}
       <div className="px-6 pt-12 pb-8">
         <div className="flex items-center justify-between mb-4">
@@ -440,7 +440,7 @@ const WelcomePage = ({ onComplete }) => {
 
       {/* Floating continue button - only for start and end */}
       {(currentStep === 0 || currentStep === steps.length - 1) && (
-        <div className="fixed bottom-0 left-0 right-0 px-6 pb-8 pt-6 bg-bg border-t border-white/10 z-50 safe-area-bottom max-w-[430px] mx-auto">
+        <div className="fixed bottom-0 left-0 right-0 px-6 pb-8 pt-6 bg-bg border-t border-white/10 z-50 pb-safe-bottom max-w-[430px] mx-auto">
           <div className="space-y-3">
             {currentStep === 0 ? (
               <div className="flex gap-3">

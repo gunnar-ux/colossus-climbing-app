@@ -111,10 +111,10 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
 
       
-              <Header 
-          title="PROGRESS"
-          onTitleClick={handleScrollToTop}
-        />
+      <Header 
+        title="PROGRESS"
+        onTitleClick={handleScrollToTop}
+      />
 
       {/* Level Progress Card - Top Priority */}
       <section className="px-5 pt-4">

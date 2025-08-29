@@ -88,15 +88,8 @@ const Dashboard = ({
 
   return (
     <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
-      {/* Pull-to-refresh indicator */}
-      <div 
-        className={`ptr-indicator flex items-center justify-center text-xs text-graytxt h-10 ${pull > 0 ? 'opacity-100' : 'opacity-0'}`} 
-        style={{transform: `translateY(${pull / 2}px)`}}
-      >
-        {pull < 80 ? 'Pull to refresh' : 'Release to refresh'}
-      </div>
-
       <Header 
+        title="DASHBOARD"
         onTitleClick={handleScrollToTop}
       />
       

@@ -59,10 +59,10 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
   };
 
   return (
-    <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-white">
+    <div className="w-full h-screen overflow-y-auto hide-scrollbar relative" style={{ backgroundColor: '#EBEDEE' }}>
       {/* Success Animation Overlay */}
       {saving && (
-        <div className="fixed inset-0 bg-white z-[60] flex items-center justify-center">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ backgroundColor: '#EBEDEE' }}>
           <div className="text-center">
             <div className="w-20 h-20 mx-auto mb-6 relative">
               {/* Animated circle background */}
@@ -200,35 +200,24 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
 
       </div>
 
-      {/* Fixed CTA Button */}
-      <div className="fixed bottom-0 left-0 right-0 px-6 pb-4 pt-3 bg-white border-t border-gray-200 z-50 safe-area-bottom max-w-[430px] mx-auto">
+      {/* Irresistible CTA button at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 p-6 flex justify-center" style={{ background: 'linear-gradient(to top, #EBEDEE, #EBEDEE, transparent)' }}>
         <button
           onClick={handleLog}
           disabled={!canLog || saving}
-          className={`w-full h-12 rounded-xl font-semibold transition-all duration-200 active:scale-[0.98] focus:outline-none focus:ring-0 ${
-            canLog && !saving
-              ? 'bg-black text-white hover:bg-gray-800 focus:bg-black' 
-              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-          }`}
+          className="w-48 h-16 rounded-full font-bold text-lg transition-all duration-300 transform bg-black text-white shadow-2xl shadow-black/30 hover:shadow-3xl hover:scale-[1.02] active:scale-[0.98]"
+          style={{
+            boxShadow: canLog && !saving 
+              ? '0 20px 40px rgba(0, 0, 0, 0.15), 0 8px 16px rgba(0, 0, 0, 0.1)' 
+              : '0 8px 16px rgba(0, 0, 0, 0.1)'
+          }}
         >
           {saving ? "✓ SAVED" : "TRACK"}
         </button>
       </div>
-
-      <BottomNavigation 
-        activeItem="Dashboard"
-        onNavigateTo={(route) => {
-          if (route === '/dashboard') {
-            onNavigateToDashboard?.();
-          } else if (route === '/sessions') {
-            onNavigateToSessions?.();
-          } else if (route === '/progress') {
-            onNavigateToProgress?.();
-          } else if (route === '/account') {
-            onNavigateToAccount?.();
-          }
-        }}
-      />
+      
+      {/* Add padding to prevent content from being hidden behind the button */}
+      <div className="h-24"></div>
      </div>
    );
 };

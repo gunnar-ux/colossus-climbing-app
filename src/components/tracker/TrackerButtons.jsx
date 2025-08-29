@@ -3,7 +3,7 @@
 
 export const Section = ({ title, children }) => (
   <div className="space-y-2">
-    <h3 className="text-sm font-bold text-black tracking-wide">{title}</h3>
+    <h3 className="text-sm font-black text-black tracking-wide">{title}</h3>
     {children}
   </div>
 );
@@ -20,8 +20,8 @@ const BaseTrackerButton = ({ label, selected, onClick }) => (
     onClick={onClick}
     className={`h-10 rounded-lg font-semibold text-sm transition-all duration-200 active:scale-95 relative overflow-hidden ${
       selected
-        ? 'bg-gray-100 text-white'
-        : 'bg-gray-100 text-black hover:bg-gray-200'
+        ? 'bg-white text-white'
+        : 'bg-white text-black hover:bg-gray-50'
     }`}
   >
     <span className="relative z-10">{label}</span>

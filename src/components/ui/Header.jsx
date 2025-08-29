@@ -14,16 +14,28 @@ const Header = ({
     }
   };
 
-  const backgroundColor = lightMode ? 'white' : '#0a0a0a';
+  const backgroundColor = lightMode ? '#EBEDEE' : '#0a0a0a';
   const textColor = lightMode ? 'text-black' : 'text-white hover:text-white/80';
 
   return (
-    <header className="sticky top-0 z-20 safe-area-inset-top" style={{ backgroundColor }}>
-      <div className="px-5 pt-4 pb-3 flex items-center justify-center relative">
+    <header className="sticky top-0 z-20 pt-safe-top" style={{ 
+      background: lightMode ? 'rgba(235, 237, 238, 0.95)' : 'rgba(10, 10, 10, 0.95)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)'
+    }}>
+      <div className="px-10 pt-4 pb-3 flex items-center justify-between relative">
+        <button 
+          onClick={handleTitleClick}
+          className={`text-2xl transition-colors cursor-pointer ${textColor}`}
+          style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 700, letterSpacing: '0.02em' }}
+          aria-label="Scroll to top"
+        >
+          {title}
+        </button>
         {showCloseButton && (
           <button 
             onClick={onCloseClick}
-            className="absolute left-5 w-9 h-9 flex items-center justify-center hover:opacity-70 active:scale-95 transition" 
+            className="w-9 h-9 flex items-center justify-center hover:opacity-70 active:scale-95 transition" 
             aria-label="Close"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={lightMode ? "black" : "white"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -32,14 +44,11 @@ const Header = ({
             </svg>
           </button>
         )}
-        <button 
-          onClick={handleTitleClick}
-          className={`text-xl font-semibold transition-colors cursor-pointer ${textColor}`}
-          aria-label="Scroll to top"
-        >
-          {title}
-        </button>
       </div>
+      {/* Gradient fade overlay */}
+      <div className="absolute bottom-0 left-0 right-0 h-6 pointer-events-none" style={{
+        background: `linear-gradient(to bottom, transparent, ${lightMode ? 'rgba(235, 237, 238, 0.8)' : 'rgba(10, 10, 10, 0.8)'})`
+      }}></div>
     </header>
   );
 };

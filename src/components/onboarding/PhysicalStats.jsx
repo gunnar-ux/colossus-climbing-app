@@ -125,7 +125,7 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
   };
 
   return (
-    <div className="min-h-screen-mobile flex flex-col safe-area-top">
+    <div className="min-h-screen-mobile flex flex-col pt-safe-top">
       {/* Header */}
       <div className="px-6 pt-12 pb-8">
         <h1 className="text-3xl font-bold mb-2">Physical Stats</h1>
@@ -275,7 +275,7 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
       </div>
 
       {/* Bottom Navigation */}
-      <div className="px-6 pb-8 pt-6 safe-area-bottom">
+      <div className="px-6 pb-8 pt-6 pb-safe-bottom">
         <div className="space-y-3">
           {error && (
             <div className="text-red-400 text-sm p-3 bg-red-500/5 border-l-4 border-red-400 bg-red-400/5">
