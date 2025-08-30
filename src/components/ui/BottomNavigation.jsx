@@ -50,34 +50,25 @@ const BottomNavigation = ({ activeItem, onNavigateTo }) => {
   ];
 
   return (
-    <>
-      {/* Gradient fade above navigation */}
-      <div 
-        className="fixed left-0 right-0 h-8 bg-gradient-to-t from-bg via-bg/80 to-transparent pointer-events-none z-29" 
-        style={{
-          bottom: `calc(env(safe-area-inset-bottom) + 60px)`
-        }}
-      ></div>
-      
-      <nav 
-        className="fixed bottom-0 left-0 right-0 z-30" 
-        style={{
-          background: 'rgba(26, 26, 26, 0.95)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-          paddingBottom: `max(env(safe-area-inset-bottom), 8px)`,
-          minHeight: `calc(env(safe-area-inset-bottom) + 60px)`
-        }}
-      >
-        <div className="flex items-center justify-around px-2 py-2">
+    <nav 
+      className="fixed bottom-0 left-0 right-0 z-30" 
+      style={{
+        background: 'rgba(26, 26, 26, 0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+        paddingBottom: `max(env(safe-area-inset-bottom), 4px)`,
+        paddingTop: '8px'
+      }}
+    >
+      <div className="flex items-center justify-around px-2">
           {navItems.map((item) => {
             const isActive = activeItem?.toLowerCase() === item.id;
             return (
               <button
                 key={item.id}
                 onClick={() => onNavigateTo?.(item.route)}
-                className={`flex flex-col items-center justify-center px-3 py-2 min-h-[44px] transition-colors ${
+                className={`flex flex-col items-center justify-center px-3 py-1 min-h-[40px] transition-colors ${
                   isActive 
                     ? 'text-white' 
                     : 'text-graytxt hover:text-white'
@@ -95,7 +86,6 @@ const BottomNavigation = ({ activeItem, onNavigateTo }) => {
           })}
         </div>
       </nav>
-    </>
   );
 };
 

@@ -97,17 +97,9 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
                 </div>
               </>
             ) : (
-              <div className="relative rounded-lg overflow-hidden">
-                {/* Blur overlay */}
-                <div className="absolute inset-0 bg-card/80 backdrop-blur-sm z-10 flex items-center justify-center">
-                  <div className="text-center">
-                    <div className="text-sm text-white font-semibold mb-2">Coming Soon</div>
-                    <div className="text-sm text-graytxt">Track more sessions to unlock</div>
-                  </div>
-                </div>
-                
+              <div className="relative -mx-4 rounded-lg overflow-hidden">
                 {/* Blurred preview content */}
-                <div className="space-y-4 opacity-60">
+                <div className="space-y-4 blur-sm pointer-events-none opacity-40 px-4">
                   <div>
                     <div className="text-sm text-white font-semibold mb-2 text-center">Grade Distribution</div>
                     <div className="mb-2">
@@ -171,6 +163,29 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                         <div className="h-full bg-white/50" style={{width: '20%'}}></div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Text overlay on blur only */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
+                  <div className="text-center px-8">
+                    <div className="mb-4">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-white/70 mx-auto mb-3">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
+                        <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M12 15v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                      <div className="text-xl font-bold text-white mb-1">
+                        {3 - currentSessions} Session{3 - currentSessions === 1 ? '' : 's'} Left
+                      </div>
+                      <div className="text-base text-white/80 mb-3">
+                        Until weekly insights unlock
+                      </div>
+                    </div>
+                    
+                    <div className="text-sm text-white/60 leading-relaxed">
+                      Track more climbing sessions to unlock detailed weekly analytics
                     </div>
                   </div>
                 </div>

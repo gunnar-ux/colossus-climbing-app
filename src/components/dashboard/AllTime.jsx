@@ -69,7 +69,7 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
         <div className="grid grid-cols-3 gap-3">
           {/* Points Subcard */}
           <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-graytxt mb-1">Total XP</div>
+            <div className="text-sm text-white mb-1">Total XP</div>
             <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
               {totalPoints.toLocaleString()}
             </div>
@@ -77,7 +77,7 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
           
           {/* Sessions Subcard */}
           <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-graytxt mb-1">Sessions</div>
+            <div className="text-sm text-white mb-1">Sessions</div>
             <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
               {totalSessions}
             </div>
@@ -85,7 +85,7 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
           
           {/* Avg Grade Subcard */}
           <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-graytxt mb-1">Avg Grade</div>
+            <div className="text-sm text-white mb-1">Avg Grade</div>
             <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
               {hasAnyData ? `V${avgGrade}` : 'V0'}
             </div>

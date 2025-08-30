@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
+import FAB from '../ui/FAB.jsx';
 import { LineChart, Trend } from '../ui/Charts.jsx';
 
 // Progress & Achievements page component
@@ -22,23 +23,42 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     }
   };
 
+  const handleFABClick = () => {
+    onNavigateToTracker?.();
+  };
+
   // Check if user has reached 6-week mark for performance trends unlock
   const checkPerformanceTrendsUnlock = (sessions) => {
-    if (!sessions || sessions.length === 0) return false;
+    if (!sessions || sessions.length === 0) return { unlocked: false, weeksRemaining: 6, firstSessionDate: null };
     
     // Find the earliest session timestamp
     const validSessions = sessions.filter(s => s.timestamp);
-    if (validSessions.length === 0) return false;
+    if (validSessions.length === 0) return { unlocked: false, weeksRemaining: 6, firstSessionDate: null };
     
     const earliestSession = validSessions.reduce((earliest, session) => 
       session.timestamp < earliest.timestamp ? session : earliest
     );
     
-    const sixWeeksAgo = Date.now() - (6 * 7 * 24 * 60 * 60 * 1000); // 6 weeks in milliseconds
-    return earliestSession.timestamp <= sixWeeksAgo;
+    const firstSessionDate = new Date(earliestSession.timestamp);
+    const sixWeeksFromFirst = firstSessionDate.getTime() + (6 * 7 * 24 * 60 * 60 * 1000);
+    const now = Date.now();
+    
+    const unlocked = now >= sixWeeksFromFirst;
+    
+    // Calculate weeks remaining (can be decimal)
+    const timeRemaining = sixWeeksFromFirst - now;
+    const weeksRemaining = Math.max(0, timeRemaining / (7 * 24 * 60 * 60 * 1000));
+    
+    return { 
+      unlocked, 
+      weeksRemaining: Math.ceil(weeksRemaining), 
+      firstSessionDate: firstSessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      daysRemaining: Math.max(0, Math.ceil(timeRemaining / (24 * 60 * 60 * 1000)))
+    };
   };
 
-  const performanceTrendsUnlocked = checkPerformanceTrendsUnlock(sessions);
+  const trendsStatus = checkPerformanceTrendsUnlock(sessions);
+  const performanceTrendsUnlocked = trendsStatus.unlocked;
 
   // Sample 6-week data - this would come from actual user data
   const weeklyData = {
@@ -191,9 +211,9 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
       {/* Performance Graphs */}
       <section className="px-5 pt-6 space-y-4 pb-24 relative">
-        <h2 className="text-lg font-semibold mb-4">Performance Trends</h2>
+        <h2 className="text-lg font-semibold mb-4 text-white">Performance Trends</h2>
         
-        <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm pointer-events-none' : ''}`}>
+        <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm pointer-events-none' : ''} ${!performanceTrendsUnlocked ? 'bg-black/40' : ''}`}>
           <div className="bg-card border border-border rounded-col p-4">
             <div className="text-sm mb-3 flex items-center justify-between">
               <span className="font-semibold text-white">Weekly Volume (Capacity)</span>
@@ -227,19 +247,32 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
         {/* Unlock overlay when trends are locked */}
         {!performanceTrendsUnlocked && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-card border border-border rounded-col p-6 mx-5 text-center shadow-lg">
-              <div className="text-white font-semibold mb-2">Performance Trends Locked</div>
-              <div className="text-sm text-graytxt mb-3">
-                Continue training for 6 weeks to unlock detailed performance analytics
-              </div>
-              <div className="flex items-center justify-center gap-1 text-xs text-graytxt">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-graytxt">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/50">
+            <div className="text-center px-8">
+              <div className="mb-4">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white/70 mx-auto mb-4">
                   <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
                   <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 13v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  <path d="M12 15v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
-                Track climbing sessions to build your profile
+                <div className="text-3xl font-bold text-white mb-2">
+                  {trendsStatus.weeksRemaining === 0 ? 'Unlocking Soon' : `${trendsStatus.weeksRemaining} Week${trendsStatus.weeksRemaining === 1 ? '' : 's'} Left`}
+                </div>
+                <div className="text-base text-white/80 mb-4">
+                  {trendsStatus.weeksRemaining === 0 
+                    ? 'Performance insights will unlock in the next few days'
+                    : 'Until performance insights unlock'
+                  }
+                </div>
+              </div>
+              
+              <div className="text-sm text-white/60 leading-relaxed">
+                {trendsStatus.firstSessionDate 
+                  ? `First session tracked: ${trendsStatus.firstSessionDate}`
+                  : 'Start tracking sessions to unlock insights'
+                }
+                <br />
+                Continue climbing to build your performance profile
               </div>
             </div>
           </div>
@@ -247,6 +280,8 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       </section>
       
       <div className="h-20" />
+      
+      <FAB onClick={handleFABClick} />
       
       <BottomNavigation 
         activeItem="Progress"

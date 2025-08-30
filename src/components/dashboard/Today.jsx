@@ -17,8 +17,8 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
   const crsMessage = crsData ? crsData.message : null;
 
   const getCRSAdvice = (s) => {
-    if (s >= 67) return { msg: 'Optimal. Peak performance ready.' };
-    if (s >= 34) return { msg: 'Moderate. Balanced training recommended.' };
+    if (s >= 77) return { msg: 'Optimal. Peak performance ready.' };
+    if (s >= 45) return { msg: 'Moderate. Balanced training recommended.' };
     return { msg: 'Limited. Focus on technique and recovery.' };
   };
 
@@ -86,9 +86,9 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
                   Daily readiness (0-100) based on recent training & recovery time.
                 </p>
                 <div className="text-sm text-graytxt space-y-1">
-                  <div>• <span className="text-green">67-100:</span> Optimal readiness - peak performance</div>
-                  <div>• <span className="text-yellow">34-66:</span> Moderate readiness - balanced training</div>
-                  <div>• <span className="text-red">0-33:</span> Limited readiness - focus on recovery</div>
+                  <div>• <span className="text-red">0-44:</span> Limited readiness - focus on recovery</div>
+                  <div>• <span className="text-blue">45-76:</span> Moderate readiness - balanced training</div>
+                  <div>• <span className="text-green">77-100:</span> Optimal readiness - peak performance</div>
                 </div>
               </div>
               
@@ -100,9 +100,9 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
                   7-day vs 28-day training load comparison to prevent overtraining.
                 </p>
                 <div className="text-sm text-graytxt space-y-1">
-                  <div>• <span className="text-green">0.8-1.2x:</span> Optimal training load</div>
-                  <div>• <span className="text-yellow">1.2-1.5x:</span> High load - monitor recovery</div>
-                  <div>• <span className="text-red">1.5x+:</span> Overreaching - reduce intensity</div>
+                  <div>• <span className="text-red">Under 0.8x:</span> Undertraining - increase volume</div>
+                  <div>• <span className="text-green">0.8-1.3x:</span> Optimal training load</div>
+                  <div>• <span className="text-red">1.3x+:</span> Overtraining - reduce intensity</div>
                 </div>
               </div>
             </div>

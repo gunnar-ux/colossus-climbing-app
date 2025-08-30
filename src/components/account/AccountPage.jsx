@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
+import FAB from '../ui/FAB.jsx';
 
 // Account management page - allows users to update their profile information
 // Includes email, password, personal info, and physical stats sections
@@ -168,6 +169,10 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleFABClick = () => {
+    onNavigateToTracker?.();
   };
 
   const savePhysicalStats = async () => {
@@ -631,6 +636,8 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
         {/* Bottom spacing */}
         <div className="h-20" />
       </div>
+
+      <FAB onClick={handleFABClick} />
 
       <BottomNavigation 
         activeItem="Account"

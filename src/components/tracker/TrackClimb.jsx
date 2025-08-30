@@ -105,7 +105,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
       )}
 
       <Header 
-        title="TRACK"
+        title="TRACK YOUR CLIMB"
         lightMode={true}
         showCloseButton={true}
         onCloseClick={() => onNavigateToDashboard?.()}
