@@ -137,10 +137,56 @@ const AppContent = () => {
     return { grades, styles, angles, types };
   };
 
-  // Handle climb logging
+  // Session gap threshold (90 minutes)
+  const SESSION_GAP_THRESHOLD = 90 * 60 * 1000; // 90 minutes in milliseconds
+
+  // Helper function to get session name
+  const getSessionName = (isActive, startTime) => {
+    if (isActive) return "Now";
+    
+    const date = new Date(startTime);
+    const monthDay = date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+    const time = date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    return `${monthDay} (${time})`;
+  };
+
+  // Helper function to calculate realistic session duration
+  const calculateSessionDuration = (climbList) => {
+    if (!climbList || climbList.length === 0) return '15m';
+    
+    const timestamps = climbList.map(c => c.timestamp).sort();
+    const firstClimb = timestamps[0];
+    const lastClimb = timestamps[timestamps.length - 1];
+    
+    // Actual time span from first to last climb
+    const timeSpan = lastClimb - firstClimb;
+    
+    // Add reasonable session padding (15 minutes)
+    const sessionPadding = 15 * 60 * 1000; // 15min
+    const totalDuration = timeSpan + sessionPadding;
+    
+    // Convert to readable format
+    const hours = Math.floor(totalDuration / (60 * 60 * 1000));
+    const minutes = Math.floor((totalDuration % (60 * 60 * 1000)) / (60 * 1000));
+    
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else {
+      return `${Math.max(minutes, 15)}m`; // Minimum 15min session
+    }
+  };
+
+  // Handle climb logging with "Now" session logic
   const handleClimbLogged = (climbData) => {
     const timestamp = Date.now();
-    const today = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     
     // Create climb object with proper format and normalized display values
     const normalizedStyle = climbData.styles[0] === 'POWERFUL' ? 'Power' : 
@@ -166,43 +212,83 @@ const AppContent = () => {
       timestamp: timestamp
     };
 
-    // Find or create today's session
-    let todaySession = sessions.find(s => s.date === 'Today' || s.date === today);
+    // Find current "Now" session
+    const nowSession = sessions.find(s => s.date === "Now");
     
-    if (todaySession) {
-      // Add climb to existing session
-      const updatedClimbList = [...(todaySession.climbList || []), newClimb];
-      const distributions = calculateSessionDistributions(updatedClimbList);
+    if (nowSession) {
+      const timeSinceLastClimb = timestamp - nowSession.timestamp;
       
-      const updatedSession = {
-        ...todaySession,
-        climbs: todaySession.climbs + 1,
-        climbList: updatedClimbList,
-        timestamp: timestamp, // Update session timestamp
-        avgRPE: roundRPE(updatedClimbList.reduce((sum, c) => sum + c.rpe, 0) / updatedClimbList.length),
-        ...distributions
-      };
-      
-      // Update sessions array
-      setSessions(prev => prev.map(s => 
-        (s.date === 'Today' || s.date === today) ? updatedSession : s
-      ));
+      if (timeSinceLastClimb <= SESSION_GAP_THRESHOLD) {
+        // Continue "Now" session
+        const updatedClimbList = [...(nowSession.climbList || []), newClimb];
+        const distributions = calculateSessionDistributions(updatedClimbList);
+        
+        const updatedSession = {
+          ...nowSession,
+          climbs: nowSession.climbs + 1,
+          climbList: updatedClimbList,
+          timestamp: timestamp, // Update session timestamp
+          endTime: timestamp,
+          duration: calculateSessionDuration(updatedClimbList),
+          avgRPE: roundRPE(updatedClimbList.reduce((sum, c) => sum + c.rpe, 0) / updatedClimbList.length),
+          ...distributions
+        };
+        
+        // Update sessions array
+        setSessions(prev => prev.map(s => 
+          s.date === "Now" ? updatedSession : s
+        ));
+      } else {
+        // Convert "Now" to timestamped, create new "Now"
+        const historicalSession = {
+          ...nowSession,
+          date: getSessionName(false, nowSession.startTime)
+        };
+        
+        // Create new "Now" session
+        const climbList = [newClimb];
+        const distributions = calculateSessionDistributions(climbList);
+        
+        const normalizedStyle = climbData.styles[0] === 'POWERFUL' ? 'Power' : 
+                                climbData.styles[0] === 'TECHNICAL' ? 'Technical' : 
+                                climbData.styles[0] === 'SIMPLE' ? 'Simple' : climbData.styles[0];
+        
+        const newSession = {
+          date: 'Now',
+          timestamp: timestamp,
+          startTime: timestamp,
+          endTime: timestamp,
+          duration: '15m',
+          climbs: 1,
+          medianGrade: climbData.grade,
+          style: normalizedStyle,
+          avgRPE: roundRPE(climbData.rpe),
+          climbList: climbList,
+          ...distributions
+        };
+        
+        // Update sessions: new "Now" first, then historical, then rest
+        setSessions(prev => [
+          newSession, // New "Now" session
+          historicalSession, // Old session with timestamp
+          ...prev.filter(s => s.date !== "Now")
+        ]);
+      }
     } else {
-      // Create new session for today
+      // No active session, create new "Now"
       const climbList = [newClimb];
       const distributions = calculateSessionDistributions(climbList);
       
-      // Normalize the session focus style
       const normalizedStyle = climbData.styles[0] === 'POWERFUL' ? 'Power' : 
                               climbData.styles[0] === 'TECHNICAL' ? 'Technical' : 
                               climbData.styles[0] === 'SIMPLE' ? 'Simple' : climbData.styles[0];
       
       const newSession = {
-        date: 'Today',
+        date: 'Now',
         timestamp: timestamp,
         startTime: timestamp,
         endTime: timestamp,
-        duration: '0h 5m',
+        duration: '15m',
         climbs: 1,
         medianGrade: climbData.grade,
         style: normalizedStyle,

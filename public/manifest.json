@@ -1,7 +1,7 @@
 {
-  "name": "Colossus - Climbing Analytics",
-  "short_name": "Colossus",
-  "description": "Your complete climbing analytics platform",
+  "name": "POGO - Climbing Tracker",
+  "short_name": "POGO",
+  "description": "Your AI climbing coach for breakthrough progression",
   "theme_color": "#000000",
   "background_color": "#000000",
   "display": "standalone",

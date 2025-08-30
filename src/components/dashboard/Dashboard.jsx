@@ -131,7 +131,15 @@ const Dashboard = ({
         </div>
       </section>
       
-      <div className="h-20" />
+      {/* Bottom Logo Section - Whoop Style */}
+      <section className="pt-2 pb-32 flex items-center justify-center">
+        <img 
+          src="/asset8.svg" 
+          alt="POGO" 
+          className="w-16 h-16"
+        />
+      </section>
+      
       <FAB onClick={handleFABClick} />
       
       <BottomNavigation 

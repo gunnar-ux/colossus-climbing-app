@@ -80,12 +80,24 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
               </div>
             </div>
             
-            <div>
-              <div className="text-sm mb-1">
-                <span className="text-white">Calibration Process: </span>
+            <div className="border border-border/50 rounded-lg p-3">
+              <div className="text-sm text-white font-semibold mb-3 text-center">Calibration Phases</div>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="px-2 py-1 text-xs rounded-full bg-blue/20 text-blue border border-blue/30">NEED DATA</span>
+                  <div className="text-graytxt mt-1">0-2 sessions: Basic tracking only</div>
+                </div>
+                <div>
+                  <span className="px-2 py-1 text-xs rounded-full bg-orange/20 text-orange border border-orange/30">CALIBRATING</span>
+                  <div className="text-graytxt mt-1">3-4 sessions: Readiness available</div>
+                </div>
+                <div>
+                  <span className="px-2 py-1 text-xs rounded-full bg-green/20 text-green border border-green/30">CALIBRATED</span>
+                  <div className="text-graytxt mt-1">5+ sessions: All metrics active</div>
+                </div>
               </div>
-              <p className="text-sm text-graytxt leading-relaxed">
-                Track sessions to establish your baseline performance patterns for accurate readiness and load calculations.
+              <p className="text-sm text-graytxt leading-relaxed mt-3 pt-3 border-t border-border/30">
+                More data = more accurate insights. Keep tracking to unlock the full POGO experience.
               </p>
             </div>
           </div>

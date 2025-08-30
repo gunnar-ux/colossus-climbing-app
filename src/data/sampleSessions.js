@@ -3,7 +3,7 @@
 
 export const sampleSessions = [
   {
-    date: 'Today',
+    date: 'Now',
     timestamp: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
     startTime: Date.now() - (3 * 60 * 60 * 1000), // 3 hours ago
     endTime: Date.now() - (2 * 60 * 60 * 1000), // 2 hours ago
@@ -71,7 +71,7 @@ export const sampleSessions = [
     ]
   },
   {
-    date: 'Oct 26',
+    date: 'Oct 26 (2:30pm)',
     timestamp: Date.now() - (4 * 24 * 60 * 60 * 1000), // 4 days ago
     startTime: Date.now() - (4 * 24 * 60 * 60 * 1000),
     endTime: Date.now() - (4 * 24 * 60 * 60 * 1000) + (1.5 * 60 * 60 * 1000),

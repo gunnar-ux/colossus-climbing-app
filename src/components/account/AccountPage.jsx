@@ -263,7 +263,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm mb-6">
             <div>
               <span className="text-graytxt">Age:</span>
               <span className="text-white ml-2">{personalForm.age || '--'}</span>
@@ -313,6 +313,14 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               </span>
             </div>
           </div>
+
+                      {/* Logout Button */}
+            <button 
+              onClick={onLogout}
+              className="w-full px-4 py-2 bg-white text-black rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
+            >
+              Sign Out
+            </button>
         </div>
 
         {/* Tabs */}

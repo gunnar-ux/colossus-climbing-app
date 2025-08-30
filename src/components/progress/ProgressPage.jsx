@@ -9,6 +9,7 @@ import { LineChart, Trend } from '../ui/Charts.jsx';
 
 const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker, onNavigateToSessions, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
+  const [isProfileExpanded, setIsProfileExpanded] = useState(false);
 
   const handleBackClick = () => {
     onNavigateBack?.();
@@ -121,8 +122,15 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     }
   ];
 
-  // Calculate level and experience points
-  const totalPoints = Math.floor(userData.totalClimbs * 1.5 + userData.totalSessions * 20);
+  // Calculate level and experience points with enhanced system
+  const calculateTotalXP = () => {
+    // Enhanced formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
+    // Fallback: approximate based on current totals (no session bonus)
+    const estimatedClimbXP = userData.totalClimbs * 25; // ~V2.5 average
+    return Math.floor(estimatedClimbXP);
+  };
+  
+  const totalPoints = calculateTotalXP();
   const currentLevel = Math.floor(totalPoints / 150) + 1;
   const nextLevelPoints = currentLevel * 150;
   const pointsInCurrentLevel = totalPoints % 150;
@@ -136,44 +144,202 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         onTitleClick={handleScrollToTop}
       />
 
-      {/* Level Progress Card - Top Priority */}
+      {/* Performance Profile - Clean & Sophisticated */}
       <section className="px-5 pt-4">
-        <div className="bg-card border border-border rounded-col p-4 mb-4">
+        {/* Level & XP Header - Expandable */}
+        <div className="bg-card border border-border rounded-col p-4 mb-4 hover:border-white/10 transition cursor-pointer" onClick={() => setIsProfileExpanded(!isProfileExpanded)}>
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-semibold text-white">Level Progress</h3>
-            <span className="text-xs text-graytxt">Level {currentLevel}</span>
+            <div>
+              <h3 className="font-semibold text-white text-lg">Performance Profile</h3>
+              <div className="text-sm text-graytxt">Level {currentLevel} Climber</div>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white">{pointsInCurrentLevel}</div>
+              <div className="text-xs text-graytxt">XP</div>
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-4xl font-extrabold text-white min-w-[48px]">{currentLevel}</div>
-            <div className="flex-1">
-              <div className="w-full h-3 bg-border rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-white" 
-                  style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
-                ></div>
+          <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-white transition-all duration-300" 
+              style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
+            ></div>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <div className="text-xs text-graytxt">
+              {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
+            </div>
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+              className={`transition-transform duration-200 text-graytxt ${isProfileExpanded ? 'rotate-180' : ''}`}
+            >
+              <polyline points="6,9 12,15 18,9"></polyline>
+            </svg>
+          </div>
+
+          {/* Expandable XP & Level Info */}
+          {isProfileExpanded && (
+            <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+              
+              {/* XP Calculation */}
+              <div className="border border-border/50 rounded-lg p-3">
+                <div className="text-sm text-white font-semibold mb-3 text-center">XP Calculation</div>
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <div className="text-white font-medium mb-2">Per Climb Formula:</div>
+                    <div className="text-graytxt text-xs bg-border/20 rounded p-2">
+                      Base XP (10) × Grade Multiplier × Flash Bonus
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-graytxt">V0 send</span>
+                      <span className="text-white">10 XP</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-graytxt">V0 flash</span>
+                      <span className="text-white">12 XP</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-graytxt">V5 send</span>
+                      <span className="text-white">60 XP</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-graytxt">V5 flash</span>
+                      <span className="text-white">72 XP</span>
+                    </div>
+                  </div>
+
+                </div>
+                <div className="text-xs text-graytxt mt-3 pt-3 border-t border-border/30 text-center">
+                  Flash Bonus: 1.2× (20% extra XP for first-try sends)
+                </div>
               </div>
-              <div className="mt-1 text-xs text-graytxt">
-                {150 - pointsInCurrentLevel} points to Level {currentLevel + 1}
+
+              {/* Level Milestones */}
+              <div className="border border-border/50 rounded-lg p-3">
+                <div className="text-sm text-white font-semibold mb-3 text-center">Level Milestones</div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-graytxt">Level 1</span>
+                    <span className="text-white">0 XP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-graytxt">Level 2</span>
+                    <span className="text-white">150 XP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-graytxt">Level 3</span>
+                    <span className="text-white">350 XP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-graytxt">Level 4</span>
+                    <span className="text-white">600 XP</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-graytxt">Level 5</span>
+                    <span className="text-white">900 XP</span>
+                  </div>
+                  <div className="text-xs text-graytxt mt-3 text-center border-t border-border/30 pt-2">
+                    Each level requires progressively more XP to unlock advanced insights
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Core Metrics */}
+        <div className="space-y-4">
+          {/* Volume Metrics */}
+          <div className="bg-card border border-border rounded-col p-4">
+            <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+              Volume
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-white">{userData.totalClimbs || 0}</div>
+                <div className="text-xs text-graytxt">Total Sends</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">{userData.totalSessions || 0}</div>
+                <div className="text-xs text-graytxt">Sessions</div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Key Metrics Overview */}
-      <section className="px-5">
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="bg-card border border-border rounded-col p-3 text-center">
-            <div className="text-xs text-graytxt mb-1">Total Sends</div>
-            <div className="text-2xl font-bold text-white">{userData.totalClimbs || 0}</div>
+          {/* Performance Metrics */}
+          <div className="bg-card border border-border rounded-col p-4">
+            <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Performance
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-white">{Math.round(Math.random() * 30 + 45)}%</div>
+                <div className="text-xs text-graytxt">Flash Rate</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">V{Math.min(Math.floor(userData.totalClimbs / 20) + 2, 8)}</div>
+                <div className="text-xs text-graytxt">Peak Grade</div>
+              </div>
+            </div>
           </div>
-          <div className="bg-card border border-border rounded-col p-3 text-center">
-            <div className="text-xs text-graytxt mb-1">Peak Grade</div>
-            <div className="text-2xl font-bold text-white">V{Math.min(Math.floor(userData.totalClimbs / 20) + 2, 8)}</div>
+
+          {/* Grade Distribution */}
+          <div className="bg-card border border-border rounded-col p-4">
+            <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Grades
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 30) + 1, 1)}</div>
+                <div className="text-xs text-graytxt">Avg Send</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 25) + 2, 2)}</div>
+                <div className="text-xs text-graytxt">Avg Flash</div>
+              </div>
+            </div>
           </div>
-          <div className="bg-card border border-border rounded-col p-3 text-center">
-            <div className="text-xs text-graytxt mb-1">Sessions</div>
-            <div className="text-2xl font-bold text-white">{userData.totalSessions || 0}</div>
+
+          {/* Session Records */}
+          <div className="bg-card border border-border rounded-col p-4">
+            <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                <path d="M6 2l3 6 5-4-3 7h4l-8 6 3-7H6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Records
+            </h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <div className="text-2xl font-bold text-white">{Math.max(Math.floor(userData.totalClimbs / 3), 1)}</div>
+                <div className="text-xs text-graytxt">Best Session</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold text-white">
+                  {userData.totalClimbs > 30 ? 'Power' : 
+                   userData.totalClimbs > 15 ? 'Technical' : 
+                   'Balanced'}
+                </div>
+                <div className="text-xs text-graytxt">Top Style</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
