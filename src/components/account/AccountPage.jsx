@@ -7,7 +7,7 @@ import FAB from '../ui/FAB.jsx';
 // Account management page - allows users to update their profile information
 // Includes email, password, personal info, and physical stats sections
 
-const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToTracker, onLogout }) => {
+const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToTracker, onLogout, sessions = [] }) => {
   const { user, profile, updateProfile, updateEmail, updatePassword } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -45,6 +45,85 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
   
   // Tab state
   const [activeTab, setActiveTab] = useState('email');
+
+  // Calculate climbing statistics from sessions
+  const calculateClimbingStats = () => {
+    if (!sessions || sessions.length === 0) {
+      return {
+        totalClimbs: 0,
+        totalFlashed: 0,
+        totalSessions: 0,
+        maxGrade: '--',
+        avgGrade: '--',
+        flashRate: '--',
+        xp: 0
+      };
+    }
+
+    let totalClimbs = 0;
+    let totalFlashed = 0;
+    let allGrades = [];
+    let xp = 0;
+
+    // Grade to numeric mapping for calculations
+    const gradeToNumber = (grade) => {
+      if (!grade || typeof grade !== 'string') return 0;
+      const match = grade.match(/V(\d+)/);
+      return match ? parseInt(match[1]) : 0;
+    };
+
+    // XP calculation based on grade difficulty
+    const gradeToXP = (grade) => {
+      const gradeNum = gradeToNumber(grade);
+      return Math.max(10, gradeNum * 15); // Base 10 XP, +15 per grade level
+    };
+
+    sessions.forEach(session => {
+      if (session.climbList && Array.isArray(session.climbList)) {
+        session.climbList.forEach(climb => {
+          totalClimbs++;
+          allGrades.push(gradeToNumber(climb.grade));
+          xp += gradeToXP(climb.grade);
+          
+          // Count as flash if attempts = 1
+          if (climb.attempts === 1) {
+            totalFlashed++;
+          }
+        });
+      }
+    });
+
+    // Calculate max grade
+    const maxGradeNum = allGrades.length > 0 ? Math.max(...allGrades) : 0;
+    const maxGrade = maxGradeNum > 0 ? `V${maxGradeNum}` : '--';
+
+    // Calculate average grade
+    const avgGradeNum = allGrades.length > 0 
+      ? Math.round(allGrades.reduce((sum, grade) => sum + grade, 0) / allGrades.length)
+      : 0;
+    const avgGrade = avgGradeNum > 0 ? `V${avgGradeNum}` : '--';
+
+    // Calculate flash rate
+    const flashRate = totalClimbs > 0 
+      ? `${Math.round((totalFlashed / totalClimbs) * 100)}%`
+      : '--';
+
+    // Calculate level based on XP (every 1000 XP = 1 level)
+    const level = Math.floor(xp / 1000) + 1;
+
+    return {
+      totalClimbs,
+      totalFlashed,
+      totalSessions: sessions.length,
+      maxGrade,
+      avgGrade,
+      flashRate,
+      xp,
+      level
+    };
+  };
+
+  const climbingStats = calculateClimbingStats();
 
   // Load profile data on mount
   useEffect(() => {
@@ -235,57 +314,55 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
         title="ACCOUNT"
       />
 
-      <div className="px-6 py-6 pb-20">
-        
-        {/* Status Messages */}
-        {(success || error) && (
-          <div className={`p-3 rounded-col border-l-4 mb-6 ${
-            success ? 'bg-green/5 border-green text-green' : 'bg-red-500/5 border-red-400 text-red-400'
-          }`}>
-            <div className="flex items-start gap-2">
-              <span className="mt-0.5">{success ? '✓' : '⚠️'}</span>
-              <span>{success || error}</span>
-            </div>
+      {/* Status Messages */}
+      {(success || error) && (
+        <div className={`mx-5 mt-4 p-3 rounded-col border-l-4 mb-6 ${
+          success ? 'bg-green/5 border-green text-green' : 'bg-red-500/5 border-red-400 text-red-400'
+        }`}>
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5">{success ? '✓' : '⚠️'}</span>
+            <span>{success || error}</span>
           </div>
-        )}
+        </div>
+      )}
 
-        {/* User Info Card */}
-        <div className="bg-card border border-border rounded-col p-6 mb-8">
-          <div className="flex items-center gap-4 mb-4">
+      {/* Comprehensive Profile Card */}
+      <section className="px-5 pt-4">
+        <div className="bg-card border border-border rounded-col p-4 mb-8">
+          {/* Header with Avatar and Name */}
+          <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
               <span className="text-2xl font-bold text-white">
                 {personalForm.name ? personalForm.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'C'}
               </span>
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">{personalForm.name || 'Climber'}</h3>
+            <div className="flex-1">
+              <h3 className="text-xl text-white" style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>{personalForm.name || 'Climber'}</h3>
               <p className="text-graytxt">{user?.email}</p>
+              <div className="flex items-center gap-4 mt-1">
+                <span className="text-sm text-white font-semibold">Level: {climbingStats.level}</span>
+                <span className="text-sm text-white font-semibold">XP: {climbingStats.xp.toLocaleString()}</span>
+              </div>
             </div>
           </div>
           
-          <div className="grid grid-cols-2 gap-4 text-sm mb-6">
-            <div>
-              <span className="text-graytxt">Age:</span>
-              <span className="text-white ml-2">{personalForm.age || '--'}</span>
+          {/* Physical Stats Row 1 */}
+          <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Age</div>
+              <div className="text-white font-semibold">{personalForm.age || '--'}</div>
             </div>
-            <div>
-              <span className="text-graytxt">Gender:</span>
-              <span className="text-white ml-2">{personalForm.gender || '--'}</span>
-            </div>
-            <div>
-              <span className="text-graytxt">Height:</span>
-              <span className="text-white ml-2">
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Height</div>
+              <div className="text-white font-semibold">
                 {(() => {
-                  // Check if we have valid feet/inches data
                   if (physicalForm.height.feet && physicalForm.height.inches && 
                       !isNaN(physicalForm.height.feet) && !isNaN(physicalForm.height.inches)) {
                     return `${physicalForm.height.feet}'${physicalForm.height.inches}"`;
                   }
-                  // Check if we have valid cm data
                   if (physicalForm.height.cm && !isNaN(physicalForm.height.cm)) {
                     return `${physicalForm.height.cm}cm`;
                   }
-                  // Check if we can convert from stored profile data
                   if (profile?.height_cm && !isNaN(profile.height_cm)) {
                     const feet = Math.floor(profile.height_cm / 30.48);
                     const inches = Math.round((profile.height_cm / 2.54) % 12);
@@ -293,36 +370,68 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   }
                   return '--';
                 })()}
-              </span>
+              </div>
             </div>
-            <div>
-              <span className="text-graytxt">Weight:</span>
-              <span className="text-white ml-2">
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Ape</div>
+              <div className="text-white font-semibold">
                 {(() => {
-                  // Check if we have valid weight data
-                  if (physicalForm.weight.value && !isNaN(physicalForm.weight.value)) {
-                    return `${physicalForm.weight.value}${unitWeight}`;
+                  if (physicalForm.apeIndex && !isNaN(physicalForm.apeIndex)) {
+                    return `${physicalForm.apeIndex}"`;
                   }
-                  // Check if we can convert from stored profile data
-                  if (profile?.weight_kg && !isNaN(profile.weight_kg)) {
-                    const weightLbs = Math.round(profile.weight_kg * 2.20462);
-                    return unitWeight === 'lbs' ? `${weightLbs}lbs` : `${profile.weight_kg}kg`;
+                  if (profile?.ape_index_cm && !isNaN(profile.ape_index_cm)) {
+                    const apeInches = Math.round(profile.ape_index_cm / 2.54);
+                    return unitApeIndex === 'in' ? `${apeInches}"` : `${profile.ape_index_cm}cm`;
                   }
                   return '--';
                 })()}
-              </span>
+              </div>
             </div>
           </div>
 
-                      {/* Logout Button */}
-            <button 
-              onClick={onLogout}
-              className="w-full px-4 py-2 bg-white text-black rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
-            >
-              Sign Out
-            </button>
-        </div>
+          {/* Climbing Performance Row 2 */}
+          <div className="grid grid-cols-3 gap-4 text-sm mb-4">
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Max Grade</div>
+              <div className="text-white font-semibold">{climbingStats.maxGrade}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Avg Grade</div>
+              <div className="text-white font-semibold">{climbingStats.avgGrade}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Flash Rate</div>
+              <div className="text-white font-semibold">{climbingStats.flashRate}</div>
+            </div>
+          </div>
 
+          {/* Volume Stats Row 3 */}
+          <div className="grid grid-cols-3 gap-4 text-sm mb-6">
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Total Climbs</div>
+              <div className="text-white font-semibold">{climbingStats.totalClimbs.toLocaleString()}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Total Flashed</div>
+              <div className="text-white font-semibold">{climbingStats.totalFlashed.toLocaleString()}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-graytxt text-xs mb-1">Total Sessions</div>
+              <div className="text-white font-semibold">{climbingStats.totalSessions.toLocaleString()}</div>
+            </div>
+          </div>
+
+          {/* Logout Button */}
+          <button 
+            onClick={onLogout}
+            className="w-full px-4 py-2 bg-white text-black rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
+          >
+            Sign Out
+          </button>
+        </div>
+      </section>
+
+      <div className="px-5">
         {/* Tabs */}
         <div className="mb-8">
           <div className="flex bg-card border border-border rounded-col p-1">
@@ -641,8 +750,14 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
           )}
         </div>
 
-        {/* Bottom spacing */}
-        <div className="h-20" />
+        {/* Bottom Logo Section - Whoop Style */}
+        <section className="pt-2 pb-32 flex items-center justify-center">
+          <img 
+            src="/asset8.svg" 
+            alt="POGO" 
+            className="w-16 h-16"
+          />
+        </section>
       </div>
 
       <FAB onClick={handleFABClick} />

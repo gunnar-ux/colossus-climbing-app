@@ -10,32 +10,97 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
   // Always show real data if we have any, regardless of 'available' status
   const hasAnyData = (userData?.totalClimbs > 0) || (userData?.totalSessions > 0);
   
-  // Proper gamification system with exponential level thresholds
-  const levelThresholds = [0, 100, 250, 500, 1000, 1750, 2750, 4000, 5500, 7500, 10000, 13000, 16500, 20500, 25000];
+  // Calculate metrics for the card
+  const totalClimbs = hasAnyData ? (userData?.totalClimbs || 0) : 0;
+  const totalSessions = hasAnyData ? (sessions?.length || 0) : 0;
   
-  // Calculate metrics for subcards
-  const totalPoints = hasAnyData ? Math.min(userData?.totalClimbs * 35 || 0, 25000) : 0; // ~35 avg points per climb
-  const totalSessions = hasAnyData ? (sessions?.length || 0) : 0; // Use actual sessions array length
-  const avgGrade = hasAnyData ? Math.min(Math.floor(userData?.totalClimbs / 20) + 2, 8) : 0; // Simplified avg grade calc
-  
-  // Find current level based on thresholds
-  let currentLevel = 1;
-  for (let i = levelThresholds.length - 1; i >= 0; i--) {
-    if (totalPoints >= levelThresholds[i]) {
-      currentLevel = i + 1;
-      break;
+  // Calculate XP and level (matching Performance Profile logic)
+  const calculateTotalXP = () => {
+    // Enhanced formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
+    if (!sessions || sessions.length === 0) {
+      return 0; // No sessions = no XP
     }
-  }
+    
+    let totalXP = 0;
+    
+    sessions.forEach(session => {
+      if (session.climbList && session.climbList.length > 0) {
+        session.climbList.forEach(climb => {
+          // Base XP
+          const baseXP = 10;
+          
+          // Grade multiplier (V0=1x, V1=2x, V2=3x, etc.)
+          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+          const gradeMultiplier = gradeNum + 1;
+          
+          // Flash bonus (1.2x for first attempt)
+          const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
+          
+          // Calculate climb XP
+          const climbXP = baseXP * gradeMultiplier * flashBonus;
+          totalXP += climbXP;
+        });
+      }
+    });
+    
+    return Math.floor(totalXP);
+  };
   
-  // Calculate progress to next level
-  const currentThreshold = levelThresholds[currentLevel - 1] || 0;
-  const nextThreshold = levelThresholds[currentLevel] || levelThresholds[levelThresholds.length - 1];
-  const pointsToNext = nextThreshold - totalPoints;
-  const progressPercent = nextThreshold > currentThreshold ? 
-    ((totalPoints - currentThreshold) / (nextThreshold - currentThreshold)) * 100 : 100;
+  const totalPoints = calculateTotalXP();
+  const currentLevel = Math.floor(totalPoints / 150) + 1;
+  const nextLevelPoints = currentLevel * 150;
+  const pointsInCurrentLevel = totalPoints % 150;
+  
+  // Calculate flash rate from sessions data
+  const flashRate = hasAnyData && sessions && sessions.length > 0 ? 
+    sessions.reduce((total, session) => {
+      if (session.climbList && session.climbList.length > 0) {
+        const flashed = session.climbList.filter(climb => climb.attempts === 1).length;
+        return total + (flashed / session.climbList.length);
+      }
+      return total;
+    }, 0) / sessions.length * 100 : 0;
+  
+  // Calculate average flash grade from sessions data
+  const avgFlashGrade = hasAnyData && sessions && sessions.length > 0 ? 
+    (() => {
+      const flashedClimbs = sessions.reduce((acc, session) => {
+        if (session.climbList && session.climbList.length > 0) {
+          const flashed = session.climbList.filter(climb => climb.attempts === 1);
+          return acc.concat(flashed);
+        }
+        return acc;
+      }, []);
+      
+      if (flashedClimbs.length === 0) return 0;
+      
+      const avgGradeNum = flashedClimbs.reduce((sum, climb) => {
+        const gradeNum = parseInt(climb.grade.replace('V', ''));
+        return sum + gradeNum;
+      }, 0) / flashedClimbs.length;
+      
+      return Math.round(avgGradeNum);
+    })() : 0;
+  
+  // Find hardest send from sessions data
+  const hardestSend = hasAnyData && sessions && sessions.length > 0 ? 
+    (() => {
+      let highest = 0;
+      sessions.forEach(session => {
+        if (session.climbList && session.climbList.length > 0) {
+          session.climbList.forEach(climb => {
+            const gradeNum = parseInt(climb.grade.replace('V', ''));
+            if (gradeNum > highest) {
+              highest = gradeNum;
+            }
+          });
+        }
+      });
+      return highest;
+    })() : 0;
   
   // Achievement progress calculations - matching achievements page categories
-  const totalBoulders = hasAnyData ? (userData?.totalClimbs || 0) : 0;
+  const totalBoulders = totalClimbs;
   
   // Count actual flashed boulders (climbed in 1 attempt) from sessions data
   const bouldersFlashed = hasAnyData && sessions ? 
@@ -58,116 +123,31 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
 
   return (
     <section className="pt-4">
-      <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="mx-5 bg-card border border-border rounded-col p-4 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         
-        {/* Clean header */}
+        {/* Header matching Performance Profile pattern */}
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-base text-white">Progress & Achievement</h3>
-        </div>
-
-        {/* 3 Subcards */}
-        <div className="grid grid-cols-3 gap-3">
-          {/* Points Subcard */}
-          <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-white mb-1">Total XP</div>
-            <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
-              {totalPoints.toLocaleString()}
-            </div>
+          <div>
+            <h3 className="font-bold text-white text-base">Performance Statistics</h3>
+            <div className="text-sm text-graytxt">Level {currentLevel} Climber</div>
           </div>
-          
-          {/* Sessions Subcard */}
-          <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-white mb-1">Sessions</div>
-            <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
-              {totalSessions}
-            </div>
-          </div>
-          
-          {/* Avg Grade Subcard */}
-          <div className="bg-border/20 rounded-lg p-3 text-center">
-            <div className="text-sm text-white mb-1">Avg Grade</div>
-            <div className={`text-lg font-bold ${hasAnyData ? 'text-white' : 'text-gray-600'}`}>
-              {hasAnyData ? `V${avgGrade}` : 'V0'}
-            </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-white">{pointsInCurrentLevel}</div>
+            <div className="text-sm text-graytxt">XP</div>
           </div>
         </div>
 
-        {/* Expandable progress section */}
-        {isExpanded && (
-          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-            <div className="space-y-3">
-              {/* Level Progress */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm text-white font-medium">Level Progress</span>
-                  <span className="text-sm text-graytxt">
-                    {Math.round(progressPercent)}% to Level {currentLevel + 1}
-                  </span>
-                </div>
-                <Progress value={progressPercent} max={100} />
-                <div className="mt-1 text-sm text-graytxt">
-                  {hasAnyData ? 
-                    (currentLevel >= levelThresholds.length ? 'Maximum level reached!' : `${pointsToNext} XP needed`) : 
-                    'Start climbing to begin progressing'
-                  }
-                </div>
-              </div>
-              
-              {/* Next Achievements */}
-              <div>
-                <div className="text-sm mb-2">
-                  <span className="text-white font-medium">Next Achievement Goals:</span>
-                </div>
-                <div className="space-y-2">
-                  {/* Boulders Tracked Achievement */}
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-graytxt">Boulders Tracked</span>
-                    <span className="text-sm text-white">
-                      {totalBoulders}/{nextBouldersTracked.toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green/60 to-green transition-all duration-300" 
-                      style={{width: `${Math.min((totalBoulders / nextBouldersTracked) * 100, 100)}%`}}
-                    ></div>
-                  </div>
-                  
-                  {/* Boulders Flashed Achievement */}
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-sm text-graytxt">Boulders Flashed</span>
-                    <span className="text-sm text-white">
-                      {bouldersFlashed}/{nextBouldersFlashed}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green/60 to-green transition-all duration-300" 
-                      style={{width: `${Math.min((bouldersFlashed / nextBouldersFlashed) * 100, 100)}%`}}
-                    ></div>
-                  </div>
-                  
-                  {/* Sessions Tracked Achievement */}
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-sm text-graytxt">Sessions Tracked</span>
-                    <span className="text-sm text-white">
-                      {totalSessions}/{nextSessionsTracked}
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-green/60 to-green transition-all duration-300" 
-                      style={{width: `${Math.min((totalSessions / nextSessionsTracked) * 100, 100)}%`}}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Progress bar for XP progress to next level */}
+        <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+          <div 
+            className="h-full bg-white transition-all duration-300" 
+            style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
+          ></div>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-graytxt">
+            {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
           </div>
-        )}
-
-        {/* Expand/Collapse arrow at bottom center */}
-        <div className="flex justify-center mt-2">
           <svg 
             width="16" 
             height="16" 
@@ -182,6 +162,127 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
             <polyline points="6,9 12,15 18,9"></polyline>
           </svg>
         </div>
+
+        {/* Expandable section matching progress page format */}
+        {isExpanded && (
+          <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+            
+            {/* Volume Metrics */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                  <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+                Volume
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalClimbs}</div>
+                  <div className="text-sm text-graytxt">Total Sends</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{totalSessions}</div>
+                  <div className="text-sm text-graytxt">Sessions</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Metrics */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Performance
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-white">{Math.round(flashRate)}%</div>
+                  <div className="text-sm text-graytxt">Flash Rate</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">V{hardestSend}</div>
+                  <div className="text-sm text-graytxt">Peak Grade</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Grade Distribution */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                  <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Grades
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(totalClimbs / 30) + 1, 1)}</div>
+                  <div className="text-sm text-graytxt">Avg Send</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">V{avgFlashGrade}</div>
+                  <div className="text-sm text-graytxt">Avg Flash</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Achievement Progress Bars */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-white mb-3">Achievement Milestones</h4>
+              <div className="space-y-3">
+                {/* Boulders Tracked Achievement */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-graytxt">Boulders Tracked</span>
+                    <span className="text-sm text-white">
+                      {totalBoulders}/{nextBouldersTracked.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white transition-all duration-300" 
+                      style={{width: `${Math.min((totalBoulders / nextBouldersTracked) * 100, 100)}%`}}
+                    ></div>
+                  </div>
+                </div>
+                
+                {/* Boulders Flashed Achievement */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-graytxt">Boulders Flashed</span>
+                    <span className="text-sm text-white">
+                      {bouldersFlashed}/{nextBouldersFlashed}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white transition-all duration-300" 
+                      style={{width: `${Math.min((bouldersFlashed / nextBouldersFlashed) * 100, 100)}%`}}
+                    ></div>
+                  </div>
+                </div>
+                
+                {/* Sessions Tracked Achievement */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-graytxt">Sessions Tracked</span>
+                    <span className="text-sm text-white">
+                      {totalSessions}/{nextSessionsTracked}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-white transition-all duration-300" 
+                      style={{width: `${Math.min((totalSessions / nextSessionsTracked) * 100, 100)}%`}}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

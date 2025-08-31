@@ -7,18 +7,18 @@ import SessionCard from './SessionCard.jsx';
 
 
 // Simple Placeholder Session Card - Visual Spaceholder Only
-const PlaceholderSessionCard = ({ sessionNumber }) => {
+const PlaceholderSessionCard = () => {
   return (
-    <div className="bg-card/30 border border-border/40 rounded-col px-4 pt-4 pb-3 opacity-60">
+    <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
       <div className="flex items-center justify-between mb-2">
-        <div className="font-semibold text-base text-graytxt/80">
-          Session {sessionNumber}
+        <div className="font-semibold text-base text-graytxt">
+          Upcoming Session
         </div>
-        <div className="text-sm text-graytxt/60">
+        <div className="text-sm text-graytxt/80">
           Pending
         </div>
       </div>
-      <div className="text-sm text-graytxt/60">
+      <div className="text-sm text-graytxt/80">
         <span>-- climbs</span> • -- median • Mixed focus
       </div>
     </div>
@@ -81,7 +81,7 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
         onTitleClick={handleScrollToTop}
       />
       
-      <SessionStats sessions={sessions} />
+      <SessionStats sessions={sessions} onNavigateToTracker={onNavigateToTracker} />
       
       <section className="pt-4 pb-20">
         <div className="mx-5 space-y-3">
@@ -98,32 +98,21 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
               {Array.from({ length: 5 - sessions.length }, (_, i) => (
                 <PlaceholderSessionCard 
                   key={`placeholder-${sessions.length + i + 1}`}
-                  sessionNumber={sessions.length + i + 1}
                 />
               ))}
             </>
           )}
-          
-          {/* Empty state with CTA only when no sessions exist */}
-          {sessions.length === 0 && (
-            <div className="text-center py-8 mb-4">
-              <div className="mb-4">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-graytxt/50 mx-auto">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Start Your Climbing Journey</h3>
-              <p className="text-graytxt mb-4">Track your first session to begin calibration</p>
-              <button 
-                onClick={onNavigateToTracker}
-                className="px-6 py-2 bg-blue text-white rounded-lg font-medium hover:bg-blue/90 transition"
-              >
-                Start First Session
-              </button>
-            </div>
-          )}
+
         </div>
+      </section>
+
+      {/* Bottom Logo Section - Whoop Style */}
+      <section className="pt-2 pb-32 flex items-center justify-center">
+        <img 
+          src="/asset8.svg" 
+          alt="POGO" 
+          className="w-16 h-16"
+        />
       </section>
 
       <FAB onClick={handleFABClick} />

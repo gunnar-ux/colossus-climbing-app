@@ -125,9 +125,33 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
   // Calculate level and experience points with enhanced system
   const calculateTotalXP = () => {
     // Enhanced formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
-    // Fallback: approximate based on current totals (no session bonus)
-    const estimatedClimbXP = userData.totalClimbs * 25; // ~V2.5 average
-    return Math.floor(estimatedClimbXP);
+    if (!sessions || sessions.length === 0) {
+      return 0; // No sessions = no XP
+    }
+    
+    let totalXP = 0;
+    
+    sessions.forEach(session => {
+      if (session.climbList && session.climbList.length > 0) {
+        session.climbList.forEach(climb => {
+          // Base XP
+          const baseXP = 10;
+          
+          // Grade multiplier (V0=1x, V1=2x, V2=3x, etc.)
+          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+          const gradeMultiplier = gradeNum + 1;
+          
+          // Flash bonus (1.2x for first attempt)
+          const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
+          
+          // Calculate climb XP
+          const climbXP = baseXP * gradeMultiplier * flashBonus;
+          totalXP += climbXP;
+        });
+      }
+    });
+    
+    return Math.floor(totalXP);
   };
   
   const totalPoints = calculateTotalXP();
@@ -150,12 +174,12 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         <div className="bg-card border border-border rounded-col p-4 mb-4 hover:border-white/10 transition cursor-pointer" onClick={() => setIsProfileExpanded(!isProfileExpanded)}>
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-semibold text-white text-lg">Performance Profile</h3>
+              <h3 className="font-bold text-white text-base">Performance Profile</h3>
               <div className="text-sm text-graytxt">Level {currentLevel} Climber</div>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-white">{pointsInCurrentLevel}</div>
-              <div className="text-xs text-graytxt">XP</div>
+              <div className="text-sm text-graytxt">XP</div>
             </div>
           </div>
           <div className="w-full h-2 bg-border rounded-full overflow-hidden">
@@ -165,7 +189,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             ></div>
           </div>
           <div className="mt-2 flex items-center justify-between">
-            <div className="text-xs text-graytxt">
+            <div className="text-sm text-graytxt">
               {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
             </div>
             <svg 
@@ -266,14 +290,46 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
               </svg>
               Volume
             </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <div className="text-2xl font-bold text-white">{userData.totalClimbs || 0}</div>
-                <div className="text-xs text-graytxt">Total Sends</div>
+            <div className="space-y-4">
+              {/* First row: Total Climbs & Total Sessions */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-white">{userData.totalClimbs || 0}</div>
+                  <div className="text-sm text-graytxt">Total Climbs</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">{userData.totalSessions || 0}</div>
+                  <div className="text-sm text-graytxt">Total Sessions</div>
+                </div>
               </div>
-              <div>
-                <div className="text-2xl font-bold text-white">{userData.totalSessions || 0}</div>
-                <div className="text-xs text-graytxt">Sessions</div>
+              
+              {/* Second row: Climbs/Session & Sessions/Week */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    {userData.totalSessions > 0 ? Math.round((userData.totalClimbs || 0) / userData.totalSessions * 10) / 10 : 0}
+                  </div>
+                  <div className="text-sm text-graytxt">Climbs/Session</div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-white">
+                    {(() => {
+                      if (!sessions || sessions.length === 0) return 0;
+                      
+                      // Calculate weeks since first session
+                      const validSessions = sessions.filter(s => s.timestamp);
+                      if (validSessions.length === 0) return 0;
+                      
+                      const firstSession = validSessions.reduce((earliest, session) => 
+                        session.timestamp < earliest.timestamp ? session : earliest
+                      );
+                      
+                      const weeksSinceFirst = Math.max(1, Math.ceil((Date.now() - firstSession.timestamp) / (7 * 24 * 60 * 60 * 1000)));
+                      return Math.round((userData.totalSessions || 0) / weeksSinceFirst * 10) / 10;
+                    })()}
+                  </div>
+                  <div className="text-sm text-graytxt">Sessions/Week</div>
+                </div>
               </div>
             </div>
           </div>
@@ -289,11 +345,11 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-2xl font-bold text-white">{Math.round(Math.random() * 30 + 45)}%</div>
-                <div className="text-xs text-graytxt">Flash Rate</div>
+                <div className="text-sm text-graytxt">Flash Rate</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">V{Math.min(Math.floor(userData.totalClimbs / 20) + 2, 8)}</div>
-                <div className="text-xs text-graytxt">Peak Grade</div>
+                <div className="text-sm text-graytxt">Peak Grade</div>
               </div>
             </div>
           </div>
@@ -309,11 +365,11 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 30) + 1, 1)}</div>
-                <div className="text-xs text-graytxt">Avg Send</div>
+                <div className="text-sm text-graytxt">Avg Send</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 25) + 2, 2)}</div>
-                <div className="text-xs text-graytxt">Avg Flash</div>
+                <div className="text-sm text-graytxt">Avg Flash</div>
               </div>
             </div>
           </div>
@@ -329,7 +385,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <div className="text-2xl font-bold text-white">{Math.max(Math.floor(userData.totalClimbs / 3), 1)}</div>
-                <div className="text-xs text-graytxt">Best Session</div>
+                <div className="text-sm text-graytxt">Best Session</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
@@ -337,7 +393,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
                    userData.totalClimbs > 15 ? 'Technical' : 
                    'Balanced'}
                 </div>
-                <div className="text-xs text-graytxt">Top Style</div>
+                <div className="text-sm text-graytxt">Top Style</div>
               </div>
             </div>
           </div>
@@ -346,7 +402,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
       {/* Achievements */}
       <section className="px-5 pt-6">
-        <h2 className="text-lg font-semibold mb-4">Achievements</h2>
+        <h2 className="text-base font-bold mb-4">Achievements</h2>
         {achievements.map((category, categoryIndex) => (
           <div key={categoryIndex} className="mb-6">
             <h3 className="font-semibold text-base mb-3 text-center">{category.category}</h3>
@@ -365,7 +421,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
                   }`}>
                     {milestone.target}
                   </div>
-                  <div className="text-xs text-graytxt mt-1">
+                  <div className="text-sm text-graytxt mt-1">
                     {milestone.unlocked ? 'Unlocked!' : `${milestone.current}/${milestone.target}`}
                   </div>
                 </div>
@@ -376,10 +432,10 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       </section>
 
       {/* Performance Graphs */}
-      <section className="px-5 pt-6 space-y-4 pb-24 relative">
-        <h2 className="text-lg font-semibold mb-4 text-white">Performance Trends</h2>
+      <section className="px-5 pt-6 space-y-4 pb-8 relative">
+        <h2 className="text-base font-bold mb-4 text-white">Performance Trends</h2>
         
-        <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm pointer-events-none' : ''} ${!performanceTrendsUnlocked ? 'bg-black/40' : ''}`}>
+        <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm' : ''}`}>
           <div className="bg-card border border-border rounded-col p-4">
             <div className="text-sm mb-3 flex items-center justify-between">
               <span className="font-semibold text-white">Weekly Volume (Capacity)</span>
@@ -413,7 +469,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
         {/* Unlock overlay when trends are locked */}
         {!performanceTrendsUnlocked && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/50">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center px-8">
               <div className="mb-4">
                 <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white/70 mx-auto mb-4">
@@ -445,7 +501,14 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         )}
       </section>
       
-      <div className="h-20" />
+      {/* Bottom Logo Section - Whoop Style */}
+      <section className="pt-2 pb-32 flex items-center justify-center">
+        <img 
+          src="/asset8.svg" 
+          alt="POGO" 
+          className="w-16 h-16"
+        />
+      </section>
       
       <FAB onClick={handleFABClick} />
       

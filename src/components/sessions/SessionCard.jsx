@@ -14,8 +14,23 @@ const SessionCard = ({ session, index }) => {
         <div className="font-semibold text-base">{session.date}</div>
         <div className="text-sm text-graytxt">{session.duration}</div>
       </div>
-      <div className="text-sm text-graytxt">
-        <span className="text-white">{session.climbs} climbs</span> • {session.medianGrade} median • {session.style} focus
+      <div className="flex items-center justify-between text-sm text-graytxt">
+        <div>
+          <span className="text-white">{session.climbs} climbs</span> • {session.medianGrade} median • {session.style} focus
+        </div>
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
+        >
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
       </div>
       
       {/* Expandable content */}
@@ -124,23 +139,6 @@ const SessionCard = ({ session, index }) => {
           </div>
         </div>
       )}
-
-              {/* Expand/Collapse arrow at bottom center */}
-        <div className="flex justify-center mt-2">
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </div>
     </div>
   );
 };

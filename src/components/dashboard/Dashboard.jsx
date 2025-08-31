@@ -7,6 +7,7 @@ import { getMetricAvailability, clamp } from '../../utils/index.js';
 
 import CalibrationCard from './CalibrationCard.jsx';
 import Today from './Today.jsx';
+import TimerCard from './TimerCard.jsx';
 import RecommendedTraining from './RecommendedTraining.jsx';
 import ThisWeek from './ThisWeek.jsx';
 import AllTime from './AllTime.jsx';
@@ -108,6 +109,7 @@ const Dashboard = ({
         crsData={crsData}
         loadRatioData={loadRatioData}
       />
+      <TimerCard />
       <RecommendedTraining 
         onStartTraining={handleStartTraining}
         recommendation={recommendedTraining}

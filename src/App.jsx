@@ -395,6 +395,7 @@ const AppContent = () => {
                     case 'account':
                       return (
                         <AccountPage 
+                          sessions={sessions}
                           onNavigateBack={handleNavigateToDashboard}
                           onNavigateToDashboard={handleNavigateToDashboard}
                           onNavigateToSessions={handleNavigateToSessions}

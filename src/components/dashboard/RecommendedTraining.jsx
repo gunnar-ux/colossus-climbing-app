@@ -22,7 +22,7 @@ const RecommendedTraining = ({ onStartTraining, recommendation, sessions = 0 }) 
     <section className="px-5 pt-4">
       <div className="bg-card border border-border rounded-col p-4 hover:border-white/10 transition">
         <div className="flex items-center justify-between mb-1">
-          <div className="font-semibold">Recommended Training</div>
+          <div className="font-bold text-base">Daily Training</div>
           {hasNoData ? (
             <span className="px-2 py-1 text-sm rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA

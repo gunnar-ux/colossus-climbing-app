@@ -23,7 +23,7 @@ const ThisWeekContent = () => {
     <>
       <button className="w-full text-left min-h-[44px]" onClick={() => setOpen(o => !o)}>
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-base flex items-center gap-2">
+          <h3 className="font-bold text-base flex items-center gap-2">
             This Week
             <span className="text-sm text-graytxt">
               {open ? '▼' : '▶'}

@@ -33,10 +33,11 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
   }
 
   return (
-    <div className="mx-5 mt-3 bg-card border border-border rounded-col px-5 pt-5 pb-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+    <section className="px-5 pt-4">
+      <div className="bg-card border border-border rounded-col p-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-base">Dashboard Calibration</h3>
+        <h3 className="font-bold text-base">Dashboard Calibration</h3>
         <span className="text-sm text-white font-medium">{Math.round(overallProgress)}%</span>
       </div>
       
@@ -83,16 +84,16 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
             <div className="border border-border/50 rounded-lg p-3">
               <div className="text-sm text-white font-semibold mb-3 text-center">Calibration Phases</div>
               <div className="space-y-3 text-sm">
-                <div>
-                  <span className="px-2 py-1 text-xs rounded-full bg-blue/20 text-blue border border-blue/30">NEED DATA</span>
+                <div className="text-center">
+                  <span className="px-2 py-1 text-sm rounded-full bg-blue/20 text-blue border border-blue/30">NEED DATA</span>
                   <div className="text-graytxt mt-1">0-2 sessions: Basic tracking only</div>
                 </div>
-                <div>
-                  <span className="px-2 py-1 text-xs rounded-full bg-orange/20 text-orange border border-orange/30">CALIBRATING</span>
+                <div className="text-center">
+                  <span className="px-2 py-1 text-sm rounded-full bg-orange/20 text-orange border border-orange/30">CALIBRATING</span>
                   <div className="text-graytxt mt-1">3-4 sessions: Readiness available</div>
                 </div>
-                <div>
-                  <span className="px-2 py-1 text-xs rounded-full bg-green/20 text-green border border-green/30">CALIBRATED</span>
+                <div className="text-center">
+                  <span className="px-2 py-1 text-sm rounded-full bg-green/20 text-green border border-green/30">CALIBRATED</span>
                   <div className="text-graytxt mt-1">5+ sessions: All metrics active</div>
                 </div>
               </div>
@@ -104,8 +105,13 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
         </div>
       )}
 
-      {/* Expand/Collapse arrow at bottom center */}
-      <div className="flex justify-center mt-2">
+      {/* Bottom-right dropdown toggle */}
+      <div className="mt-2 flex items-center justify-between">
+        <div className="text-sm text-graytxt">
+          {overallProgress >= 100 ? 'All systems calibrated' : 
+           overallProgress >= 50 ? 'Calibration in progress' : 
+           'Building baseline data'}
+        </div>
         <svg 
           width="16" 
           height="16" 
@@ -120,7 +126,9 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
           <polyline points="6,9 12,15 18,9"></polyline>
         </svg>
       </div>
+
     </div>
+    </section>
   );
 };
 

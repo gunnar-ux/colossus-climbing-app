@@ -1,7 +1,7 @@
 // SessionStats component extracted from sessions.html
 // Preserves exact dark theme styling and metrics calculations
 
-const SessionStats = ({ sessions }) => {
+const SessionStats = ({ sessions, onNavigateToTracker }) => {
   const totalSessions = sessions.length;
   const totalClimbs = sessions.reduce((sum, s) => sum + s.climbs, 0);
   const avgClimbsPerSession = totalSessions > 0 ? Math.round(totalClimbs / totalSessions) : 0;
@@ -22,13 +22,16 @@ const SessionStats = ({ sessions }) => {
   };
 
   return (
-    <section className="px-5 pt-6">
+    <section className="px-5 pt-4">
       <div className="bg-card border border-border rounded-col p-4">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-lg text-white">Session Overview</h2>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h2 className="font-bold text-base text-white">Session Overview</h2>
+            <div className="text-sm text-graytxt">Total Sessions</div>
+          </div>
           <div className="text-right">
             <div className="text-2xl font-bold text-white">{totalSessions}</div>
-            <div className="text-xs text-graytxt">Total</div>
+            <div className="text-sm text-graytxt">Total</div>
           </div>
         </div>
         
@@ -43,7 +46,7 @@ const SessionStats = ({ sessions }) => {
               </div>
               <div>
                 <div className="text-sm font-medium text-white">Volume</div>
-                <div className="text-xs text-graytxt">Avg climbs per session</div>
+                <div className="text-sm text-graytxt">Avg climbs per session</div>
               </div>
             </div>
             <div className="text-xl font-bold text-white">{avgClimbsPerSession}</div>
@@ -60,11 +63,21 @@ const SessionStats = ({ sessions }) => {
               </div>
               <div>
                 <div className="text-sm font-medium text-white">Frequency</div>
-                <div className="text-xs text-graytxt">Avg sessions per week</div>
+                <div className="text-sm text-graytxt">Avg sessions per week</div>
               </div>
             </div>
             <div className="text-xl font-bold text-white">{avgSessionsPerWeek()}</div>
           </div>
+        </div>
+        
+        {/* Track Button */}
+        <div className="mt-4 pt-4 border-t border-border/50">
+          <button 
+            onClick={onNavigateToTracker}
+            className="w-full py-3 bg-white text-black rounded-lg font-semibold hover:bg-white/90 transition"
+          >
+            Track
+          </button>
         </div>
       </div>
     </section>

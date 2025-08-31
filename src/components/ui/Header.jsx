@@ -23,7 +23,7 @@ const Header = ({
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)'
     }}>
-      <div className="px-10 pt-4 pb-3 flex items-center justify-between relative">
+      <div className="pl-9 pr-5 pt-4 pb-3 flex items-center justify-between relative">
         <button 
           onClick={handleTitleClick}
           className={`text-2xl transition-colors cursor-pointer ${textColor}`}

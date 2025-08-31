@@ -26,7 +26,7 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
     <section className="px-5 pt-4">
       <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-base">Climb Readiness</h3>
+          <h3 className="font-bold text-base">Climb Readiness</h3>
           {hasNoData ? (
             <span className="px-2 py-1 text-sm rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
               NEED DATA
@@ -53,12 +53,12 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
         {hasNoData ? (
           <>
             <div className="mt-1 flex items-center gap-3">
-              <div className="text-5xl font-extrabold leading-none text-gray-600 min-w-[64px]">--</div>
+              <div className="text-5xl font-extrabold leading-none text-graytxt min-w-[64px]">--</div>
               <div className="flex-1 h-3 bg-border rounded-full overflow-hidden">
                 <div className={`h-full bg-white/30`} style={{width: `0%`}}></div>
               </div>
             </div>
-            <div className="mt-2 text-sm text-blue text-center">Track 3 sessions to enable CRS.</div>
+
           </>
         ) : (
           <>
@@ -77,40 +77,46 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
         {/* Expandable section with CRS & Load information */}
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-            <div className="space-y-3">
-              <div>
-                <div className="text-sm mb-1">
-                  <span className="text-white">Readiness Score: </span>
-                </div>
-                <p className="text-sm text-graytxt leading-relaxed mb-2">
-                  Daily readiness (0-100) based on recent training & recovery time.
-                </p>
-                <div className="text-sm text-graytxt space-y-1">
-                  <div>• <span className="text-red">0-44:</span> Limited readiness - focus on recovery</div>
-                  <div>• <span className="text-blue">45-76:</span> Moderate readiness - balanced training</div>
-                  <div>• <span className="text-green">77-100:</span> Optimal readiness - peak performance</div>
-                </div>
+            
+            {/* Readiness Score Section */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <div className="text-sm mb-1">
+                <span className="text-white font-semibold">Readiness Score</span>
               </div>
-              
-              <div>
-                <div className="text-sm mb-1">
-                  <span className="text-white">Load Ratio: </span>
-                </div>
-                <p className="text-sm text-graytxt leading-relaxed mb-2">
-                  7-day vs 28-day training load comparison to prevent overtraining.
-                </p>
-                <div className="text-sm text-graytxt space-y-1">
-                  <div>• <span className="text-red">Under 0.8x:</span> Undertraining - increase volume</div>
-                  <div>• <span className="text-green">0.8-1.3x:</span> Optimal training load</div>
-                  <div>• <span className="text-red">1.3x+:</span> Overtraining - reduce intensity</div>
-                </div>
+              <p className="text-sm text-graytxt leading-relaxed mb-2">
+                Daily readiness (0-100) based on recent training & recovery time.
+              </p>
+              <div className="text-sm text-graytxt space-y-1">
+                <div>• <span className="text-red">0-44:</span> Limited readiness</div>
+                <div>• <span className="text-blue">45-76:</span> Moderate readiness</div>
+                <div>• <span className="text-green">77-100:</span> Optimal readiness</div>
+              </div>
+            </div>
+            
+            {/* Load Ratio Section */}
+            <div className="border border-border/50 rounded-lg p-3">
+              <div className="text-sm mb-1">
+                <span className="text-white font-semibold">Load Ratio</span>
+              </div>
+              <p className="text-sm text-graytxt leading-relaxed mb-2">
+                7-day vs 28-day training load comparison to prevent overtraining.
+              </p>
+              <div className="text-sm text-graytxt space-y-1">
+                <div>• <span className="text-red">Under 0.8x:</span> Undertraining</div>
+                <div>• <span className="text-green">0.8-1.3x:</span> Optimal training load</div>
+                <div>• <span className="text-red">1.3x+:</span> Overtraining</div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Expand/Collapse arrow at bottom center */}
-        <div className="flex justify-center mt-2">
+        {/* Bottom-right dropdown toggle */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-blue">
+            {hasNoData ? `Track ${3 - sessions} more session${3 - sessions === 1 ? '' : 's'} to unlock insights` : 
+             sessions >= 5 && loadRatioData ? 'Readiness calculated' : 
+             'Building readiness model'}
+          </div>
           <svg 
             width="16" 
             height="16" 
@@ -125,6 +131,7 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
             <polyline points="6,9 12,15 18,9"></polyline>
           </svg>
         </div>
+
       </div>
     </section>
   );

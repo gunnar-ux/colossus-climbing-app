@@ -32,7 +32,7 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
     <section className="pt-4">
       <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-base">This Week</h3>
+          <h3 className="font-bold text-base">This Week</h3>
           <div className="text-sm">
             <span className="text-white">Total:</span> <span className="text-graytxt font-medium">{available ? total : '--'}</span>
             {available && <> • <span className="text-white">Avg Perceived Effort:</span> <span className="text-graytxt font-medium">{avgRPE}</span></>}
@@ -48,11 +48,7 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
           <div><span className="text-white">Avg Grade:</span> <span className="text-graytxt font-medium">{available ? 'V4.5' : '--'}</span> {available && <span className="text-green-400 text-sm">+0.3</span>}</div>
         </div>
         
-        {!available && (
-          <div className="mt-2 text-sm text-blue text-center">
-            Track {3 - currentSessions} more session{3 - currentSessions === 1 ? '' : 's'} to enable rich insights.
-          </div>
-        )}
+
 
         
         {/* Expandable content */}
@@ -194,8 +190,11 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
           </div>
         )}
 
-        {/* Expand/Collapse arrow at bottom center */}
-        <div className="flex justify-center mt-2">
+        {/* Bottom-right dropdown toggle */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-blue">
+            {available ? 'Weekly performance summary' : `Track ${3 - currentSessions} more session${3 - currentSessions === 1 ? '' : 's'} to unlock insights`}
+          </div>
           <svg 
             width="16" 
             height="16" 
@@ -210,6 +209,7 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
             <polyline points="6,9 12,15 18,9"></polyline>
           </svg>
         </div>
+
       </div>
     </section>
   );
