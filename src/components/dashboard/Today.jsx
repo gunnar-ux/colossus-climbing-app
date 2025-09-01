@@ -74,6 +74,28 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
           </>
         )}
 
+        {/* Bottom-right dropdown toggle */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-blue">
+            {hasNoData ? `Track ${3 - sessions} more session${3 - sessions === 1 ? '' : 's'} to unlock insights` : 
+             sessions >= 5 && loadRatioData ? 'Readiness calculated' : 
+             'Building readiness model'}
+          </div>
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </div>
+
         {/* Expandable section with CRS & Load information */}
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
@@ -109,28 +131,6 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
             </div>
           </div>
         )}
-
-        {/* Bottom-right dropdown toggle */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-sm text-blue">
-            {hasNoData ? `Track ${3 - sessions} more session${3 - sessions === 1 ? '' : 's'} to unlock insights` : 
-             sessions >= 5 && loadRatioData ? 'Readiness calculated' : 
-             'Building readiness model'}
-          </div>
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </div>
 
       </div>
     </section>

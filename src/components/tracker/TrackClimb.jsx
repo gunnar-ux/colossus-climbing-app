@@ -58,6 +58,8 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
     }
   };
 
+
+
   return (
     <div className="w-full h-screen overflow-y-auto hide-scrollbar relative" style={{ backgroundColor: '#EBEDEE' }}>
       {/* Success Animation Overlay */}
@@ -73,6 +75,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
                   animation: saving ? 'pulse-once 0.6s ease-out' : 'none'
                 }}
               ></div>
+              
               {/* Checkmark */}
               <svg 
                 width="80" 

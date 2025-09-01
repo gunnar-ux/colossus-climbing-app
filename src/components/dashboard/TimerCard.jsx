@@ -11,6 +11,7 @@ const TimerCard = () => {
   const [timeRemaining, setTimeRemaining] = useState(0);
   const [startTime, setStartTime] = useState(null); // Track when timer started for persistence
   const [isCompleted, setIsCompleted] = useState(false); // Track if workout is completed
+  const [selectedPreset, setSelectedPreset] = useState(null); // Track selected preset for UI
   
   // Timer settings
   const [workTime, setWorkTime] = useState(10); // seconds
@@ -153,6 +154,14 @@ const TimerCard = () => {
       rounds: 4,
       workUnit: 'seconds',
       restUnit: 'seconds'
+    },
+    {
+      name: 'Rest Between Climbs',
+      work: 0,
+      rest: 2,
+      rounds: 1,
+      workUnit: 'seconds',
+      restUnit: 'minutes'
     }
   ];
 
@@ -160,6 +169,9 @@ const TimerCard = () => {
   const convertToSeconds = (time, unit) => {
     return unit === 'minutes' ? time * 60 : time;
   };
+
+  // Check if this is rest-only mode (work time is 0)
+  const isRestOnlyMode = workTime === 0;
 
   // Convert seconds back to display format
   const convertFromSeconds = (seconds, unit) => {
@@ -187,20 +199,51 @@ const TimerCard = () => {
     setTotalRounds(preset.rounds);
     setWorkTimeUnit(preset.workUnit);
     setRestTimeUnit(preset.restUnit);
-    resetTimer();
+    setSelectedPreset(preset.name); // Track selected preset
+    
+    // Auto-fill timer with first work period (or rest for rest-only mode)
+    const isRestOnly = preset.work === 0;
+    if (isRestOnly) {
+      const restSeconds = convertToSeconds(preset.rest, preset.restUnit);
+      setTimeRemaining(restSeconds);
+      setCurrentPhase('rest');
+    } else {
+      const workSeconds = convertToSeconds(preset.work, preset.workUnit);
+      setTimeRemaining(workSeconds);
+      setCurrentPhase('work');
+    }
+    
+    setCurrentRound(1);
+    setIsRunning(false);
+    setIsCompleted(false);
   };
 
   // Start timer
   const startTimer = () => {
+    // Don't start if no preset is selected and timer is empty
+    if (!selectedPreset && timeRemaining === 0) {
+      return; // Do nothing - no workout configured
+    }
+    
     if (!isRunning) {
       setIsRunning(true);
       setStartTime(Date.now());
       setIsCompleted(false);
-      const workSeconds = convertToSeconds(workTime, workTimeUnit);
+      
       if (timeRemaining === 0 || isCompleted) {
-        setTimeRemaining(workSeconds);
-        setCurrentPhase('work');
-        setCurrentRound(1);
+        if (isRestOnlyMode) {
+          // Rest-only mode: start with rest phase
+          const restSeconds = convertToSeconds(restTime, restTimeUnit);
+          setTimeRemaining(restSeconds);
+          setCurrentPhase('rest');
+          setCurrentRound(1);
+        } else {
+          // Normal mode: start with work phase
+          const workSeconds = convertToSeconds(workTime, workTimeUnit);
+          setTimeRemaining(workSeconds);
+          setCurrentPhase('work');
+          setCurrentRound(1);
+        }
       }
     }
   };
@@ -216,15 +259,36 @@ const TimerCard = () => {
   // Reset timer
   const resetTimer = () => {
     setIsRunning(false);
-    setCurrentPhase('work');
-    setCurrentRound(1);
-    setTimeRemaining(0);
     setStartTime(null);
     setIsCompleted(false);
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
-    clearTimerState();
+    
+    // If a preset is selected, restore to its initial state
+    if (selectedPreset) {
+      const preset = presets.find(p => p.name === selectedPreset);
+      if (preset) {
+        const isRestOnly = preset.work === 0;
+        if (isRestOnly) {
+          const restSeconds = convertToSeconds(preset.rest, preset.restUnit);
+          setTimeRemaining(restSeconds);
+          setCurrentPhase('rest');
+        } else {
+          const workSeconds = convertToSeconds(preset.work, preset.workUnit);
+          setTimeRemaining(workSeconds);
+          setCurrentPhase('work');
+        }
+        setCurrentRound(1);
+      }
+    } else {
+      // No preset selected, clear everything
+      setCurrentPhase('work');
+      setCurrentRound(1);
+      setTimeRemaining(0);
+      setSelectedPreset(null); // Ensure no preset is selected
+      clearTimerState();
+    }
   };
 
   // Timer logic effect
@@ -234,7 +298,16 @@ const TimerCard = () => {
         setTimeRemaining(prev => {
           if (prev <= 1) {
             // Phase complete
-            if (currentPhase === 'work') {
+            if (isRestOnlyMode) {
+              // Rest-only mode: auto-reset for next rest
+              setIsRunning(false);
+              setCurrentPhase('rest');
+              setCurrentRound(1);
+              setIsCompleted(false);
+              const restSeconds = convertToSeconds(restTime, restTimeUnit);
+              setTimeRemaining(restSeconds);
+              return restSeconds;
+            } else if (currentPhase === 'work') {
               // Switch to rest
               setCurrentPhase('rest');
               const restSeconds = convertToSeconds(restTime, restTimeUnit);
@@ -291,29 +364,30 @@ const TimerCard = () => {
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">Training Timer</h3>
           <div className="flex items-center gap-1">
-            {Array.from({ length: totalRounds }, (_, index) => {
+            {!isRestOnlyMode && Array.from({ length: totalRounds }, (_, index) => {
               const roundNumber = index + 1;
-              // Mark round as completed when work phase ends (not when rest ends)
-              const isRoundCompleted = isCompleted || 
-                roundNumber < currentRound || 
-                (roundNumber === currentRound && currentPhase === 'rest');
+              // Mark rounds as green if they are completed OR currently active (and timer has time remaining)
+              const isActiveOrCompleted = timeRemaining > 0 && roundNumber <= currentRound;
               
               return (
                 <div
                   key={index}
                   className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    isRoundCompleted ? 'bg-green' : 'bg-border'
+                    isActiveOrCompleted ? 'bg-green' : 'bg-border'
                   }`}
                 />
               );
             })}
+            {isRestOnlyMode && (
+              <span className="text-sm text-graytxt">Rest Timer</span>
+            )}
           </div>
         </div>
 
         {/* Timer Display */}
         <div className="flex items-center justify-between gap-4 mb-3">
           <div className={`text-4xl font-extrabold leading-none ${getPhaseColor()}`}>
-            {timeRemaining > 0 ? formatTime(timeRemaining) : '--:--'}
+            {timeRemaining > 0 || selectedPreset ? formatTime(timeRemaining) : '--:--'}
           </div>
           <div className="flex items-center gap-2">
             {/* Reset button - only show when timer is stopped and has been used */}
@@ -363,6 +437,47 @@ const TimerCard = () => {
 
 
 
+        {/* Bottom status with dropdown toggle */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm">
+            {isCompleted ? (
+              <span className="text-green">{isRestOnlyMode ? 'Rest complete!' : 'Workout completed! Great job!'}</span>
+            ) : isRestOnlyMode ? (
+              <span className={`${isRunning ? 'text-blue font-semibold' : 'text-graytxt'}`}>
+                Rest: {convertToSeconds(restTime, restTimeUnit)}s
+              </span>
+            ) : selectedPreset ? (
+              <span>
+                <span className={`${isRunning && currentPhase === 'work' ? 'text-green font-semibold' : 'text-graytxt'}`}>
+                  Work: {convertToSeconds(workTime, workTimeUnit)}s
+                </span>
+                <span className="text-graytxt"> • </span>
+                <span className={`${isRunning && currentPhase === 'rest' ? 'text-blue font-semibold' : 'text-graytxt'}`}>
+                  Rest: {convertToSeconds(restTime, restTimeUnit)}s
+                </span>
+                <span className="text-graytxt"> • {totalRounds} Rounds</span>
+              </span>
+            ) : (
+              <span className="text-graytxt">
+                Work: --s • Rest: --s • -- Rounds
+              </span>
+            )}
+          </div>
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </div>
+
         {/* Expandable section */}
         {isExpanded && (
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4" onClick={(e) => e.stopPropagation()}>
@@ -375,7 +490,11 @@ const TimerCard = () => {
                   <button
                     key={index}
                     onClick={() => applyPreset(preset)}
-                    className="p-3 bg-border/50 hover:bg-border border border-border/50 rounded-lg text-left transition"
+                    className={`p-3 bg-border/50 hover:bg-border rounded-lg text-left transition ${
+                      selectedPreset === preset.name 
+                        ? 'border-2 border-white' 
+                        : 'border border-border/50'
+                    }`}
                   >
                     <div className="font-medium text-white text-sm">{preset.name}</div>
                     <div className="text-sm text-graytxt">
@@ -397,7 +516,10 @@ const TimerCard = () => {
                   <input
                     type="number"
                     value={workTime}
-                    onChange={(e) => setWorkTime(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => {
+                      setWorkTime(Math.max(1, parseInt(e.target.value) || 1));
+                      setSelectedPreset(null); // Clear preset selection on manual change
+                    }}
                     className="flex-1 px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                     min="1"
                   />
@@ -419,7 +541,10 @@ const TimerCard = () => {
                   <input
                     type="number"
                     value={restTime}
-                    onChange={(e) => setRestTime(Math.max(1, parseInt(e.target.value) || 1))}
+                    onChange={(e) => {
+                      setRestTime(Math.max(1, parseInt(e.target.value) || 1));
+                      setSelectedPreset(null); // Clear preset selection on manual change
+                    }}
                     className="flex-1 px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                     min="1"
                   />
@@ -440,7 +565,10 @@ const TimerCard = () => {
                 <input
                   type="number"
                   value={totalRounds}
-                  onChange={(e) => setTotalRounds(Math.max(1, parseInt(e.target.value) || 1))}
+                  onChange={(e) => {
+                    setTotalRounds(Math.max(1, parseInt(e.target.value) || 1));
+                    setSelectedPreset(null); // Clear preset selection on manual change
+                  }}
                   className="w-full px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                   min="1"
                 />
@@ -460,47 +588,29 @@ const TimerCard = () => {
                 {isRunning ? 'Stop' : 'Start'}
               </button>
               <button 
-                onClick={resetTimer}
+                onClick={() => {
+                  // Clear everything to original --:-- state
+                  setIsRunning(false);
+                  setCurrentPhase('work');
+                  setCurrentRound(1);
+                  setTimeRemaining(0);
+                  setStartTime(null);
+                  setIsCompleted(false);
+                  setSelectedPreset(null);
+                  if (intervalRef.current) {
+                    clearInterval(intervalRef.current);
+                  }
+                  clearTimerState();
+                }}
                 className="flex-1 px-4 py-2 bg-border hover:bg-border/70 text-white rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
               >
-                Reset
+                Clear
               </button>
             </div>
           </div>
         )}
 
-        {/* Bottom status with dropdown toggle */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-sm">
-            {isCompleted ? (
-              <span className="text-green">Workout completed! Great job!</span>
-            ) : (
-              <span>
-                <span className={`${isRunning && currentPhase === 'work' ? 'text-green font-semibold' : 'text-graytxt'}`}>
-                  Work: {convertToSeconds(workTime, workTimeUnit)}s
-                </span>
-                <span className="text-graytxt"> • </span>
-                <span className={`${isRunning && currentPhase === 'rest' ? 'text-blue font-semibold' : 'text-graytxt'}`}>
-                  Rest: {convertToSeconds(restTime, restTimeUnit)}s
-                </span>
-                <span className="text-graytxt"> • {totalRounds} Rounds</span>
-              </span>
-            )}
-          </div>
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </div>
+
       </div>
     </section>
   );

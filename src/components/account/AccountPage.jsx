@@ -72,18 +72,19 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
       return match ? parseInt(match[1]) : 0;
     };
 
-    // XP calculation based on grade difficulty
-    const gradeToXP = (grade) => {
-      const gradeNum = gradeToNumber(grade);
-      return Math.max(10, gradeNum * 15); // Base 10 XP, +15 per grade level
-    };
-
     sessions.forEach(session => {
       if (session.climbList && Array.isArray(session.climbList)) {
         session.climbList.forEach(climb => {
           totalClimbs++;
           allGrades.push(gradeToNumber(climb.grade));
-          xp += gradeToXP(climb.grade);
+          
+          // Enhanced XP formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
+          const baseXP = 10;
+          const gradeNum = gradeToNumber(climb.grade);
+          const gradeMultiplier = gradeNum + 1; // V0=1x, V1=2x, V2=3x, etc.
+          const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
+          const climbXP = baseXP * gradeMultiplier * flashBonus;
+          xp += climbXP;
           
           // Count as flash if attempts = 1
           if (climb.attempts === 1) {
@@ -108,8 +109,8 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
       ? `${Math.round((totalFlashed / totalClimbs) * 100)}%`
       : '--';
 
-    // Calculate level based on XP (every 1000 XP = 1 level)
-    const level = Math.floor(xp / 1000) + 1;
+    // Calculate level based on XP (every 150 XP = 1 level)
+    const level = Math.floor(xp / 150) + 1;
 
     return {
       totalClimbs,
@@ -118,7 +119,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
       maxGrade,
       avgGrade,
       flashRate,
-      xp,
+      xp: Math.floor(xp),
       level
     };
   };

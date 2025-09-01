@@ -48,9 +48,26 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
           <div><span className="text-white">Avg Grade:</span> <span className="text-graytxt font-medium">{available ? 'V4.5' : '--'}</span> {available && <span className="text-green-400 text-sm">+0.3</span>}</div>
         </div>
         
+        {/* Bottom-right dropdown toggle */}
+        <div className="mt-2 flex items-center justify-between">
+          <div className="text-sm text-blue">
+            {available ? 'Weekly performance summary' : `Track ${3 - currentSessions} more session${3 - currentSessions === 1 ? '' : 's'} to unlock insights`}
+          </div>
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6,9 12,15 18,9"></polyline>
+          </svg>
+        </div>
 
-
-        
         {/* Expandable content */}
         {open && (
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
@@ -189,26 +206,6 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
             )}
           </div>
         )}
-
-        {/* Bottom-right dropdown toggle */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-sm text-blue">
-            {available ? 'Weekly performance summary' : `Track ${3 - currentSessions} more session${3 - currentSessions === 1 ? '' : 's'} to unlock insights`}
-          </div>
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
-        </div>
 
       </div>
     </section>

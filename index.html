@@ -69,6 +69,9 @@
         /* Ensure body fills entire viewport */
         min-height: 100vh;
         min-height: 100dvh;
+        /* Prevent white flash - match app background */
+        background-color: #000000;
+        color: #ffffff;
       }
       
       #root {
@@ -76,6 +79,7 @@
         min-height: 100dvh;
         position: relative;
         /* Remove negative margins for better PWA behavior */
+        background-color: #000000;
       }
       
       /* PWA safe area detection */

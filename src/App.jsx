@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
@@ -7,6 +7,7 @@ import SessionsPage from './components/sessions/SessionsPage.jsx';
 import ProgressPage from './components/progress/ProgressPage.jsx';
 import TrackClimb from './components/tracker/TrackClimb.jsx';
 import AccountPage from './components/account/AccountPage.jsx';
+import LoadingScreen from './components/ui/LoadingScreen.jsx';
 import { getCleanInitialData, getCleanInitialSessions } from './utils/appReset.js';
 import { roundRPE } from './utils/index.js';
 
@@ -14,9 +15,21 @@ import { roundRPE } from './utils/index.js';
 const AppContent = () => {
   const { user, loading, profile, signOut } = useAuth();
   
+  // App loading state for initial animation
+  const [appLoading, setAppLoading] = useState(true);
+  
   // Initialize with completely clean data
   const [userData, setUserData] = useState(getCleanInitialData());
   const [sessions, setSessions] = useState(getCleanInitialSessions());
+
+  // Handle initial app loading animation (3.5 seconds)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setAppLoading(false);
+    }, 3500); // 3.5 seconds
+
+    return () => clearTimeout(timer);
+  }, []);
 
 
   // Recalculate existing sessions to include new distribution data
@@ -319,6 +332,11 @@ const AppContent = () => {
   
   // Tour feature disabled - skip welcome tour
   
+  // Show loading animation on first app load
+  if (appLoading) {
+    return <LoadingScreen />;
+  }
+
   // If loading auth state, show nothing (Supabase handles this quickly)
   if (loading) {
     return (

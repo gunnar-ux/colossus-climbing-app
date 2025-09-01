@@ -59,6 +59,28 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
         ))}
       </div>
 
+      {/* Bottom-right dropdown toggle */}
+      <div className="mt-2 flex items-center justify-between">
+        <div className="text-sm text-graytxt">
+          {overallProgress >= 100 ? 'All systems calibrated' : 
+           overallProgress >= 50 ? 'Calibration in progress' : 
+           'Building baseline data'}
+        </div>
+        <svg 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round"
+          className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
+        >
+          <polyline points="6,9 12,15 18,9"></polyline>
+        </svg>
+      </div>
+
       {/* Expandable section with advanced metrics */}
       {isExpanded && (
         <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
@@ -104,28 +126,6 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
           </div>
         </div>
       )}
-
-      {/* Bottom-right dropdown toggle */}
-      <div className="mt-2 flex items-center justify-between">
-        <div className="text-sm text-graytxt">
-          {overallProgress >= 100 ? 'All systems calibrated' : 
-           overallProgress >= 50 ? 'Calibration in progress' : 
-           'Building baseline data'}
-        </div>
-        <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
-        >
-          <polyline points="6,9 12,15 18,9"></polyline>
-        </svg>
-      </div>
 
     </div>
     </section>
