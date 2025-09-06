@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js'
 
 // Supabase project configuration
 // Replace these with your actual Supabase project values
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'your_supabase_project_url'
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your_supabase_anon_key'
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key_that_wont_work_but_prevents_errors'
 
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -65,6 +65,11 @@ export const auth = {
   // Get current user
   getCurrentUser: () => {
     return supabase.auth.getUser()
+  },
+
+  // Get current session
+  getSession: async () => {
+    return supabase.auth.getSession()
   },
 
   // Listen to auth changes

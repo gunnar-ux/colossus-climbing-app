@@ -1,0 +1,90 @@
+/* Navigation and Page Transitions */
+
+/* Prevent layout shift during navigation */
+#root {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Page container for smooth transitions */
+.page-container {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Bottom navigation spacing */
+.with-bottom-nav {
+  padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+}
+
+/* Prevent flashing during transitions */
+.route-transition-enter {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.route-transition-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: all 200ms ease-out;
+}
+
+.route-transition-exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.route-transition-exit-active {
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 200ms ease-in;
+}
+
+/* Bottom navigation styles */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: #1a1a1a;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: env(safe-area-inset-bottom);
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* Prevent double tap zoom on navigation */
+.bottom-nav button {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Active navigation item */
+.nav-item-active {
+  color: white;
+}
+
+.nav-item-inactive {
+  color: #6b7280;
+}
+
+/* Navigation icon animations */
+.nav-icon {
+  transition: transform 200ms ease-out;
+}
+
+.nav-icon-active {
+  transform: scale(1.1);
+}
+
+/* Prevent content jumps */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
