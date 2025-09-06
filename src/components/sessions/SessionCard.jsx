@@ -16,7 +16,7 @@ const SessionCard = ({ session, index }) => {
       </div>
       <div className="flex items-center justify-between text-sm text-graytxt">
         <div>
-          <span className="text-white">{session.climbs} climbs</span> • {session.medianGrade} median • {session.style} focus
+          <span className="text-white">Climbs: {session.climbs}</span> • Median: {session.medianGrade} • Focus: {session.style}
         </div>
         <svg 
           width="16" 
@@ -39,7 +39,7 @@ const SessionCard = ({ session, index }) => {
           {/* Grade Distribution */}
           <div className="border border-border/50 rounded-lg p-3">
             <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
-            {session.grades.map((g, i) => (
+            {(session.grades || []).map((g, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{g.label}</span>
@@ -55,7 +55,7 @@ const SessionCard = ({ session, index }) => {
           {/* Style Distribution */}
           <div className="border border-border/50 rounded-lg p-3">
             <div className="text-sm text-white font-semibold mb-3 text-center">Style Distribution</div>
-            {session.styles.map((s, i) => (
+            {(session.styles || []).map((s, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{s.label}</span>
@@ -71,7 +71,7 @@ const SessionCard = ({ session, index }) => {
           {/* Wall Angles */}
           <div className="border border-border/30 rounded-lg p-3">
             <div className="text-sm text-white font-semibold mb-3 text-center">Wall Angle Distribution</div>
-            {session.angles.map((w, i) => (
+            {(session.angles || []).map((w, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-graytxt">{w.label}</span>
@@ -117,7 +117,7 @@ const SessionCard = ({ session, index }) => {
           <div className="mt-4">
             <div className="text-sm text-white font-semibold mb-2 text-center">Individual Climbs</div>
             <ul className="space-y-2">
-              {session.climbList.map((c, i) => (
+              {(session.climbList || []).map((c, i) => (
                 <li key={i} className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2">
                   <div className="flex items-center gap-2">
                     <div className="text-lg font-bold text-white">{c.grade}</div>

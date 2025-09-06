@@ -14,6 +14,7 @@ import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icon
 // Utils & Services
 import { getCleanInitialData, getCleanInitialSessions } from './utils/appReset.js';
 import { roundRPE } from './utils/index.js';
+import { calculateSessionStats } from './utils/sessionCalculations.js';
 
 // Persistent Bottom Navigation Component
 const BottomNavigation = () => {
@@ -125,6 +126,7 @@ const AppContent = () => {
     }
   };
   
+
   // Handle climb logging
   const handleClimbLogged = async (climbData) => {
     const timestamp = Date.now();
@@ -134,14 +136,19 @@ const AppContent = () => {
                             climbData.styles[0] === 'TECHNICAL' ? 'Technical' : 
                             climbData.styles[0] === 'SIMPLE' ? 'Simple' : climbData.styles[0];
     
+    const normalizedAngle = (climbData.wall || climbData.angle) === 'SLAB' ? 'Slab' :
+                            (climbData.wall || climbData.angle) === 'VERTICAL' ? 'Vertical' :
+                            (climbData.wall || climbData.angle) === 'OVERHANG' ? 'Overhang' : 
+                            (climbData.wall || climbData.angle);
+    
     const newClimb = {
       id: Date.now(),
       timestamp: timestamp,
       grade: climbData.grade,
       style: normalizedStyle,
       styles: [normalizedStyle],
-      angle: climbData.wall || climbData.angle,
-      wall: climbData.wall || climbData.angle,
+      angle: normalizedAngle,
+      wall: normalizedAngle,
       rpe: roundRPE(climbData.rpe),
       attempts: climbData.attempts || 1,
       zone: climbData.zone || 'ENDURANCE',
@@ -155,16 +162,19 @@ const AppContent = () => {
       // Update existing "Now" session
       const nowSession = updatedSessions[nowSessionIndex];
       const updatedClimbList = [newClimb, ...nowSession.climbList];
+      const sessionStats = calculateSessionStats(updatedClimbList);
       
       updatedSessions[nowSessionIndex] = {
         ...nowSession,
         climbList: updatedClimbList,
         climbs: updatedClimbList.length,
         endTime: timestamp,
-        duration: calculateSessionDuration(nowSession.startTime, timestamp)
+        duration: calculateSessionDuration(nowSession.startTime, timestamp),
+        ...sessionStats
       };
     } else {
       // Create new "Now" session
+      const sessionStats = calculateSessionStats([newClimb]);
       const newSession = {
         id: `now-${timestamp}`,
         date: "Now",
@@ -176,9 +186,9 @@ const AppContent = () => {
         quality: 'MODERATE',
         gym: climbData.gym || 'Session',
         avgGrade: climbData.grade,
-        medianGrade: climbData.grade,
-        avgRPE: climbData.rpe,
-        climbList: [newClimb]
+        style: normalizedStyle,
+        climbList: [newClimb],
+        ...sessionStats
       };
       
       updatedSessions = [newSession, ...updatedSessions];

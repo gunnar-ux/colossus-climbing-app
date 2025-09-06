@@ -14,9 +14,9 @@ const TimerCard = () => {
   const [selectedPreset, setSelectedPreset] = useState(null); // Track selected preset for UI
   
   // Timer settings
-  const [workTime, setWorkTime] = useState(10); // seconds
-  const [restTime, setRestTime] = useState(50); // seconds
-  const [totalRounds, setTotalRounds] = useState(3);
+  const [workTime, setWorkTime] = useState(''); // seconds
+  const [restTime, setRestTime] = useState(''); // seconds
+  const [totalRounds, setTotalRounds] = useState('');
   const [workTimeUnit, setWorkTimeUnit] = useState('seconds');
   const [restTimeUnit, setRestTimeUnit] = useState('seconds');
   
@@ -75,9 +75,9 @@ const TimerCard = () => {
       setCurrentPhase(savedState.currentPhase || 'work');
       setCurrentRound(savedState.currentRound || 1);
       setTimeRemaining(savedState.timeRemaining || 0);
-      setWorkTime(savedState.workTime || 10);
-      setRestTime(savedState.restTime || 50);
-      setTotalRounds(savedState.totalRounds || 3);
+      setWorkTime(savedState.workTime || '');
+      setRestTime(savedState.restTime || '');
+      setTotalRounds(savedState.totalRounds || '');
       setWorkTimeUnit(savedState.workTimeUnit || 'seconds');
       setRestTimeUnit(savedState.restTimeUnit || 'seconds');
       setStartTime(savedState.startTime || null);
@@ -102,7 +102,7 @@ const TimerCard = () => {
     };
     
     // Only save if timer is running or has been configured
-    if (isRunning || timeRemaining > 0 || workTime !== 10 || restTime !== 50 || totalRounds !== 3) {
+    if (isRunning || timeRemaining > 0 || workTime !== '' || restTime !== '' || totalRounds !== '') {
       saveTimerState(state);
     } else {
       clearTimerState();
@@ -167,11 +167,12 @@ const TimerCard = () => {
 
   // Convert time to seconds based on unit
   const convertToSeconds = (time, unit) => {
-    return unit === 'minutes' ? time * 60 : time;
+    const numTime = parseInt(time) || 0;
+    return unit === 'minutes' ? numTime * 60 : numTime;
   };
 
   // Check if this is rest-only mode (work time is 0)
-  const isRestOnlyMode = workTime === 0;
+  const isRestOnlyMode = workTime === 0 || workTime === '0';
 
   // Convert seconds back to display format
   const convertFromSeconds = (seconds, unit) => {
@@ -189,7 +190,7 @@ const TimerCard = () => {
   const getProtocolSummary = () => {
     const workSeconds = convertToSeconds(workTime, workTimeUnit);
     const restSeconds = convertToSeconds(restTime, restTimeUnit);
-    return `Work: ${workSeconds}s Rest: ${restSeconds}s • ${totalRounds} Rounds`;
+    return `Work: ${workSeconds}s Rest: ${restSeconds}s • ${totalRounds || 0} Rounds`;
   };
 
   // Apply preset configuration
@@ -220,8 +221,9 @@ const TimerCard = () => {
 
   // Start timer
   const startTimer = () => {
-    // Don't start if no preset is selected and timer is empty
-    if (!selectedPreset && timeRemaining === 0) {
+    // Don't start if no preset is selected and no custom settings are configured
+    const hasCustomSettings = workTime !== '' && restTime !== '' && totalRounds !== '';
+    if (!selectedPreset && timeRemaining === 0 && !hasCustomSettings) {
       return; // Do nothing - no workout configured
     }
     
@@ -314,7 +316,7 @@ const TimerCard = () => {
               return restSeconds;
             } else {
               // Rest complete, check if more rounds
-              if (currentRound < totalRounds) {
+              if (currentRound < (parseInt(totalRounds) || 1)) {
                 setCurrentRound(prev => prev + 1);
                 setCurrentPhase('work');
                 const workSeconds = convertToSeconds(workTime, workTimeUnit);
@@ -347,7 +349,8 @@ const TimerCard = () => {
 
   // Get phase color
   const getPhaseColor = () => {
-    if (!isRunning && timeRemaining === 0) return 'text-graytxt';
+    // Only show green/blue when timer is actively running
+    if (!isRunning) return 'text-white';
     return currentPhase === 'work' ? 'text-green' : 'text-blue';
   };
 
@@ -364,10 +367,10 @@ const TimerCard = () => {
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">Training Timer</h3>
           <div className="flex items-center gap-1">
-            {!isRestOnlyMode && Array.from({ length: totalRounds }, (_, index) => {
+            {!isRestOnlyMode && Array.from({ length: parseInt(totalRounds) || 0 }, (_, index) => {
               const roundNumber = index + 1;
-              // Mark rounds as green if they are completed OR currently active (and timer has time remaining)
-              const isActiveOrCompleted = timeRemaining > 0 && roundNumber <= currentRound;
+              // Only show green dots when timer is actively running and for completed/current rounds
+              const isActiveOrCompleted = isRunning && timeRemaining > 0 && roundNumber <= currentRound;
               
               return (
                 <div
@@ -446,7 +449,7 @@ const TimerCard = () => {
               <span className={`${isRunning ? 'text-blue font-semibold' : 'text-graytxt'}`}>
                 Rest: {convertToSeconds(restTime, restTimeUnit)}s
               </span>
-            ) : selectedPreset ? (
+            ) : selectedPreset || (workTime !== '' && restTime !== '' && totalRounds !== '') ? (
               <span>
                 <span className={`${isRunning && currentPhase === 'work' ? 'text-green font-semibold' : 'text-graytxt'}`}>
                   Work: {convertToSeconds(workTime, workTimeUnit)}s
@@ -455,7 +458,7 @@ const TimerCard = () => {
                 <span className={`${isRunning && currentPhase === 'rest' ? 'text-blue font-semibold' : 'text-graytxt'}`}>
                   Rest: {convertToSeconds(restTime, restTimeUnit)}s
                 </span>
-                <span className="text-graytxt"> • {totalRounds} Rounds</span>
+                <span className="text-graytxt"> • {totalRounds || 0} Rounds</span>
               </span>
             ) : (
               <span className="text-graytxt">
@@ -517,11 +520,16 @@ const TimerCard = () => {
                     type="number"
                     value={workTime}
                     onChange={(e) => {
-                      setWorkTime(Math.max(1, parseInt(e.target.value) || 1));
-                      setSelectedPreset(null); // Clear preset selection on manual change
+                      const value = e.target.value;
+                      // Allow empty string or valid positive numbers
+                      if (value === '' || (parseInt(value) > 0 && !isNaN(parseInt(value)))) {
+                        setWorkTime(value);
+                        setSelectedPreset(null); // Clear preset selection on manual change
+                      }
                     }}
                     className="flex-1 px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                     min="1"
+                    placeholder="0"
                   />
                   <select
                     value={workTimeUnit}
@@ -542,11 +550,16 @@ const TimerCard = () => {
                     type="number"
                     value={restTime}
                     onChange={(e) => {
-                      setRestTime(Math.max(1, parseInt(e.target.value) || 1));
-                      setSelectedPreset(null); // Clear preset selection on manual change
+                      const value = e.target.value;
+                      // Allow empty string or valid positive numbers
+                      if (value === '' || (parseInt(value) > 0 && !isNaN(parseInt(value)))) {
+                        setRestTime(value);
+                        setSelectedPreset(null); // Clear preset selection on manual change
+                      }
                     }}
                     className="flex-1 px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                     min="1"
+                    placeholder="0"
                   />
                   <select
                     value={restTimeUnit}
@@ -566,11 +579,16 @@ const TimerCard = () => {
                   type="number"
                   value={totalRounds}
                   onChange={(e) => {
-                    setTotalRounds(Math.max(1, parseInt(e.target.value) || 1));
-                    setSelectedPreset(null); // Clear preset selection on manual change
+                    const value = e.target.value;
+                    // Allow empty string or valid positive numbers
+                    if (value === '' || (parseInt(value) > 0 && !isNaN(parseInt(value)))) {
+                      setTotalRounds(value);
+                      setSelectedPreset(null); // Clear preset selection on manual change
+                    }
                   }}
                   className="w-full px-3 py-2 bg-border text-white rounded-lg border border-border/50 focus:border-white/30 outline-none"
                   min="1"
+                  placeholder="0"
                 />
               </div>
             </div>
@@ -597,6 +615,12 @@ const TimerCard = () => {
                   setStartTime(null);
                   setIsCompleted(false);
                   setSelectedPreset(null);
+                  // Reset custom settings to empty/default values
+                  setWorkTime('');
+                  setRestTime('');
+                  setTotalRounds('');
+                  setWorkTimeUnit('seconds');
+                  setRestTimeUnit('seconds');
                   if (intervalRef.current) {
                     clearInterval(intervalRef.current);
                   }

@@ -127,9 +127,26 @@ const Dashboard = ({
       {/* Recent Sessions */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
-          {sessions.slice(0, 3).map((session, i) => (
-            <SessionCard key={i} session={session} index={i} />
-          ))}
+          {sessions.length > 0 ? (
+            sessions.slice(0, 3).map((session, i) => (
+              <SessionCard key={i} session={session} index={i} />
+            ))
+          ) : (
+            // Empty state session card - matches sessions page placeholder style
+            <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-semibold text-base text-graytxt">
+                  Upcoming Session
+                </div>
+                <div className="text-sm text-graytxt/80">
+                  Pending
+                </div>
+              </div>
+              <div className="text-sm text-graytxt/80">
+                Climbs: -- • Median: -- • Focus: --
+              </div>
+            </div>
+          )}
         </div>
       </section>
       

@@ -19,7 +19,7 @@ const PlaceholderSessionCard = () => {
         </div>
       </div>
       <div className="text-sm text-graytxt/80">
-        <span>-- climbs</span> • -- median • Mixed focus
+        Climbs: -- • Median: -- • Focus: --
       </div>
     </div>
   );

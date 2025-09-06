@@ -61,12 +61,27 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
   const trendsStatus = checkPerformanceTrendsUnlock(sessions);
   const performanceTrendsUnlocked = trendsStatus.unlocked;
 
-  // Sample 6-week data - this would come from actual user data
-  const weeklyData = {
-    volume: [18, 22, 19, 25, 28, 31], // Climbs per week
-    avgGrade: [4.0, 4.1, 4.2, 4.3, 4.4, 4.5], // Avg grade per week
-    flashRate: [48, 55, 62, 59, 65, 67] // Flash rate % per week
+  // Calculate weekly data from sessions or show sample data
+  const calculateWeeklyData = () => {
+    if (!sessions || sessions.length === 0) {
+      // Show sample data when no sessions exist - this gives users a preview of what charts will look like
+      return {
+        volume: [18, 22, 19, 25, 28, 31], // Sample climbs per week
+        avgGrade: [4.0, 4.1, 4.2, 4.3, 4.4, 4.5], // Sample avg grade per week
+        flashRate: [48, 55, 62, 59, 65, 67] // Sample flash rate % per week
+      };
+    }
+
+    // For now, return sample data until we have enough sessions to calculate meaningful weekly trends
+    // This will be populated with real data once user has 6+ weeks of climbing
+    return {
+      volume: [18, 22, 19, 25, 28, 31],
+      avgGrade: [4.0, 4.1, 4.2, 4.3, 4.4, 4.5],
+      flashRate: [48, 55, 62, 59, 65, 67]
+    };
   };
+
+  const weeklyData = calculateWeeklyData();
   const weekLabels = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
 
   // Icon components for achievements
@@ -344,11 +359,51 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-2xl font-bold text-white">{Math.round(Math.random() * 30 + 45)}%</div>
+                <div className="text-2xl font-bold text-white">
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return '0%';
+                    
+                    let totalClimbs = 0;
+                    let flashedClimbs = 0;
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > 0) {
+                        session.climbList.forEach(climb => {
+                          totalClimbs++;
+                          if (climb.attempts === 1) {
+                            flashedClimbs++;
+                          }
+                        });
+                      }
+                    });
+                    
+                    if (totalClimbs === 0) return '0%';
+                    return Math.round((flashedClimbs / totalClimbs) * 100) + '%';
+                  })()}
+                </div>
                 <div className="text-sm text-graytxt">Flash Rate</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">V{Math.min(Math.floor(userData.totalClimbs / 20) + 2, 8)}</div>
+                <div className="text-2xl font-bold text-white">
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return 'V0';
+                    
+                    let highestGrade = 0;
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > 0) {
+                        session.climbList.forEach(climb => {
+                          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+                          if (gradeNum > highestGrade) {
+                            highestGrade = gradeNum;
+                          }
+                        });
+                      }
+                    });
+                    
+                    return `V${highestGrade}`;
+                  })()}
+                </div>
                 <div className="text-sm text-graytxt">Peak Grade</div>
               </div>
             </div>
@@ -364,11 +419,53 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 30) + 1, 1)}</div>
+                <div className="text-2xl font-bold text-white">
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return 'V0';
+                    
+                    let totalGrades = 0;
+                    let climbCount = 0;
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > 0) {
+                        session.climbList.forEach(climb => {
+                          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+                          totalGrades += gradeNum;
+                          climbCount++;
+                        });
+                      }
+                    });
+                    
+                    if (climbCount === 0) return 'V0';
+                    return `V${Math.round(totalGrades / climbCount)}`;
+                  })()}
+                </div>
                 <div className="text-sm text-graytxt">Avg Send</div>
               </div>
               <div>
-                <div className="text-2xl font-bold text-white">V{Math.max(Math.floor(userData.totalClimbs / 25) + 2, 2)}</div>
+                <div className="text-2xl font-bold text-white">
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return 'V0';
+                    
+                    let totalFlashGrades = 0;
+                    let flashCount = 0;
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > 0) {
+                        session.climbList.forEach(climb => {
+                          if (climb.attempts === 1) {
+                            const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+                            totalFlashGrades += gradeNum;
+                            flashCount++;
+                          }
+                        });
+                      }
+                    });
+                    
+                    if (flashCount === 0) return 'V0';
+                    return `V${Math.round(totalFlashGrades / flashCount)}`;
+                  })()}
+                </div>
                 <div className="text-sm text-graytxt">Avg Flash</div>
               </div>
             </div>
@@ -384,14 +481,56 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             </h4>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="text-2xl font-bold text-white">{Math.max(Math.floor(userData.totalClimbs / 3), 1)}</div>
+                <div className="text-2xl font-bold text-white">
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return '0';
+                    
+                    let bestSessionClimbs = 0;
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > bestSessionClimbs) {
+                        bestSessionClimbs = session.climbList.length;
+                      }
+                    });
+                    
+                    return bestSessionClimbs;
+                  })()}
+                </div>
                 <div className="text-sm text-graytxt">Best Session</div>
               </div>
               <div>
                 <div className="text-2xl font-bold text-white">
-                  {userData.totalClimbs > 30 ? 'Power' : 
-                   userData.totalClimbs > 15 ? 'Technical' : 
-                   'Balanced'}
+                  {(() => {
+                    if (!sessions || sessions.length === 0) return '-';
+                    
+                    const styleCounts = { Power: 0, Technical: 0, Simple: 0 };
+                    
+                    sessions.forEach(session => {
+                      if (session.climbList && session.climbList.length > 0) {
+                        session.climbList.forEach(climb => {
+                          if (climb.style && styleCounts.hasOwnProperty(climb.style)) {
+                            styleCounts[climb.style]++;
+                          }
+                        });
+                      }
+                    });
+                    
+                    const totalClimbs = Object.values(styleCounts).reduce((sum, count) => sum + count, 0);
+                    if (totalClimbs === 0) return '-';
+                    
+                    // Find the most common style
+                    let topStyle = 'Balanced';
+                    let maxCount = 0;
+                    
+                    Object.entries(styleCounts).forEach(([style, count]) => {
+                      if (count > maxCount) {
+                        maxCount = count;
+                        topStyle = style;
+                      }
+                    });
+                    
+                    return topStyle;
+                  })()}
                 </div>
                 <div className="text-sm text-graytxt">Top Style</div>
               </div>

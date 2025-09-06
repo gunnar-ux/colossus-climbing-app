@@ -85,70 +85,78 @@ const SessionStats = ({ sessions, onNavigateToTracker }) => {
           </div>
         </div>
         
-        <div className="space-y-4">
+        <div className="space-y-3">
           {/* Volume Metric */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                  <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                    <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">Volume</div>
+                  <div className="text-sm text-graytxt">Avg climbs per session</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-white">Volume</div>
-                <div className="text-sm text-graytxt">Avg climbs per session</div>
-              </div>
+              <div className="text-xl font-bold text-white">{avgClimbsPerSession}</div>
             </div>
-            <div className="text-xl font-bold text-white">{avgClimbsPerSession}</div>
           </div>
 
           {/* Frequency Metric */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">Frequency</div>
+                  <div className="text-sm text-graytxt">Avg sessions per week</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-white">Frequency</div>
-                <div className="text-sm text-graytxt">Avg sessions per week</div>
-              </div>
+              <div className="text-xl font-bold text-white">{avgSessionsPerWeek()}</div>
             </div>
-            <div className="text-xl font-bold text-white">{avgSessionsPerWeek()}</div>
           </div>
 
           {/* Top Style Metric */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                  <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                    <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">Top Style</div>
+                  <div className="text-sm text-graytxt">Most common style</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-white">Top Style</div>
-                <div className="text-sm text-graytxt">Most common style</div>
-              </div>
+              <div className="text-xl font-bold text-white">{getTopStyle()}</div>
             </div>
-            <div className="text-xl font-bold text-white">{getTopStyle()}</div>
           </div>
 
           {/* Top Angle Metric */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                  <path d="M3 21l18-18M3 21v-6l6-6 6 6v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+          <div className="border border-border/50 rounded-lg p-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
+                    <path d="M3 21l18-18M3 21v-6l6-6 6 6v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-white">Top Angle</div>
+                  <div className="text-sm text-graytxt">Most common angle</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-medium text-white">Top Angle</div>
-                <div className="text-sm text-graytxt">Most common angle</div>
-              </div>
+              <div className="text-xl font-bold text-white">{getTopAngle()}</div>
             </div>
-            <div className="text-xl font-bold text-white">{getTopAngle()}</div>
           </div>
         </div>
         

@@ -10,8 +10,7 @@ export function calculateSessionStats(climbList) {
   const angleCounts = {
     'Slab': 0,
     'Vertical': 0,
-    'Overhang': 0,
-    'Roof': 0
+    'Overhang': 0
   };
   const typeCounts = {
     'BOULDER': 0,
@@ -27,7 +26,9 @@ export function calculateSessionStats(climbList) {
         label: label === 'BOARD' ? 'Board' : 'Boulder', 
         count, 
         val: 0 
-      }))
+      })),
+      avgRPE: 0,
+      medianGrade: 'V0'
     };
   }
 
@@ -100,10 +101,21 @@ export function calculateSessionStats(climbList) {
     }))
     .sort((a, b) => b.val - a.val);
 
+  // Calculate average RPE
+  const avgRPE = climbList.reduce((sum, climb) => sum + (climb.rpe || 0), 0) / climbList.length;
+
+  // Calculate median grade (simplified)
+  const gradeValues = climbList.map(climb => parseInt(climb.grade.replace('V', '')) || 0);
+  gradeValues.sort((a, b) => a - b);
+  const medianGradeValue = gradeValues[Math.floor(gradeValues.length / 2)];
+  const medianGrade = `V${medianGradeValue}`;
+
   return {
     grades,
     styles,
     angles,
-    types
+    types,
+    avgRPE,
+    medianGrade
   };
 }
