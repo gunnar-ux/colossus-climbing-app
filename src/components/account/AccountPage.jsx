@@ -338,7 +338,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               </span>
             </div>
             <div className="flex-1">
-              <h3 className="text-xl text-white" style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>{personalForm.name || 'Climber'}</h3>
+              <h3 className="text-xl text-white" style={{ fontFamily: 'Oswald, sans-serif', fontWeight: 600 }}>{personalForm.name || profile?.name || 'Climber'}</h3>
               <p className="text-graytxt">{user?.email}</p>
               <div className="flex items-center gap-4 mt-1">
                 <span className="text-sm text-white font-semibold">Level: {climbingStats.level}</span>
@@ -576,8 +576,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                       <option value="">Select</option>
                       <option value="Male">Male</option>
                       <option value="Female">Female</option>
-                      <option value="Non-binary">Non-binary</option>
-                      <option value="Prefer not to say">Prefer not to say</option>
+                      <option value="Other">Other</option>
                     </select>
                     <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-graytxt">

@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 // Uses AuthContext for state management
 
 const AuthPage = ({ onComplete, onError }) => {
-  const { signUp } = useAuth();
+  const { signUp, signIn } = useAuth();
   const [form, setForm] = useState({
     email: '',
     password: ''
@@ -24,26 +24,25 @@ const AuthPage = ({ onComplete, onError }) => {
     setError('');
     
     try {
-      // Use AuthContext signUp method
-      const result = await signUp({
-        email: form.email.trim(),
-        password: form.password // We store password in context but don't persist it
-      });
+      // Try signup first (for new users)
+      let result = await signUp(form.email.trim(), form.password);
+      
+      // If signup fails because user exists, try signin
+      if (!result.success && result.error?.includes('already')) {
+        result = await signIn(form.email.trim(), form.password);
+      }
       
       if (result.success) {
-        // Complete onboarding
         onComplete({ 
           email: result.user.email,
           id: result.user.id 
         });
       } else {
-        setError(result.error || 'Failed to create account');
-        onError?.(result.error);
+        setError(result.error || 'Authentication failed');
       }
       
     } catch (error) {
       setError('Something went wrong. Please try again.');
-      onError?.(error.message);
     } finally {
       setIsSubmitting(false);
     }

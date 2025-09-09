@@ -6,6 +6,10 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co'
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder_anon_key_that_wont_work_but_prevents_errors'
 
+// Environment variables loaded successfully
+console.log('🔧 Supabase URL:', supabaseUrl.substring(0, 20) + '...')
+console.log('🔧 Supabase Key:', supabaseAnonKey.substring(0, 20) + '...')
+
 // Create Supabase client
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -19,7 +23,7 @@ export const TABLES = {
   USERS: 'users',
   SESSIONS: 'sessions', 
   CLIMBS: 'climbs',
-  CRS_SCORES: 'crs_scores'
+  CRS_SCORES: 'user_crs_scores'
 }
 
 // Auth helpers
@@ -92,22 +96,36 @@ export const database = {
     },
 
     getById: async (userId) => {
+      console.log('🔍 DATABASE getById - Looking for user:', userId)
+      
+      // Simple, efficient single query
       const { data, error } = await supabase
         .from(TABLES.USERS)
         .select('*')
         .eq('id', userId)
         .single()
+      
+      console.log('🔍 DATABASE getById - Result:', { data: !!data, error: error?.message })
+      
       return { data, error }
     },
 
     update: async (userId, updates) => {
+      console.log('🔍 DATABASE update - User ID:', userId, 'Updates:', updates)
+      
       const { data, error } = await supabase
         .from(TABLES.USERS)
         .update(updates)
         .eq('id', userId)
         .select()
-        .single()
-      return { data, error }
+      
+      console.log('🔍 DATABASE update - Raw result:', { data, error })
+      
+      // Return the first item if data is an array, otherwise return data
+      const result = Array.isArray(data) && data.length > 0 ? data[0] : data
+      console.log('🔍 DATABASE update - Final result:', result)
+      
+      return { data: result, error }
     }
   },
 

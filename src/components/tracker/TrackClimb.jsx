@@ -39,7 +39,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
       type, grade, wall, 
       styles: Array.from(styles), 
       rpe, attempts, 
-      ts: Date.now() 
+      timestamp: Date.now() 
     };
     
     try {

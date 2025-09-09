@@ -1,44 +1,39 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import AuthPage from './AuthPage.jsx';
 import PersonalInfo from './PersonalInfo.jsx';
 import PhysicalStats from './PhysicalStats.jsx';
-import WelcomePage from './WelcomePage.jsx';
-import Dashboard from '../dashboard/Dashboard.jsx';
 
 // OnboardingApp state machine extracted from HTML
 // Manages signup → welcome → dashboard flow for Week 1 retention
 
-const OnboardingApp = ({ 
-  initialState = 'signup',
-  onAccountCreation,
-  onNavigateToTracker,
-  onNavigateToSessions,
-  onViewAchievements 
-}) => {
-  // Use initial state passed from parent
-  const getInitialState = () => {
-    return initialState;
-  };
+const OnboardingApp = ({ onComplete }) => {
+  const { isAuthenticated, hasProfile } = useAuth();
+  
+  // Start at step 2 if already authenticated, step 1 if not
+  const [step, setStep] = useState(isAuthenticated ? 2 : 1);
+  const [userData, setUserData] = useState({
+    name: '', age: '', gender: '', location: '',
+    height: { feet: '', inches: '' },
+    weight: { value: '', unit: 'lbs' },
+    apeIndex: ''
+  });
 
-  const getInitialUserData = () => {
-    return {
-      name: '', age: '', gender: '',
-      height: { feet: '', inches: '' },
-      weight: { value: '', unit: 'lbs' },
-      apeIndex: '', location: '',
-      totalSessions: 0, totalClimbs: 0,
-    };
-  };
+  console.log('🔄 OnboardingApp - Authenticated:', isAuthenticated, 'HasProfile:', hasProfile, 'Step:', step);
 
-  const [appState, setAppState] = useState(getInitialState()); // 'signup' | 'personal' | 'physical' | 'welcome' | 'dashboard' | 'achievements'
-  const [userData, setUserData] = useState(getInitialUserData());
+  // If already authenticated and has profile, complete immediately
+  if (isAuthenticated && hasProfile) {
+    onComplete?.();
+    return null;
+  }
 
-  if (appState === 'signup') {
+  // Step 1: Authentication
+  if (step === 1) {
     return (
       <AuthPage 
         onComplete={(data) => { 
-          setUserData(u => ({...u, ...data})); 
-          setAppState('personal');
+          setUserData(prev => ({...prev, ...data})); 
+          setStep(2);
         }}
         onError={(error) => {
           console.error('Auth error:', error);
@@ -47,63 +42,30 @@ const OnboardingApp = ({
     );
   }
 
-  if (appState === 'personal') {
+  // Step 2: Personal Info
+  if (step === 2) {
     return (
       <PersonalInfo 
         onComplete={(data) => { 
-          setUserData(u => ({...u, ...data})); 
-          setAppState('physical');
+          setUserData(prev => ({...prev, ...data})); 
+          setStep(3);
         }}
-        onBack={() => setAppState('signup')}
+        onBack={() => setStep(1)}
         initialData={userData}
       />
     );
   }
 
-  if (appState === 'physical') {
-    return (
-      <PhysicalStats 
-        onComplete={(data) => { 
-          const completeUserData = {...userData, ...data};
-          setUserData(completeUserData); 
-          setAppState('welcome');
-          if (onAccountCreation) {
-            onAccountCreation(completeUserData);
-          }
-        }}
-        onBack={() => setAppState('personal')}
-        userData={userData}
-      />
-    );
-  }
-
-  // Tour feature disabled - skip welcome state
-
-  if (appState === 'achievements') {
-    return (
-      <div>
-        {/* AchievementsPage would be implemented here */}
-        <div className="flex items-center justify-center min-h-screen text-white">
-          <div className="text-center">
-            <h2 className="text-2xl font-bold mb-4">Achievements Coming Soon</h2>
-            <button 
-              onClick={() => setAppState('dashboard')}
-              className="px-6 py-3 bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition"
-            >
-              Back to Dashboard
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Step 3: Physical Stats
   return (
-    <Dashboard 
-      userData={userData} 
-      onNavigateToTracker={onNavigateToTracker}
-      onNavigateToSessions={onNavigateToSessions}
-      onViewAchievements={() => setAppState('achievements')}
+    <PhysicalStats 
+      onComplete={(data) => { 
+        const completeUserData = {...userData, ...data};
+        setUserData(completeUserData); 
+        onComplete?.();
+      }}
+      onBack={() => setStep(2)}
+      userData={userData}
     />
   );
 };

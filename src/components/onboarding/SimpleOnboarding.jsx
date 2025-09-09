@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useAuth } from '../../auth/useAuth.js';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 // Simple 3-step onboarding: Email/Password → Personal Info → Physical Stats → Dashboard
 const SimpleOnboarding = ({ onComplete }) => {

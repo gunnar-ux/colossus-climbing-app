@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
-import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 
 import { getMetricAvailability, clamp } from '../../utils/index.js';
@@ -160,21 +159,6 @@ const Dashboard = ({
       </section>
       
       <FAB onClick={handleFABClick} />
-      
-      <BottomNavigation 
-        activeItem="Dashboard"
-        onNavigateTo={(route) => {
-          if (route === '/dashboard') {
-            // Already on dashboard
-          } else if (route === '/sessions') {
-            onNavigateToSessions?.();
-          } else if (route === '/progress') {
-            onNavigateToProgress?.();
-          } else if (route === '/account') {
-            onNavigateToAccount?.();
-          }
-        }}
-      />
     </div>
   );
 };

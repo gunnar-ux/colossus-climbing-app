@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-// Auth system temporarily removed
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext.jsx';
 
 // Components
 import Dashboard from './components/dashboard/Dashboard.jsx';
@@ -8,13 +8,16 @@ import SessionsPage from './components/sessions/SessionsPage.jsx';
 import ProgressPage from './components/progress/ProgressPage.jsx';
 import AccountPage from './components/account/AccountPage.jsx';
 import TrackClimb from './components/tracker/TrackClimb.jsx';
-// Onboarding and loading components temporarily disabled
+import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
+import LoadingScreen from './components/ui/LoadingScreen.jsx';
 import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icons.jsx';
 
 // Utils & Services
 import { getCleanInitialData, getCleanInitialSessions } from './utils/appReset.js';
 import { roundRPE } from './utils/index.js';
 import { calculateSessionStats } from './utils/sessionCalculations.js';
+import { database } from './lib/supabase.js';
+import { useDataHydration } from './hooks/useDataHydration.js';
 
 // Persistent Bottom Navigation Component
 const BottomNavigation = () => {
@@ -86,16 +89,18 @@ const BottomNavigation = () => {
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, profile, loading, profileLoading, isAuthenticated, hasProfile, signOut } = useAuth();
   
-  // App state
-  const [userData, setUserData] = useState(getCleanInitialData());
-  const [sessions, setSessions] = useState(getCleanInitialSessions());
+  // Data hydration from database
+  const { 
+    sessions, 
+    userData, 
+    dataLoading, 
+    setSessions, 
+    setUserData 
+  } = useDataHydration(user, profile);
   
-  // Mock user data for now
-  const user = { id: 'demo-user', email: 'demo@example.com' };
-  const profile = { name: 'Demo User' };
-  
-  // Use local sample data for now (no database loading)
+  // Session loading is now handled by useDataHydration hook
   
   // Handle account creation
   const handleAccountCreation = (accountData) => {
@@ -106,11 +111,24 @@ const AppContent = () => {
     navigate('/');
   };
   
-  // Simple logout handler (no auth system)
-  const handleLogout = () => {
-    setUserData(getCleanInitialData());
-    setSessions(getCleanInitialSessions());
-    navigate('/');
+  // Real logout handler using Supabase auth
+  const handleLogout = async () => {
+    try {
+      console.log('🚪 Logging out user...');
+      await signOut(); // This will clear auth state and redirect
+      
+      // Clear local state as well
+      setUserData(getCleanInitialData());
+      setSessions(getCleanInitialSessions());
+      
+      console.log('🚪 Logout successful');
+    } catch (error) {
+      console.error('🚪 Logout error:', error);
+      // Still clear local state even if signOut fails
+      setUserData(getCleanInitialData());
+      setSessions(getCleanInitialSessions());
+      navigate('/');
+    }
   };
   
   // Calculate session duration
@@ -129,9 +147,11 @@ const AppContent = () => {
 
   // Handle climb logging
   const handleClimbLogged = async (climbData) => {
-    const timestamp = Date.now();
+    if (!user) return;
     
-    // Create climb object
+    const timestamp = climbData.timestamp || Date.now();
+    
+    // Create climb object for local state
     const normalizedStyle = climbData.styles[0] === 'POWERFUL' ? 'Power' : 
                             climbData.styles[0] === 'TECHNICAL' ? 'Technical' : 
                             climbData.styles[0] === 'SIMPLE' ? 'Simple' : climbData.styles[0];
@@ -154,57 +174,152 @@ const AppContent = () => {
       zone: climbData.zone || 'ENDURANCE',
       type: climbData.type || 'BOULDER'
     };
-    
-    let updatedSessions = [...sessions];
-    let nowSessionIndex = updatedSessions.findIndex(s => s.date === "Now");
-    
-    if (nowSessionIndex !== -1) {
-      // Update existing "Now" session
-      const nowSession = updatedSessions[nowSessionIndex];
-      const updatedClimbList = [newClimb, ...nowSession.climbList];
-      const sessionStats = calculateSessionStats(updatedClimbList);
-      
-      updatedSessions[nowSessionIndex] = {
-        ...nowSession,
-        climbList: updatedClimbList,
-        climbs: updatedClimbList.length,
-        endTime: timestamp,
-        duration: calculateSessionDuration(nowSession.startTime, timestamp),
-        ...sessionStats
-      };
-    } else {
-      // Create new "Now" session
-      const sessionStats = calculateSessionStats([newClimb]);
-      const newSession = {
-        id: `now-${timestamp}`,
-        date: "Now",
-        timestamp: timestamp,
-        startTime: timestamp,
-        endTime: timestamp,
-        climbs: 1,
-        duration: "15m",
-        quality: 'MODERATE',
-        gym: climbData.gym || 'Session',
-        avgGrade: climbData.grade,
-        style: normalizedStyle,
-        climbList: [newClimb],
-        ...sessionStats
+
+    try {
+      // Save to Supabase
+      const climbPayload = {
+        user_id: user.id,
+        grade: climbData.grade,
+        wall_angle: climbData.wall || climbData.angle, // Use original uppercase values
+        style: climbData.styles[0], // Use original uppercase values
+        rpe: roundRPE(climbData.rpe),
+        attempts: climbData.attempts || 1,
+        climb_type: climbData.type || 'BOULDER',
+        timestamp: new Date(timestamp).toISOString()
       };
       
-      updatedSessions = [newSession, ...updatedSessions];
+      console.log('🔥 About to save climb payload:', climbPayload);
+      console.log('🔥 Original climb data:', climbData);
+
+      // Find or create today's session (database-first approach)
+      let sessionId;
+      let currentSession = sessions.find(s => s.date === "Now" || 
+        new Date(s.timestamp).toDateString() === new Date().toDateString());
+      
+      if (!currentSession) {
+        // Create new session in database first
+        const today = new Date();
+        const sessionData = {
+          user_id: user.id,
+          date: today.toISOString().split('T')[0], // Store as proper date
+          start_time: new Date(timestamp).toISOString(),
+          gym_location: 'Session'
+        };
+        
+        console.log('🔥 Creating new session in database:', sessionData);
+        const { data: sessionResult, error: sessionError } = await database.sessions.create(sessionData);
+        if (sessionError) throw sessionError;
+        
+        sessionId = sessionResult.id;
+        
+        // Add the new session to local state immediately
+        const newLocalSession = {
+          id: sessionResult.id,
+          date: "Now",
+          timestamp: timestamp,
+          startTime: timestamp,
+          endTime: null,
+          duration: "Active",
+          climbs: 0,
+          climbList: [],
+          grades: [],
+          styles: [],
+          angles: [],
+          types: []
+        };
+        
+        setSessions(prevSessions => [newLocalSession, ...prevSessions]);
+        currentSession = newLocalSession;
+        
+      } else {
+        sessionId = currentSession.id;
+      }
+
+      // Add session_id to climb payload
+      climbPayload.session_id = sessionId;
+      
+      // Save climb to Supabase
+      console.log('🔥 Calling database.climbs.create with payload:', climbPayload);
+      const { data: climbResult, error: climbError } = await database.climbs.create(climbPayload);
+      
+      console.log('🔥 Database response:', { climbResult, climbError });
+      
+      if (climbError) {
+        console.error('🔥 Database error details:', climbError);
+        throw climbError;
+      }
+
+      console.log('🔥 Climb saved to Supabase successfully:', climbResult);
+      
+      // Update local state immediately after successful save
+      const currentSessionId = sessionId;
+      setSessions(prevSessions => {
+        const updatedSessions = [...prevSessions];
+        const sessionIndex = updatedSessions.findIndex(s => s.id === currentSessionId);
+        
+        if (sessionIndex !== -1) {
+          // Update existing session
+          const session = updatedSessions[sessionIndex];
+          const updatedClimbList = [newClimb, ...session.climbList];
+          const sessionStats = calculateSessionStats(updatedClimbList);
+          
+          updatedSessions[sessionIndex] = {
+            ...session,
+            climbList: updatedClimbList,
+            climbs: updatedClimbList.length,
+            endTime: timestamp,
+            duration: calculateSessionDuration(session.startTime, timestamp),
+            ...sessionStats
+          };
+          
+          console.log('🔥 Updated local session state:', updatedSessions[sessionIndex]);
+        }
+        
+        return updatedSessions;
+      });
+      
+      // Update user data totals
+      setUserData(prev => ({
+        ...prev,
+        totalClimbs: prev.totalClimbs + 1
+      }));
+      
+    } catch (error) {
+      console.error('🔥 Failed to save climb to Supabase:', error);
+      console.error('🔥 Error details:', error.message);
+      console.error('🔥 Error stack:', error.stack);
+      console.error('🔥 User ID:', user?.id);
+      console.error('🔥 Climb payload that failed:', climbPayload);
+      // Continue with local state update even if Supabase fails
     }
     
-    setSessions(updatedSessions);
-    
-    // Update user data totals
-    setUserData(prev => ({
-      ...prev,
-      totalSessions: Math.max(prev.totalSessions, sessions.length + 1),
-      totalClimbs: prev.totalClimbs + 1
-    }));
-    
-    // Data is now stored locally only (no database saving)
+    // Data is now stored in database and synced to local state
   };
+  
+  // AUTH CHECK - AFTER ALL HOOKS
+  if (loading) {
+    return <LoadingScreen />;
+  }
+  
+  // If not authenticated, show simple auth page
+  if (!isAuthenticated) {
+    return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
+  }
+  
+  // If authenticated but profile is still loading, show loading screen
+  if (isAuthenticated && profileLoading) {
+    return <LoadingScreen />;
+  }
+  
+  // If authenticated but no profile, show onboarding to create profile
+  if (isAuthenticated && !profile) {
+    return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
+  }
+  
+  // If profile loaded but data is still loading, show loading screen
+  if (isAuthenticated && profile && dataLoading) {
+    return <LoadingScreen />;
+  }
   
   return (
     <div className="bg-black text-white min-h-screen">
@@ -219,7 +334,7 @@ const AppContent = () => {
                         userData={userData}
                         sessions={sessions}
                         user={user}
-                        profile={profile}
+                        profile={profile || { id: user?.id, name: 'Gunnar', email: user?.email }}
                         onNavigateToTracker={() => navigate('/tracker')}
                         onLogout={handleLogout}
                       />
@@ -264,11 +379,13 @@ const AppContent = () => {
   );
 };
 
-// Main App wrapper with Router
+// Main App wrapper with Router and Auth
 const App = () => {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 };

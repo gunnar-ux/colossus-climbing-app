@@ -78,6 +78,13 @@ export function validateClimbData(climbData) {
   
   if (!climbData.styles || climbData.styles.length === 0) {
     errors.push('At least one style must be selected');
+  } else {
+    // Validate each style
+    const validStyles = ['SIMPLE', 'POWERFUL', 'TECHNICAL'];
+    const invalidStyles = climbData.styles.filter(style => !validStyles.includes(style));
+    if (invalidStyles.length > 0) {
+      errors.push(`Invalid styles: ${invalidStyles.join(', ')}`);
+    }
   }
   
   return {

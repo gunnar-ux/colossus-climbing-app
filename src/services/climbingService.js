@@ -1,5 +1,6 @@
 // Climbing-specific service layer for Supabase integration
-import { supabase } from '../lib/supabase.js'
+import { supabase, database } from '../lib/supabase.js'
+import { validateClimbData } from '../utils/validation.js'
 
 export class ClimbingService {
   constructor() {

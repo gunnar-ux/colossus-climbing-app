@@ -5,7 +5,9 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 // Collects height, weight, ape index and creates user profile
 
 const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
-  const { user, updateProfile } = useAuth();
+  const { user, createProfile, loadProfile, isAuthenticated } = useAuth();
+  
+  console.log('🔧 PhysicalStats render - User:', !!user, 'Authenticated:', isAuthenticated, 'UserData:', userData);
   const [unitHeight, setUnitHeight] = useState('ft');
   const [unitWeight, setUnitWeight] = useState('lbs');
   const [unitApeIndex, setUnitApeIndex] = useState('in');
@@ -23,6 +25,7 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
 
 
   const handleCreateProfile = async () => {
+    console.log('🔧 Complete Setup clicked! User:', !!user, 'Form:', form);
     if (isCreating) return;
     
     setIsCreating(true);
@@ -31,7 +34,7 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
     try {
       
       // If user is not yet authenticated (email not confirmed), store data locally and proceed
-      if (!user) {
+      if (!user && !userData.id) {
 
         
         // Convert measurements for storage
@@ -88,8 +91,13 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
         : Math.round((Number(form.apeIndex) || 0) * 2.54);
 
       // Prepare user data for database
+      const currentUser = user || { id: userData.id, email: userData.email };
+      console.log('🔧 Using user:', currentUser);
+      
       const profileData = {
-        name: userData.name || 'Climber', // Provide fallback name for database constraint
+        id: currentUser.id,
+        name: userData.name || 'Climber',
+        email: currentUser.email || userData.email,
         age: userData.age ? Number(userData.age) : null,
         gender: userData.gender || '',
         location: userData.location || '',
@@ -102,14 +110,22 @@ const PhysicalStats = ({ onComplete, onBack, userData = {} }) => {
 
 
       
-      // Use AuthContext to update profile
-      const result = await updateProfile(profileData);
+      // Create profile in database
+      console.log('🔧 Creating profile with data:', profileData);
+      const result = await createProfile(profileData);
+      console.log('🔧 Profile creation result:', result);
 
       if (!result.success) {
+        console.error('🔧 Profile creation failed:', result.error);
         setError(result.error || 'Failed to create profile');
         return;
       }
       
+      // Reload profile to update AuthContext
+      console.log('🔧 Reloading profile...');
+      await loadProfile(currentUser.id);
+      
+      console.log('🔧 Calling onComplete...');
       onComplete({
         ...userData,
         height: form.height,
