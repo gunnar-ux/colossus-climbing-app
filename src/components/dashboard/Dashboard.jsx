@@ -108,22 +108,8 @@ const Dashboard = ({
         crsData={crsData}
         loadRatioData={loadRatioData}
       />
-      <TimerCard />
-      <RecommendedTraining 
-        onStartTraining={handleStartTraining}
-        recommendation={recommendedTraining}
-        sessions={userData.totalSessions}
-      />
-      <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} />
-      <AllTime 
-        available={avail.allMetrics} 
-        onViewAchievements={handleViewAchievements}
-        userData={userData}
-        sessions={sessions}
-        peakGrade={peakGrade}
-      />
       
-      {/* Recent Sessions */}
+      {/* Recent Sessions - positioned after Today for context */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
           {sessions.length > 0 ? (
@@ -138,16 +124,30 @@ const Dashboard = ({
                   Upcoming Session
                 </div>
                 <div className="text-sm text-graytxt/80">
-                  Pending
+                  -- Climbs
                 </div>
               </div>
               <div className="text-sm text-graytxt/80">
-                Climbs: -- • Median: -- • Focus: --
+                Peak: -- • Flash Rate: --% • XP: --
               </div>
             </div>
           )}
         </div>
       </section>
+      <TimerCard />
+      <RecommendedTraining 
+        onStartTraining={handleStartTraining}
+        recommendation={recommendedTraining}
+        sessions={userData.totalSessions}
+      />
+      <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} />
+      <AllTime 
+        available={avail.allMetrics} 
+        onViewAchievements={handleViewAchievements}
+        userData={userData}
+        sessions={sessions}
+        peakGrade={peakGrade}
+      />
       
       {/* Bottom Logo Section - Whoop Style */}
       <section className="pt-2 pb-32 flex items-center justify-center">

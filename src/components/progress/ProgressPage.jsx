@@ -3,6 +3,7 @@ import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 import { LineChart, Trend } from '../ui/Charts.jsx';
+import { MountainIcon, LightningIcon, TargetIcon, ChevronDownIcon, ClockIcon, ChartBarIcon, TrophyIcon, LockClosedIcon } from '../ui/Icons.jsx';
 
 // Progress & Achievements page component
 // Displays climbing progress, achievement milestones, and performance trends
@@ -84,33 +85,12 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
   const weeklyData = calculateWeeklyData();
   const weekLabels = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
 
-  // Icon components for achievements
-  const BoulderIcon = ({ className }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M3 18h18l-9-15-9 15z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-      <path d="M8 18l4-7 4 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-
-  const FlashIcon = ({ className }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
-      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-
-  const TrackIcon = ({ className }) => (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className={className}>
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="12" cy="12" r="6" stroke="currentColor" strokeWidth="2"/>
-      <circle cx="12" cy="12" r="2" fill="currentColor"/>
-    </svg>
-  );
 
   // Achievement milestones
   const achievements = [
     {
       category: 'Boulders Climbed',
-      icon: BoulderIcon,
+      icon: MountainIcon,
       milestones: [
         { target: 50, unlocked: userData.totalClimbs >= 50, current: userData.totalClimbs },
         { target: 100, unlocked: userData.totalClimbs >= 100, current: userData.totalClimbs },
@@ -119,7 +99,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     },
     {
       category: 'Climbs Flashed',
-      icon: FlashIcon,
+      icon: LightningIcon,
       milestones: [
         { target: 10, unlocked: userData.totalClimbs >= 15, current: Math.floor(userData.totalClimbs * 0.65) },
         { target: 25, unlocked: userData.totalClimbs >= 40, current: Math.floor(userData.totalClimbs * 0.65) },
@@ -128,7 +108,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     },
     {
       category: 'Sessions Tracked',
-      icon: TrackIcon,
+      icon: TargetIcon,
       milestones: [
         { target: 5, unlocked: userData.totalSessions >= 5, current: userData.totalSessions },
         { target: 25, unlocked: userData.totalSessions >= 25, current: userData.totalSessions },
@@ -207,19 +187,9 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             <div className="text-sm text-graytxt">
               {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
             </div>
-            <svg 
-              width="16" 
-              height="16" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className={`transition-transform duration-200 text-graytxt ${isProfileExpanded ? 'rotate-180' : ''}`}
-            >
-              <polyline points="6,9 12,15 18,9"></polyline>
-            </svg>
+            <ChevronDownIcon 
+              className={`w-4 h-4 transition-transform duration-200 text-graytxt ${isProfileExpanded ? 'rotate-180' : ''}`}
+            />
           </div>
 
           {/* Expandable XP & Level Info */}
@@ -299,10 +269,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           {/* Volume Metrics */}
           <div className="bg-card border border-border rounded-col p-4">
             <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-              </svg>
+              <ClockIcon className="w-4 h-4 text-white" />
               Volume
             </h4>
             <div className="space-y-4">
@@ -352,9 +319,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           {/* Performance Metrics */}
           <div className="bg-card border border-border rounded-col p-4">
             <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <LightningIcon className="w-4 h-4 text-white" />
               Performance
             </h4>
             <div className="grid grid-cols-2 gap-4">
@@ -412,9 +377,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           {/* Grade Distribution */}
           <div className="bg-card border border-border rounded-col p-4">
             <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ChartBarIcon className="w-4 h-4 text-white" />
               Grades
             </h4>
             <div className="grid grid-cols-2 gap-4">
@@ -474,9 +437,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           {/* Session Records */}
           <div className="bg-card border border-border rounded-col p-4">
             <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                <path d="M6 2l3 6 5-4-3 7h4l-8 6 3-7H6z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <TrophyIcon className="w-4 h-4 text-white" />
               Records
             </h4>
             <div className="grid grid-cols-2 gap-4">
@@ -553,7 +514,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
                     : 'border-border bg-card'
                 }`}>
                   <div className="flex justify-center mb-2">
-                    <category.icon className={milestone.unlocked ? 'text-green' : 'text-gray-600'} />
+                    <category.icon className={`w-8 h-8 ${milestone.unlocked ? 'text-green' : 'text-gray-600'}`} />
                   </div>
                   <div className={`text-xl font-bold ${
                     milestone.unlocked ? 'text-green' : 'text-gray-600'
@@ -611,11 +572,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center px-8">
               <div className="mb-4">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" className="text-white/70 mx-auto mb-4">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
-                  <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                  <path d="M12 15v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
+                <LockClosedIcon className="w-10 h-10 text-white/70 mx-auto mb-4" />
                 <div className="text-3xl font-bold text-white mb-2">
                   {trendsStatus.weeksRemaining === 0 ? 'Unlocking Soon' : `${trendsStatus.weeksRemaining} Week${trendsStatus.weeksRemaining === 1 ? '' : 's'} Left`}
                 </div>

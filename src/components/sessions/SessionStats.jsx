@@ -1,6 +1,9 @@
 // SessionStats component extracted from sessions.html
 // Preserves exact dark theme styling and metrics calculations
 
+import { ChartBarIcon, ClockIcon, BoltIcon } from '@heroicons/react/24/outline';
+import { MountainIcon } from '../ui/Icons.jsx';
+
 const SessionStats = ({ sessions, onNavigateToTracker }) => {
   const totalSessions = sessions.length;
   const totalClimbs = sessions.reduce((sum, s) => sum + s.climbs, 0);
@@ -91,9 +94,7 @@ const SessionStats = ({ sessions, onNavigateToTracker }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                    <path d="M3 3l18 18M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <ChartBarIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-white">Volume</div>
@@ -109,10 +110,7 @@ const SessionStats = ({ sessions, onNavigateToTracker }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
-                    <path d="M12 8v4l3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                  </svg>
+                  <ClockIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-white">Frequency</div>
@@ -128,9 +126,7 @@ const SessionStats = ({ sessions, onNavigateToTracker }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                    <path d="M12 2L2 7v10c0 5.55 3.84 9.74 9 11 5.16-1.26 9-5.45 9-11V7l-10-5z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <BoltIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-white">Top Style</div>
@@ -146,9 +142,7 @@ const SessionStats = ({ sessions, onNavigateToTracker }) => {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/5 border border-white/10 rounded-lg flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-white">
-                    <path d="M3 21l18-18M3 21v-6l6-6 6 6v6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  <MountainIcon className="w-4 h-4 text-white" />
                 </div>
                 <div>
                   <div className="text-sm font-medium text-white">Top Angle</div>

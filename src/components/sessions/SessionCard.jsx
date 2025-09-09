@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDownIcon } from '../ui/Icons.jsx';
 import Progress from '../ui/Progress.jsx';
 import { roundRPE } from '../../utils/index.js';
 
@@ -10,27 +11,17 @@ const SessionCard = ({ session, index }) => {
   
   return (
     <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setOpen(!open)}>
-      <div className="flex items-center justify-between mb-2">
-        <div className="font-semibold text-base">{session.date}</div>
-        <div className="text-sm text-graytxt">{session.duration}</div>
-      </div>
+        <div className="flex items-center justify-between mb-2">
+          <div className="font-semibold text-base">{session.date}</div>
+          <div className="text-sm text-white">{session.climbs} Climbs</div>
+        </div>
       <div className="flex items-center justify-between text-sm text-graytxt">
         <div>
-          <span className="text-white">Climbs: {session.climbs}</span> • Median: {session.medianGrade} • Focus: {session.style}
+          Peak: <span className="text-white">{session.peakGrade || 'V0'}</span> • Flash Rate: <span className="text-white">{session.flashRate || 0}%</span> • XP: <span className="text-white">{session.totalXP || 0}</span>
         </div>
-        <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
-        >
-          <polyline points="6,9 12,15 18,9"></polyline>
-        </svg>
+        <ChevronDownIcon 
+          className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
+        />
       </div>
       
       {/* Expandable content */}

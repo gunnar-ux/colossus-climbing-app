@@ -89,7 +89,7 @@ const BottomNavigation = () => {
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, loading, profileLoading, isAuthenticated, hasProfile, signOut } = useAuth();
+  const { user, profile, loading, profileLoading, isAuthenticated, hasProfile, signOut, loadProfile } = useAuth();
   
   // Data hydration from database
   const { 
@@ -225,11 +225,21 @@ const AppContent = () => {
           grades: [],
           styles: [],
           angles: [],
-          types: []
+          types: [],
+          totalXP: 0,
+          flashRate: 0,
+          peakGrade: 'V0',
+          style: '--'
         };
         
         setSessions(prevSessions => [newLocalSession, ...prevSessions]);
         currentSession = newLocalSession;
+        
+        // Update user data totals for new session
+        setUserData(prev => ({
+          ...prev,
+          totalSessions: prev.totalSessions + 1
+        }));
         
       } else {
         sessionId = currentSession.id;
@@ -283,6 +293,15 @@ const AppContent = () => {
         ...prev,
         totalClimbs: prev.totalClimbs + 1
       }));
+      
+      // Refresh profile data to sync with database totals for calibration card
+      try {
+        await loadProfile(user.id);
+        console.log('🔥 Profile refreshed after climb logging');
+      } catch (profileError) {
+        console.warn('🔥 Failed to refresh profile after climb logging:', profileError);
+        // Don't throw - this is not critical for the climb logging flow
+      }
       
     } catch (error) {
       console.error('🔥 Failed to save climb to Supabase:', error);

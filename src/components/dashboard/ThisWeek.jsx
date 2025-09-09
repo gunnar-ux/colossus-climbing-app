@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDownIcon, LockClosedIcon } from '../ui/Icons.jsx';
 import { BarChart, Trend } from './Charts.jsx';
 import { roundRPE } from '../../utils/index.js';
 
@@ -53,19 +54,9 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
           <div className="text-sm text-blue">
             {available ? 'Weekly performance summary' : `Track ${3 - currentSessions} more session${3 - currentSessions === 1 ? '' : 's'} to unlock insights`}
           </div>
-          <svg 
-            width="16" 
-            height="16" 
-            viewBox="0 0 24 24" 
-            fill="none" 
-            stroke="currentColor" 
-            strokeWidth="2" 
-            strokeLinecap="round" 
-            strokeLinejoin="round"
-            className={`transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
-          >
-            <polyline points="6,9 12,15 18,9"></polyline>
-          </svg>
+          <ChevronDownIcon 
+            className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
+          />
         </div>
 
         {/* Expandable content */}
@@ -184,11 +175,7 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none px-4">
                   <div className="text-center px-8">
                     <div className="mb-4">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-white/70 mx-auto mb-3">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="12" cy="7" r="4" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M12 15v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
+                      <LockClosedIcon className="w-8 h-8 text-white/70 mx-auto mb-3" />
                       <div className="text-xl font-bold text-white mb-1">
                         {3 - currentSessions} Session{3 - currentSessions === 1 ? '' : 's'} Left
                       </div>

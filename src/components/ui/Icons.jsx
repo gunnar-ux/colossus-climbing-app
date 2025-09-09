@@ -1,34 +1,102 @@
-// Static icon components for iOS compatibility
-// These replace Lucide icons which don't always bundle correctly with Capacitor
+// Modern icon components using Heroicons for consistency
+// Heroicons provide excellent iOS compatibility and consistent design
 
-export const HomeIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-    <polyline points="9,22 9,12 15,12 15,22"/>
-  </svg>
+import {
+  HomeIcon as HeroHomeIcon,
+  QueueListIcon as HeroListIcon,
+  ChartBarIcon as HeroTrendingIcon,
+  ChartBarIcon as HeroChartBarIcon,
+  UserIcon as HeroUserIcon,
+  ClockIcon as HeroClockIcon,
+  ChevronDownIcon as HeroChevronDownIcon,
+  ArrowPathIcon as HeroResetIcon,
+  LockClosedIcon as HeroLockIcon,
+  SpeakerWaveIcon as HeroVolumeIcon,
+  MapIcon as HeroMountainIcon,
+  BoltIcon as HeroLightningIcon,
+  ViewfinderCircleIcon as HeroTargetIcon,
+  TrophyIcon as HeroTrophyIcon,
+  PlusIcon as HeroPlusIcon,
+  XMarkIcon as HeroXIcon,
+  ArrowRightOnRectangleIcon as HeroLogoutIcon,
+  ArrowTopRightOnSquareIcon as HeroExternalIcon
+} from '@heroicons/react/24/outline';
+
+// Navigation Icons (4 icons)
+export const HomeIcon = ({ className = "w-5 h-5" }) => (
+  <HeroHomeIcon className={className} />
 );
 
-export const ListIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="8" x2="21" y1="6" y2="6"/>
-    <line x1="8" x2="21" y1="12" y2="12"/>
-    <line x1="8" x2="21" y1="18" y2="18"/>
-    <line x1="3" x2="3.01" y1="6" y2="6"/>
-    <line x1="3" x2="3.01" y1="12" y2="12"/>
-    <line x1="3" x2="3.01" y1="18" y2="18"/>
-  </svg>
+export const ListIcon = ({ className = "w-5 h-5" }) => (
+  <HeroListIcon className={className} />
 );
 
-export const TrendingIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
-  </svg>
+export const TrendingIcon = ({ className = "w-5 h-5" }) => (
+  <HeroTrendingIcon className={className} />
 );
 
-export const UserIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-    <circle cx="12" cy="7" r="4"/>
-  </svg>
+export const UserIcon = ({ className = "w-5 h-5" }) => (
+  <HeroUserIcon className={className} />
+);
+
+// UI/Functional Icons (13 icons)
+export const ClockIcon = ({ className = "w-5 h-5" }) => (
+  <HeroClockIcon className={className} />
+);
+
+export const ChevronDownIcon = ({ className = "w-5 h-5" }) => (
+  <HeroChevronDownIcon className={className} />
+);
+
+export const ResetIcon = ({ className = "w-5 h-5" }) => (
+  <HeroResetIcon className={className} />
+);
+
+export const LockIcon = ({ className = "w-5 h-5" }) => (
+  <HeroLockIcon className={className} />
+);
+
+export const VolumeIcon = ({ className = "w-5 h-5" }) => (
+  <HeroVolumeIcon className={className} />
+);
+
+export const MountainIcon = ({ className = "w-5 h-5" }) => (
+  <HeroMountainIcon className={className} />
+);
+
+export const LightningIcon = ({ className = "w-5 h-5" }) => (
+  <HeroLightningIcon className={className} />
+);
+
+export const TargetIcon = ({ className = "w-5 h-5" }) => (
+  <HeroTargetIcon className={className} />
+);
+
+export const TrophyIcon = ({ className = "w-5 h-5" }) => (
+  <HeroTrophyIcon className={className} />
+);
+
+export const PlusIcon = ({ className = "w-5 h-5" }) => (
+  <HeroPlusIcon className={className} />
+);
+
+export const XIcon = ({ className = "w-5 h-5" }) => (
+  <HeroXIcon className={className} />
+);
+
+export const LogoutIcon = ({ className = "w-5 h-5" }) => (
+  <HeroLogoutIcon className={className} />
+);
+
+export const ExternalIcon = ({ className = "w-5 h-5" }) => (
+  <HeroExternalIcon className={className} />
+);
+
+export const ChartBarIcon = ({ className = "w-5 h-5" }) => (
+  <HeroChartBarIcon className={className} />
+);
+
+export const LockClosedIcon = ({ className = "w-5 h-5" }) => (
+  <HeroLockIcon className={className} />
 );
 

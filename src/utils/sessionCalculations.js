@@ -1,5 +1,22 @@
 // Calculate session statistics from climb list
 export function calculateSessionStats(climbList) {
+  // Helper function to normalize style values
+  const normalizeStyle = (style) => {
+    if (style === 'POWERFUL') return 'Power';
+    if (style === 'TECHNICAL') return 'Technical';
+    if (style === 'SIMPLE') return 'Simple';
+    return style;
+  };
+
+  // Helper function to normalize angle values
+  const normalizeAngle = (angle) => {
+    if (!angle || angle === null || angle === undefined) return 'Vertical'; // Default fallback
+    if (angle === 'SLAB') return 'Slab';
+    if (angle === 'VERTICAL') return 'Vertical';
+    if (angle === 'OVERHANG') return 'Overhang';
+    return angle;
+  };
+
   // Initialize with all possible values set to 0
   const gradeCounts = {};
   const styleCounts = {
@@ -38,20 +55,22 @@ export function calculateSessionStats(climbList) {
     const grade = climb.grade || 'Unknown';
     gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
 
-    // Count styles
-    const style = climb.style || 'Unknown';
-    if (styleCounts.hasOwnProperty(style)) {
-      styleCounts[style]++;
+    // Count styles (normalize first)
+    const rawStyle = climb.style || 'Unknown';
+    const normalizedStyle = normalizeStyle(rawStyle);
+    if (styleCounts.hasOwnProperty(normalizedStyle)) {
+      styleCounts[normalizedStyle]++;
     } else {
-      styleCounts[style] = 1;
+      styleCounts[normalizedStyle] = 1;
     }
 
-    // Count angles
-    const angle = climb.angle || climb.wall || 'Unknown';
-    if (angleCounts.hasOwnProperty(angle)) {
-      angleCounts[angle]++;
+    // Count angles (normalize first)
+    const rawAngle = climb.angle || climb.wall || 'Unknown';
+    const normalizedAngle = normalizeAngle(rawAngle);
+    if (angleCounts.hasOwnProperty(normalizedAngle)) {
+      angleCounts[normalizedAngle]++;
     } else {
-      angleCounts[angle] = 1;
+      angleCounts[normalizedAngle] = 1;
     }
 
     // Count types
@@ -110,12 +129,37 @@ export function calculateSessionStats(climbList) {
   const medianGradeValue = gradeValues[Math.floor(gradeValues.length / 2)];
   const medianGrade = `V${medianGradeValue}`;
 
+  // Calculate peak grade (highest grade in session)
+  const peakGradeValue = gradeValues.length > 0 ? Math.max(...gradeValues) : 0;
+  const peakGrade = `V${peakGradeValue}`;
+
+  // Calculate total XP for session
+  const totalXP = climbList.reduce((sum, climb) => {
+    const baseXP = 10;
+    const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+    const gradeMultiplier = gradeNum + 1; // V0=1x, V1=2x, V2=3x, etc.
+    const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
+    const climbXP = baseXP * gradeMultiplier * flashBonus;
+    return sum + climbXP;
+  }, 0);
+
+  // Calculate flash rate
+  const flashedClimbs = climbList.filter(climb => climb.attempts === 1).length;
+  const flashRate = total > 0 ? Math.round((flashedClimbs / total) * 100) : 0;
+
+  // Determine session focus (most common style)
+  const sessionFocus = styles.length > 0 && styles[0].count > 0 ? styles[0].label : '--';
+
   return {
     grades,
     styles,
     angles,
     types,
     avgRPE,
-    medianGrade
+    medianGrade,
+    peakGrade,
+    totalXP: Math.round(totalXP),
+    flashRate,
+    style: sessionFocus // Add the session focus/style
   };
 }

@@ -15,11 +15,11 @@ const PlaceholderSessionCard = () => {
           Upcoming Session
         </div>
         <div className="text-sm text-graytxt/80">
-          Pending
+          -- Climbs
         </div>
       </div>
       <div className="text-sm text-graytxt/80">
-        Climbs: -- • Median: -- • Focus: --
+        Peak: -- • Flash Rate: --% • XP: --
       </div>
     </div>
   );

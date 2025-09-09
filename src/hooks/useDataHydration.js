@@ -1,6 +1,7 @@
 // Data hydration hook - loads user data from database on app start
 import { useState, useEffect } from 'react';
 import { database } from '../lib/supabase.js';
+import { calculateSessionStats } from '../utils/sessionCalculations.js';
 
 export function useDataHydration(user, profile) {
   const [sessions, setSessions] = useState([]);
@@ -16,6 +17,17 @@ export function useDataHydration(user, profile) {
       loadUserData();
     }
   }, [user, profile, dataLoaded, dataLoading]);
+
+  // Update userData when profile changes (for calibration card sync)
+  useEffect(() => {
+    if (profile && dataLoaded) {
+      setUserData(prev => ({
+        ...prev,
+        totalSessions: profile.total_sessions || 0,
+        totalClimbs: profile.total_climbs || 0
+      }));
+    }
+  }, [profile?.total_sessions, profile?.total_climbs, dataLoaded]);
 
   const loadUserData = async () => {
     if (!user?.id) return;
@@ -67,10 +79,11 @@ export function useDataHydration(user, profile) {
   // Transform database sessions to match app's expected format
   const transformDatabaseSessions = (dbSessions) => {
     return dbSessions.map(session => {
-      const climbs = session.climbs || [];
+      const rawClimbs = session.climbs || [];
       
-      // Calculate session stats from climbs
-      const sessionStats = calculateSessionStats(climbs);
+      // Transform climbs first, then calculate stats from transformed data
+      const transformedClimbs = rawClimbs.map(transformClimb);
+      const sessionStats = calculateSessionStats(transformedClimbs);
       
       return {
         id: session.id,
@@ -79,10 +92,11 @@ export function useDataHydration(user, profile) {
         startTime: new Date(session.start_time).getTime(),
         endTime: session.end_time ? new Date(session.end_time).getTime() : null,
         duration: calculateDuration(session.start_time, session.end_time),
-        climbs: climbs.length,
-        medianGrade: session.median_grade || calculateMedianGrade(climbs),
-        avgRPE: session.avg_rpe || calculateAvgRPE(climbs),
-        climbList: climbs.map(transformClimb),
+        climbs: rawClimbs.length,
+        medianGrade: session.median_grade || calculateMedianGrade(rawClimbs),
+        avgRPE: session.avg_rpe || calculateAvgRPE(rawClimbs),
+        climbList: transformedClimbs,
+        totalXP: session.total_xp || sessionStats.totalXP || 0, // Use database value with fallback
         ...sessionStats
       };
     });
@@ -94,9 +108,9 @@ export function useDataHydration(user, profile) {
     timestamp: new Date(climb.timestamp).getTime(),
     grade: climb.grade,
     style: normalizeStyle(climb.style),
-    styles: [climb.style],
+    styles: [normalizeStyle(climb.style)],
     angle: normalizeAngle(climb.wall_angle),
-    wall: climb.wall_angle,
+    wall: normalizeAngle(climb.wall_angle),
     rpe: climb.rpe,
     attempts: climb.attempts,
     type: climb.climb_type || 'BOULDER'
@@ -146,72 +160,6 @@ export function useDataHydration(user, profile) {
     }
   };
 
-  const calculateSessionStats = (climbs) => {
-    // Implement basic session stats calculation
-    // This matches the logic from sessionCalculations.js
-    const gradeCounts = {};
-    const styleCounts = { 'Power': 0, 'Technical': 0, 'Simple': 0 };
-    const angleCounts = { 'Slab': 0, 'Vertical': 0, 'Overhang': 0 };
-
-    climbs.forEach(climb => {
-      // Count grades
-      const grade = climb.grade || 'Unknown';
-      gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
-
-      // Count styles
-      const style = normalizeStyle(climb.style);
-      if (styleCounts.hasOwnProperty(style)) {
-        styleCounts[style]++;
-      }
-
-      // Count angles
-      const angle = normalizeAngle(climb.wall_angle);
-      if (angleCounts.hasOwnProperty(angle)) {
-        angleCounts[angle]++;
-      }
-    });
-
-    const total = climbs.length;
-    if (total === 0) {
-      return {
-        grades: [],
-        styles: [],
-        angles: [],
-        types: []
-      };
-    }
-
-    // Convert to percentages
-    const grades = Object.entries(gradeCounts)
-      .map(([label, count]) => ({
-        label,
-        count,
-        val: Math.round((count / total) * 100)
-      }))
-      .sort((a, b) => {
-        const aNum = parseInt(a.label.replace('V', ''));
-        const bNum = parseInt(b.label.replace('V', ''));
-        return aNum - bNum;
-      });
-
-    const styles = Object.entries(styleCounts)
-      .map(([label, count]) => ({
-        label,
-        count,
-        val: Math.round((count / total) * 100)
-      }))
-      .sort((a, b) => b.val - a.val);
-
-    const angles = Object.entries(angleCounts)
-      .map(([label, count]) => ({
-        label,
-        count,
-        val: Math.round((count / total) * 100)
-      }))
-      .sort((a, b) => b.val - a.val);
-
-    return { grades, styles, angles, types: [] };
-  };
 
   const calculateMedianGrade = (climbs) => {
     if (climbs.length === 0) return 'V0';
@@ -239,6 +187,7 @@ export function useDataHydration(user, profile) {
   };
 
   const normalizeAngle = (angle) => {
+    if (!angle || angle === null || angle === undefined) return 'Vertical'; // Default fallback
     if (angle === 'SLAB') return 'Slab';
     if (angle === 'VERTICAL') return 'Vertical';
     if (angle === 'OVERHANG') return 'Overhang';

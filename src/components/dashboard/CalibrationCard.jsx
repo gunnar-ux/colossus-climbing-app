@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronDownIcon } from '../ui/Icons.jsx';
 import Progress from '../ui/Progress.jsx';
 
 // CalibrationCard component extracted from dashboard HTML
@@ -66,19 +67,9 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
            overallProgress >= 50 ? 'Calibration in progress' : 
            'Building baseline data'}
         </div>
-        <svg 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round"
-          className={`transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
-        >
-          <polyline points="6,9 12,15 18,9"></polyline>
-        </svg>
+        <ChevronDownIcon 
+          className={`w-4 h-4 transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
+        />
       </div>
 
       {/* Expandable section with advanced metrics */}

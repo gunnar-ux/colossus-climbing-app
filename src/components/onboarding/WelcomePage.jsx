@@ -307,6 +307,7 @@ const WelcomePage = ({ onComplete }) => {
           <div className="mx-auto max-w-sm shadow-lg shadow-black/30 rounded-col overflow-hidden">
             <SessionCard session={{
               date: 'Today', duration: '1h 45m', climbs: 18, medianGrade: 'V4', style: 'Power', avgRPE: 6.8,
+              peakGrade: 'V5', totalXP: 245, flashRate: 40,
               styles: [ {label:'Power', val:40}, {label:'Technical', val:35}, {label:'Simple', val:25} ],
               angles: [ {label:'Overhang', val:60}, {label:'Vertical', val:30}, {label:'Slab', val:10} ],
               grades: [ {label:'V3', val:20}, {label:'V4', val:45}, {label:'V5', val:30}, {label:'V6', val:5} ],

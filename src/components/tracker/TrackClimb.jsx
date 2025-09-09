@@ -111,7 +111,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
         title="TRACK YOUR CLIMB"
         lightMode={true}
         showCloseButton={true}
-        onCloseClick={() => onNavigateToDashboard?.()}
+        onCloseClick={onBack}
       />
 
       {/* Content */}
