@@ -30,14 +30,11 @@ const BottomNavigation = ({ activeItem, onNavigateTo }) => {
 
   return (
     <nav 
-      className="fixed bottom-0 left-0 right-0 z-30" 
+      className="fixed bottom-0 left-0 right-0 z-30 bg-card border-t border-border pt-2" 
       style={{
-        background: 'rgba(26, 26, 26, 0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-        paddingBottom: `max(env(safe-area-inset-bottom), 4px)`,
-        paddingTop: '8px'
+        paddingBottom: `max(env(safe-area-inset-bottom), 4px)`
       }}
     >
       <div className="flex items-center justify-around px-2">

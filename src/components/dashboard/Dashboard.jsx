@@ -5,9 +5,8 @@ import FAB from '../ui/FAB.jsx';
 import { getMetricAvailability, clamp } from '../../utils/index.js';
 
 import CalibrationCard from './CalibrationCard.jsx';
-import Today from './Today.jsx';
+import TodaysTraining from './TodaysTraining.jsx';
 import TimerCard from './TimerCard.jsx';
-import RecommendedTraining from './RecommendedTraining.jsx';
 import ThisWeek from './ThisWeek.jsx';
 import AllTime from './AllTime.jsx';
 import SessionCard from '../sessions/SessionCard.jsx';
@@ -101,21 +100,21 @@ const Dashboard = ({
         />
       )}
       
-      <Today 
-        score={currentScore} 
-        loadRatio={currentLoadRatio} 
+      <TodaysTraining 
+        score={77} 
+        loadRatio={1.0} 
         sessions={userData.totalSessions}
-        crsData={crsData}
-        loadRatioData={loadRatioData}
+        crsData={userData.totalSessions >= 3 ? crsData : null}
+        loadRatioData={userData.totalSessions >= 5 ? loadRatioData : null}
+        recommendation={recommendedTraining}
+        onStartTraining={handleStartTraining}
       />
       
-      {/* Recent Sessions - positioned after Today for context */}
+      {/* Current Session - positioned after TodaysTraining for context */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
           {sessions.length > 0 ? (
-            sessions.slice(0, 3).map((session, i) => (
-              <SessionCard key={i} session={session} index={i} />
-            ))
+            <SessionCard key={0} session={sessions[0]} index={0} />
           ) : (
             // Empty state session card - matches sessions page placeholder style
             <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
@@ -135,11 +134,6 @@ const Dashboard = ({
         </div>
       </section>
       <TimerCard />
-      <RecommendedTraining 
-        onStartTraining={handleStartTraining}
-        recommendation={recommendedTraining}
-        sessions={userData.totalSessions}
-      />
       <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} />
       <AllTime 
         available={avail.allMetrics} 

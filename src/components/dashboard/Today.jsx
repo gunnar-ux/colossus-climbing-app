@@ -5,17 +5,17 @@ import { readinessTextColor, readinessGradient, loadColor } from '../../utils/in
 // Today component extracted from dashboard HTML
 // Expandable CRS card with tour information and proper mobile font sizes
 
-const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioData }) => {
+const Today = ({ score = 77, loadRatio = 1.0, sessions = 0, crsData, loadRatioData }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   // Determine display state based on CRS data availability
   const isCalibrating = sessions < 5;
   const hasNoData = sessions < 3;
   
-  // Use real data if available, fallback to props
-  const currentScore = crsData ? crsData.score : score;
-  const currentLoadRatio = loadRatioData ? loadRatioData.ratio : loadRatio;
-  const crsStatus = crsData ? crsData.status : 'demo';
-  const crsMessage = crsData ? crsData.message : null;
+  // Use real data only if we have enough sessions, otherwise use demo values
+  const currentScore = (sessions >= 3 && crsData) ? crsData.score : score;
+  const currentLoadRatio = (sessions >= 5 && loadRatioData) ? loadRatioData.ratio : loadRatio;
+  const crsStatus = (sessions >= 3 && crsData) ? crsData.status : 'demo';
+  const crsMessage = (sessions >= 3 && crsData) ? crsData.message : null;
 
   const getCRSAdvice = (s) => {
     if (s >= 77) return { msg: 'Optimal. Peak performance ready.' };
@@ -28,52 +28,22 @@ const Today = ({ score = 73, loadRatio = 1.2, sessions = 0, crsData, loadRatioDa
       <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">Climb Readiness</h3>
-          {hasNoData ? (
-            <span className="px-2 py-1 text-sm rounded-full bg-gradient-to-r from-blue/20 to-cyan/20 text-blue border border-blue/20">
-              NEED DATA
-            </span>
-          ) : sessions >= 5 && loadRatioData ? (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-white/15 text-sm text-white/90">
-              <span className="text-graytxt">Load</span>
-              <span className={`font-semibold ${loadColor(currentLoadRatio)}`}>{currentLoadRatio.toFixed(1)}x</span>
-              <span className="text-graytxt">baseline</span>
-            </span>
-          ) : (
-            <span className={`px-2 py-1 text-sm rounded-full ${
-              crsStatus === 'building' ? 'bg-blue/20 text-blue' : 
-              crsStatus === 'calibrating' ? 'bg-orange/20 text-orange' : 
-              'bg-green/20 text-green'
-            }`}>
-              {crsStatus === 'building' ? 'BUILDING' : 
-               crsStatus === 'calibrating' ? 'CALIBRATING' : 
-               'CALIBRATED'}
-            </span>
-          )}
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full border border-white/15 text-sm text-white/90">
+            <span className="text-graytxt">Load</span>
+            <span className={`font-semibold ${loadColor(currentLoadRatio)}`}>{currentLoadRatio.toFixed(1)}x</span>
+            <span className="text-graytxt">baseline</span>
+          </span>
         </div>
 
-        {hasNoData ? (
-          <>
-            <div className="mt-1 flex items-center gap-3">
-              <div className="text-5xl font-extrabold leading-none text-graytxt min-w-[64px]">--</div>
-              <div className="flex-1 h-3 bg-border rounded-full overflow-hidden">
-                <div className={`h-full bg-white/30`} style={{width: `0%`}}></div>
-              </div>
-            </div>
-
-          </>
-        ) : (
-          <>
-            <div className="mt-1 flex items-center gap-3">
-              <div className={`text-5xl font-extrabold leading-none ${readinessTextColor(currentScore)} min-w-[64px]`}>{currentScore}</div>
-              <div className="flex-1 h-3 bg-border rounded-full overflow-hidden">
-                <div className={`bg-gradient-to-r ${readinessGradient(currentScore)} h-full`} style={{width: `${currentScore}%`}}></div>
-              </div>
-            </div>
-            <div className="mt-2 text-sm text-graytxt text-center">
-              {crsMessage || getCRSAdvice(currentScore).msg}
-            </div>
-          </>
-        )}
+        <div className="mt-1 flex items-center gap-3">
+          <div className={`text-5xl font-extrabold leading-none ${readinessTextColor(currentScore)} min-w-[64px]`}>{currentScore}</div>
+          <div className="flex-1 h-3 bg-border rounded-full overflow-hidden">
+            <div className={`bg-gradient-to-r ${readinessGradient(currentScore)} h-full`} style={{width: `${currentScore}%`}}></div>
+          </div>
+        </div>
+        <div className="mt-2 text-sm text-graytxt text-center">
+          {crsMessage || getCRSAdvice(currentScore).msg}
+        </div>
 
         {/* Bottom-right dropdown toggle */}
         <div className="mt-2 flex items-center justify-between">

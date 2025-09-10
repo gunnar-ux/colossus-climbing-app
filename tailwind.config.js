@@ -8,8 +8,8 @@ export default {
     extend: {
       colors: {
         bg: '#0a0a0a',
-        card: '#1a1a1a',
-        border: '#2a2a2a',
+        card: '#2a2a2a33', // #2a2a2a at 20% opacity (33 in hex = ~20%)
+        border: '#2a2a2a4d', // #2a2a2a at 30% opacity (4d in hex = ~30%)
         graytxt: '#888888',
         green: '#4ade80',
         yellow: '#fbbf24',

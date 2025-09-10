@@ -7,6 +7,7 @@ import {
   ChartBarIcon as HeroTrendingIcon,
   ChartBarIcon as HeroChartBarIcon,
   UserIcon as HeroUserIcon,
+  UserCircleIcon as HeroUserCircleIcon,
   ClockIcon as HeroClockIcon,
   ChevronDownIcon as HeroChevronDownIcon,
   ArrowPathIcon as HeroResetIcon,
@@ -36,7 +37,7 @@ export const TrendingIcon = ({ className = "w-5 h-5" }) => (
 );
 
 export const UserIcon = ({ className = "w-5 h-5" }) => (
-  <HeroUserIcon className={className} />
+  <HeroUserCircleIcon className={className} />
 );
 
 // UI/Functional Icons (13 icons)
