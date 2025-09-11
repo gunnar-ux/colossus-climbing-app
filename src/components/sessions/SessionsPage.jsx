@@ -4,6 +4,7 @@ import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 import SessionStats from './SessionStats.jsx';
 import SessionCard from './SessionCard.jsx';
+import TimerCard from '../dashboard/TimerCard.jsx';
 
 
 // Simple Placeholder Session Card - Visual Spaceholder Only
@@ -82,6 +83,8 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
       />
       
       <SessionStats sessions={sessions} onNavigateToTracker={onNavigateToTracker} />
+      
+      <TimerCard />
       
       <section className="pt-4 pb-20">
         <div className="mx-5 space-y-3">

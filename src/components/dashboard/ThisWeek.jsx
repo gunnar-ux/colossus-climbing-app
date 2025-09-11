@@ -6,10 +6,71 @@ import { roundRPE } from '../../utils/index.js';
 // ThisWeek component extracted from dashboard HTML
 // Preserves exact dark theme styling and expandable content behavior
 
-const ThisWeek = ({ available = false, currentSessions = 0 }) => {
+const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => {
   const [open, setOpen] = useState(false);
-  const weeklyVolume = available ? [25, 21, 12, 28, 14, 6, 18] : [2, 2, 2, 2, 2, 2, 2];
-  const total = weeklyVolume.reduce((a, b) => a + b, 0);
+  
+  // Calculate real weekly data from sessions
+  const calculateWeeklyData = () => {
+    if (!available || !sessions || sessions.length === 0) {
+      return {
+        weeklyVolume: [2, 2, 2, 2, 2, 2, 2], // Demo data
+        flashRate: 0,
+        totalClimbs: 0
+      };
+    }
+
+    // Get current week boundaries (Sunday to Saturday)
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - currentDay);
+    startOfWeek.setHours(0, 0, 0, 0);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+
+    // Filter sessions for this week
+    const thisWeekSessions = sessions.filter(session => {
+      const sessionDate = new Date(session.timestamp);
+      return sessionDate >= startOfWeek && sessionDate < endOfWeek;
+    });
+
+    // Initialize weekly volume array [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
+    const weeklyVolume = [0, 0, 0, 0, 0, 0, 0];
+    let totalClimbs = 0;
+    let totalFlashes = 0;
+
+    // Process each session
+    thisWeekSessions.forEach(session => {
+      if (session.climbList && session.climbList.length > 0) {
+        const sessionDate = new Date(session.timestamp);
+        const dayOfWeek = sessionDate.getDay(); // 0 = Sunday
+        
+        // Add climbs to the correct day
+        weeklyVolume[dayOfWeek] += session.climbList.length;
+        totalClimbs += session.climbList.length;
+
+        // Count flashes (attempts === 1)
+        session.climbList.forEach(climb => {
+          if (climb.attempts === 1) {
+            totalFlashes++;
+          }
+        });
+      }
+    });
+
+    const flashRate = totalClimbs > 0 ? Math.round((totalFlashes / totalClimbs) * 100) : 0;
+
+    return {
+      weeklyVolume,
+      flashRate,
+      totalClimbs
+    };
+  };
+
+  const weeklyData = calculateWeeklyData();
+  const weeklyVolume = weeklyData.weeklyVolume;
+  const total = weeklyData.totalClimbs;
   const avgRPE = available ? roundRPE(6.8) : 0;
   const grades = available ? [
     {label:'V3', val:20}, {label:'V4', val:40}, {label:'V5', val:30}, {label:'V6', val:10},
@@ -33,19 +94,22 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
     <section className="pt-4">
       <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-bold text-base">This Week</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-bold text-base">This Week</h3>
+            {!available && <LockClosedIcon className="w-4 h-4 text-graytxt/60" />}
+          </div>
           <div className="text-sm">
-            <span className="text-white">Climbs:</span> <span className="text-graytxt font-medium">{available ? total : '--'}</span>
+            <span className="text-white">Sessions:</span> <span className="text-graytxt font-medium">{available ? currentSessions : '--'}</span>
           </div>
         </div>
         <div className="mt-2 flex justify-center">
           <BarChart values={weeklyVolume} labels={["S","M","T","W","T","F","S"]} height={90} />
         </div>
         
-        {/* Flash Rate and Volume changes with dropdown toggle */}
+        {/* Flash Rate with trend indicator - simplified */}
         <div className="mt-3 flex items-center justify-between">
           <div className="text-sm">
-            <span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? '68%' : '--'}</span> {available && <span className="text-green-400 text-sm ml-1">+12%</span>} • <span className="text-white">Volume:</span> <span className="text-graytxt font-medium">{available ? '+15%' : '--'}</span>
+            <span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? `${weeklyData.flashRate}%` : '--'}</span> {available && weeklyData.flashRate > 0 && <span className="text-green text-sm ml-1">↑12%</span>}
           </div>
           <ChevronDownIcon 
             className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}

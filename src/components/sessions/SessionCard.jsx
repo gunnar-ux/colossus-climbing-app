@@ -9,6 +9,13 @@ import { roundRPE } from '../../utils/index.js';
 const SessionCard = ({ session, index }) => {
   const [open, setOpen] = useState(false);
   
+  // Get flash rate color based on performance ranges
+  const getFlashRateColor = (rate) => {
+    if (rate >= 80) return 'text-green';      // 80-100%: Excellent (green)
+    if (rate >= 40) return 'text-blue';       // 40-79%: Good (blue)  
+    return 'text-red';                        // 0-39%: Needs work (red)
+  };
+  
   return (
     <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
@@ -17,7 +24,7 @@ const SessionCard = ({ session, index }) => {
         </div>
       <div className="flex items-center justify-between text-sm text-graytxt">
         <div>
-          Peak: <span className="text-white">{session.peakGrade || 'V0'}</span> • Flash Rate: <span className="text-white">{session.flashRate || 0}%</span> • XP: <span className="text-white">{session.totalXP || 0}</span>
+          Peak: <span className="text-white">{session.peakGrade || 'V0'}</span> • Flash Rate: <span className={getFlashRateColor(session.flashRate || 0)}>{session.flashRate || 0}%</span> • XP: <span className="text-white">{session.totalXP || 0}</span>
         </div>
         <ChevronDownIcon 
           className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}

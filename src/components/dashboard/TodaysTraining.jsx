@@ -8,7 +8,7 @@ import { readinessTextColor, readinessGradient, loadColor } from '../../utils/in
 const TodaysTraining = ({ 
   score = 77, 
   loadRatio = 1.0, 
-  sessions = 0, 
+  sessions = [], 
   crsData, 
   loadRatioData,
   recommendation,
@@ -21,20 +21,57 @@ const TodaysTraining = ({
   const calculateWeekStreak = () => {
     // For now, return a simple calculation based on sessions
     // In real implementation, this would check consecutive weeks with sessions
-    return Math.min(Math.floor(sessions / 2) + 1, 8); // Cap at 8 weeks for demo
+    return Math.min(Math.floor(userData.totalSessions / 2) + 1, 8); // Cap at 8 weeks for demo
   };
   
   const weekStreak = calculateWeekStreak();
+
+  // Calculate total XP from sessions (same logic as Progress page)
+  const calculateTotalXP = () => {
+    if (!sessions || sessions.length === 0) {
+      return 0; // No sessions = no XP
+    }
+    
+    let totalXP = 0;
+    
+    sessions.forEach(session => {
+      if (session.climbList && session.climbList.length > 0) {
+        session.climbList.forEach(climb => {
+          // Base XP
+          const baseXP = 10;
+          
+          // Grade multiplier (V0=1x, V1=2x, V2=3x, etc.)
+          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+          const gradeMultiplier = gradeNum + 1;
+          
+          // Flash bonus (1.2x for first attempt)
+          const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
+          
+          // Calculate climb XP
+          const climbXP = baseXP * gradeMultiplier * flashBonus;
+          totalXP += climbXP;
+        });
+      }
+    });
+    
+    return Math.floor(totalXP);
+  };
+
+  // Calculate XP progress for display
+  const totalXP = calculateTotalXP();
+  const currentLevel = Math.floor(totalXP / 150) + 1;
+  const pointsInCurrentLevel = totalXP % 150;
+  const xpToNextLevel = 150 - pointsInCurrentLevel;
   
   // Determine display state based on CRS data availability
-  const isCalibrating = sessions < 5;
-  const hasNoData = sessions < 3;
+  const isCalibrating = userData.totalSessions < 5;
+  const hasNoData = userData.totalSessions < 3;
   
   // Use real data only if we have enough sessions, otherwise use demo values
-  const currentScore = (sessions >= 3 && crsData) ? crsData.score : score;
-  const currentLoadRatio = (sessions >= 5 && loadRatioData) ? loadRatioData.ratio : loadRatio;
-  const crsStatus = (sessions >= 3 && crsData) ? crsData.status : 'demo';
-  const crsMessage = (sessions >= 3 && crsData) ? crsData.message : null;
+  const currentScore = (userData.totalSessions >= 3 && crsData) ? crsData.score : score;
+  const currentLoadRatio = (userData.totalSessions >= 5 && loadRatioData) ? loadRatioData.ratio : loadRatio;
+  const crsStatus = (userData.totalSessions >= 3 && crsData) ? crsData.status : 'demo';
+  const crsMessage = (userData.totalSessions >= 3 && crsData) ? crsData.message : null;
 
   // Get status message based on readiness score
   const getStatusMessage = () => {
@@ -187,6 +224,11 @@ const TodaysTraining = ({
           </div>
         </div>
 
+        {/* Recommended Training header */}
+        <div className="text-center mb-3">
+          <div className="text-sm font-bold text-graytxt">Recommended Training</div>
+        </div>
+
         {/* Training parameters - compact 2 rows */}
         <div className="space-y-2 mb-4">
           <div className="bg-border/20 border border-border/40 rounded-lg px-3 py-2 flex items-center justify-between">
@@ -216,10 +258,10 @@ const TodaysTraining = ({
           <div className="text-sm text-orange mt-3">⚠️ {loadWarning}</div>
         )}
 
-        {/* Progress metrics with expandable toggle */}
+        {/* XP progress with expandable toggle */}
         <div className="flex items-center justify-between mt-3">
           <div className="text-sm text-graytxt flex-1 mr-3">
-            Sessions: <span className="text-white">{userData.totalSessions}</span> • Climbs: <span className="text-white">{userData.totalClimbs}</span>
+            <span className="text-white">{xpToNextLevel} XP</span> to Level {currentLevel + 1}
           </div>
           <ChevronDownIcon
             className={`w-4 h-4 transition-transform duration-200 text-graytxt flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}

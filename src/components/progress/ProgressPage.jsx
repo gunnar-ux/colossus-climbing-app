@@ -173,8 +173,8 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
               <div className="text-sm text-graytxt">Level {currentLevel} Climber</div>
             </div>
             <div className="text-right">
-              <div className="text-2xl font-bold text-white">{pointsInCurrentLevel}</div>
-              <div className="text-sm text-graytxt">XP</div>
+              <div className="text-2xl font-bold text-white">{totalPoints.toLocaleString()}</div>
+              <div className="text-sm text-graytxt">Total XP</div>
             </div>
           </div>
           <div className="w-full h-2 bg-border rounded-full overflow-hidden">
