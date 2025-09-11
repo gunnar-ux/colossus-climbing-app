@@ -201,7 +201,7 @@ const AppContent = () => {
         const today = new Date();
         const sessionData = {
           user_id: user.id,
-          date: today.toISOString().split('T')[0], // Store as proper date
+          session_date: today.toISOString().split('T')[0], // Use correct column name
           start_time: new Date(timestamp).toISOString(),
           gym_location: 'Session'
         };

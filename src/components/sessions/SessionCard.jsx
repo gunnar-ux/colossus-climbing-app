@@ -10,7 +10,7 @@ const SessionCard = ({ session, index }) => {
   const [open, setOpen] = useState(false);
   
   return (
-    <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setOpen(!open)}>
+    <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
           <div className="font-semibold text-base">{session.date === 'Now' ? 'Current Session' : session.date}</div>
           <div className="text-sm text-white">{session.climbs} Climbs</div>

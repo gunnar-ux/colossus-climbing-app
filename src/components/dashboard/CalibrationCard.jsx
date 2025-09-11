@@ -38,21 +38,16 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
       <div className="bg-border/15 border border-border/30 border-l-2 border-l-green/40 p-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
       {/* Header */}
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-semibold text-sm text-white">Calibrating Dashboard...</h3>
+        <h3 className="font-semibold text-sm text-white">Dashboard calibrating...</h3>
         <span className="text-sm text-green font-medium">{Math.round(overallProgress)}%</span>
       </div>
       
-      {/* Progress bar - thinner and more subtle */}
-      <div className="w-full h-1.5 bg-border/50 rounded-full overflow-hidden">
-        <div className="h-full bg-white" style={{width: `${Math.min(overallProgress, 100)}%`}}></div>
-      </div>
-      
       {/* Basic requirements with dropdown arrow */}
-      <div className="flex items-center justify-between mt-3">
+      <div className="flex items-center justify-between">
         <div className="grid grid-cols-2 gap-3 flex-1">
           {requirements.map(req => (
             <div key={req.metric} className="text-sm">
-              <span className="text-white">{req.metric}: </span>
+              <span className="text-graytxt">{req.metric}: </span>
               <span className="text-graytxt">
                 {req.current}/{req.needed}
               </span>

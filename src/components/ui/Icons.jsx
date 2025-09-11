@@ -20,7 +20,8 @@ import {
   PlusIcon as HeroPlusIcon,
   XMarkIcon as HeroXIcon,
   ArrowRightOnRectangleIcon as HeroLogoutIcon,
-  ArrowTopRightOnSquareIcon as HeroExternalIcon
+  ArrowTopRightOnSquareIcon as HeroExternalIcon,
+  FireIcon as HeroFireIcon
 } from '@heroicons/react/24/outline';
 
 // Navigation Icons (4 icons)
@@ -99,5 +100,9 @@ export const ChartBarIcon = ({ className = "w-5 h-5" }) => (
 
 export const LockClosedIcon = ({ className = "w-5 h-5" }) => (
   <HeroLockIcon className={className} />
+);
+
+export const FireIcon = ({ className = "w-5 h-5" }) => (
+  <HeroFireIcon className={className} />
 );
 

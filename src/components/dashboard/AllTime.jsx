@@ -124,7 +124,7 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
 
   return (
     <section className="pt-4">
-      <div className="mx-5 bg-card border border-border rounded-col p-4 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="mx-5 bg-card border border-border rounded-col p-4 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         
         {/* Header matching Performance Profile pattern */}
         <div className="flex items-center justify-between mb-3">
@@ -133,8 +133,8 @@ const AllTime = ({ available = false, onViewAchievements, userData, sessions, pe
             <div className="text-sm text-graytxt">Level {currentLevel} Climber</div>
           </div>
           <div className="text-right">
-            <div className="text-2xl font-bold text-white">{pointsInCurrentLevel}</div>
-            <div className="text-sm text-graytxt">XP</div>
+            <div className="text-2xl font-bold text-white">{totalPoints}</div>
+            <div className="text-sm text-graytxt">Total XP</div>
           </div>
         </div>
 

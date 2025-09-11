@@ -31,28 +31,21 @@ const ThisWeek = ({ available = false, currentSessions = 0 }) => {
   
   return (
     <section className="pt-4">
-      <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setOpen(!open)}>
+      <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">This Week</h3>
           <div className="text-sm">
-            <span className="text-white">Total:</span> <span className="text-graytxt font-medium">{available ? total : '--'}</span>
-            {available && <> • <span className="text-white">Avg Perceived Effort:</span> <span className="text-graytxt font-medium">{avgRPE}</span></>}
+            <span className="text-white">Climbs:</span> <span className="text-graytxt font-medium">{available ? total : '--'}</span>
           </div>
         </div>
         <div className="mt-2 flex justify-center">
           <BarChart values={weeklyVolume} labels={["S","M","T","W","T","F","S"]} height={90} />
         </div>
         
-        {/* Flash Rate and Avg Grade - always shown */}
-        <div className="mt-3 flex items-center justify-between text-sm">
-          <div><span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? '68%' : '--'}</span> {available && <span className="text-green-400 text-sm">+12%</span>}</div>
-          <div><span className="text-white">Avg Grade:</span> <span className="text-graytxt font-medium">{available ? 'V4.5' : '--'}</span> {available && <span className="text-green-400 text-sm">+0.3</span>}</div>
-        </div>
-        
-        {/* Bottom-right dropdown toggle */}
-        <div className="mt-2 flex items-center justify-between">
-          <div className="text-sm text-blue">
-            {available ? 'Weekly performance summary' : `Track ${3 - currentSessions} more session${3 - currentSessions === 1 ? '' : 's'} to unlock insights`}
+        {/* Flash Rate and Volume changes with dropdown toggle */}
+        <div className="mt-3 flex items-center justify-between">
+          <div className="text-sm">
+            <span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? '68%' : '--'}</span> {available && <span className="text-green-400 text-sm ml-1">+12%</span>} • <span className="text-white">Volume:</span> <span className="text-graytxt font-medium">{available ? '+15%' : '--'}</span>
           </div>
           <ChevronDownIcon 
             className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}

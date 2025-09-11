@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDownIcon } from '../ui/Icons.jsx';
+import { ChevronDownIcon, FireIcon } from '../ui/Icons.jsx';
 import { readinessTextColor, readinessGradient, loadColor } from '../../utils/index.js';
 
 // Unified TodaysTraining component combining readiness and recommendations
@@ -12,9 +12,19 @@ const TodaysTraining = ({
   crsData, 
   loadRatioData,
   recommendation,
-  onStartTraining 
+  onStartTraining,
+  userData = { totalSessions: 0, totalClimbs: 0 }
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  
+  // Calculate week streak (placeholder - would need session data with dates)
+  const calculateWeekStreak = () => {
+    // For now, return a simple calculation based on sessions
+    // In real implementation, this would check consecutive weeks with sessions
+    return Math.min(Math.floor(sessions / 2) + 1, 8); // Cap at 8 weeks for demo
+  };
+  
+  const weekStreak = calculateWeekStreak();
   
   // Determine display state based on CRS data availability
   const isCalibrating = sessions < 5;
@@ -26,13 +36,52 @@ const TodaysTraining = ({
   const crsStatus = (sessions >= 3 && crsData) ? crsData.status : 'demo';
   const crsMessage = (sessions >= 3 && crsData) ? crsData.message : null;
 
+  // Get status message based on readiness score
+  const getStatusMessage = () => {
+    if (currentScore >= 77) {
+      return {
+        status: 'OPTIMAL - PUSH YOUR LIMITS',
+        color: 'text-green',
+        bgColor: 'bg-green/10',
+        borderColor: 'border-green/20',
+        ctaText: 'CRUSH YOUR PROJECT'
+      };
+    } else if (currentScore >= 45) {
+      return {
+        status: 'MODERATE - TRAIN SMART',
+        color: 'text-blue',
+        bgColor: 'bg-blue/10',
+        borderColor: 'border-blue/20',
+        ctaText: 'BUILD STRENGTH'
+      };
+    } else {
+      return {
+        status: 'LIMITED - RECOVERY FOCUS',
+        color: 'text-orange',
+        bgColor: 'bg-orange/10',
+        borderColor: 'border-orange/20',
+        ctaText: 'MOVE EASY'
+      };
+    }
+  };
+
+  // Get focus message based on readiness score
+  const getFocusMessage = () => {
+    if (currentScore >= 77) {
+      return 'Push yourself today to build power and capacity.';
+    } else if (currentScore >= 45) {
+      return 'Train smart with balanced volume and technique focus.';
+    } else {
+      return 'Focus on recovery with light movement and skill work.';
+    }
+  };
+
   // Smart recommendation logic based on readiness
   const getSmartRecommendation = () => {
     const baseRec = recommendation || {
       type: 'Track Climbs',
       volume: '10-15',
-      rpe: '6-7',
-      focus: 'Begin building your climbing profile'
+      rpe: '6-7'
     };
 
     // Adjust recommendations based on readiness score and load ratio
@@ -40,23 +89,20 @@ const TodaysTraining = ({
       if (currentScore >= 77) {
         return {
           ...baseRec,
-          volume: '12-18 climbs',
-          rpe: '7-8',
-          focus: 'Push your limits today - optimal readiness'
+          volume: '12-18',
+          rpe: '7-8'
         };
       } else if (currentScore >= 45) {
         return {
           ...baseRec,
-          volume: '8-12 climbs',
-          rpe: '6-7',
-          focus: 'Moderate training, focus on technique'
+          volume: '8-12',
+          rpe: '6-7'
         };
       } else {
         return {
           ...baseRec,
-          volume: '5-8 climbs',
-          rpe: '5-6',
-          focus: 'Recovery day, light technique work'
+          volume: '5-8',
+          rpe: '5-6'
         };
       }
     }
@@ -64,6 +110,7 @@ const TodaysTraining = ({
     return baseRec;
   };
 
+  const statusInfo = getStatusMessage();
   const smartRec = getSmartRecommendation();
 
   // Add load ratio warnings
@@ -91,24 +138,15 @@ const TodaysTraining = ({
 
   return (
     <section className="px-5 pt-4">
-      <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 hover:border-white/10 transition cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         
-        {/* Header with title and calibrating badge */}
+        {/* Header with title and week streak */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">Today's Readiness</h3>
-          {hasNoData ? (
-            <span className="px-2 py-1 text-sm rounded-full bg-border text-graytxt">
-              NEED DATA
-            </span>
-          ) : isCalibrating ? (
-            <span className="px-2 py-1 text-sm rounded-full bg-border text-graytxt">
-              CALIBRATING
-            </span>
-          ) : (
-            <span className="px-2 py-1 text-sm rounded-full bg-border text-graytxt">
-              CALIBRATED
-            </span>
-          )}
+          <div className="flex items-center gap-1 text-sm text-graytxt">
+            <FireIcon className="w-4 h-4 text-orange-500" />
+            <span>{weekStreak}</span>
+          </div>
         </div>
 
         {/* CRS copy/message */}
@@ -119,16 +157,16 @@ const TodaysTraining = ({
         {/* CRS and Load Ratio containers */}
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* Readiness container */}
-          <div className="bg-border/20 border border-border/30 rounded-lg p-3 text-center">
+          <div className="bg-border/30 border border-border/60 rounded-lg p-3 text-center shadow-inner">
             <div className="text-xs text-white font-bold mb-1 uppercase tracking-wide">Readiness</div>
-            <div className={`text-3xl font-extrabold leading-none ${readinessTextColor(currentScore)} mb-2`}>{currentScore}</div>
+            <div className={`text-3xl font-extrabold leading-none ${readinessTextColor(currentScore)} mb-2`}>{currentScore}%</div>
             <div className="h-2 bg-border rounded-full overflow-hidden">
               <div className={`bg-gradient-to-r ${readinessGradient(currentScore)} h-full`} style={{width: `${currentScore}%`}}></div>
             </div>
           </div>
 
           {/* Load Ratio container */}
-          <div className="bg-border/20 border border-border/30 rounded-lg p-3 text-center">
+          <div className="bg-border/30 border border-border/60 rounded-lg p-3 text-center shadow-inner">
             <div className="text-xs text-white font-bold mb-1 uppercase tracking-wide">Load Ratio</div>
             <div className={`text-3xl font-extrabold leading-none ${loadColor(currentLoadRatio)} mb-2`}>{currentLoadRatio.toFixed(1)}x</div>
             {/* Balanced indicator with center baseline */}
@@ -149,20 +187,44 @@ const TodaysTraining = ({
           </div>
         </div>
 
-        {/* Recommended Training subtext with dropdown arrow */}
-        <div className="flex items-center justify-between">
-          <div className="text-sm">
-            <span className="text-white">Climb Volume:</span> <span className="text-graytxt">{smartRec.volume}</span> • <span className="text-white">Max Effort:</span> <span className="text-graytxt">{smartRec.rpe} / 10</span>
+        {/* Training parameters - compact 2 rows */}
+        <div className="space-y-2 mb-4">
+          <div className="bg-border/20 border border-border/40 rounded-lg px-3 py-2 flex items-center justify-between">
+            <span className="text-white font-medium text-sm">Volume</span>
+            <span className="text-white text-sm">{smartRec.volume}</span>
           </div>
-          <ChevronDownIcon
-            className={`w-4 h-4 transition-transform duration-200 text-graytxt ml-3 ${isExpanded ? 'rotate-180' : ''}`}
-          />
+          
+          <div className="bg-border/20 border border-border/40 rounded-lg px-3 py-2 flex items-center justify-between">
+            <span className="text-white font-medium text-sm">Effort / RPE</span>
+            <span className="text-white text-sm">{smartRec.rpe} / 10</span>
+          </div>
         </div>
+
+        {/* CTA Button */}
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleStartClick();
+          }}
+          className="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-100 active:scale-95 transition-all duration-150"
+        >
+          Track Climbs
+        </button>
 
         {/* Load warning if applicable */}
         {loadWarning && (
-          <div className="text-sm text-orange">⚠️ {loadWarning}</div>
+          <div className="text-sm text-orange mt-3">⚠️ {loadWarning}</div>
         )}
+
+        {/* Progress metrics with expandable toggle */}
+        <div className="flex items-center justify-between mt-3">
+          <div className="text-sm text-graytxt flex-1 mr-3">
+            Sessions: <span className="text-white">{userData.totalSessions}</span> • Climbs: <span className="text-white">{userData.totalClimbs}</span>
+          </div>
+          <ChevronDownIcon
+            className={`w-4 h-4 transition-transform duration-200 text-graytxt flex-shrink-0 ${isExpanded ? 'rotate-180' : ''}`}
+          />
+        </div>
 
         {/* Expandable section with combined details */}
         {isExpanded && (

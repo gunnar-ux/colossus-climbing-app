@@ -100,6 +100,7 @@ const Dashboard = ({
         />
       )}
       
+      {/* Hero Card: Today's Readiness - Primary decision making */}
       <TodaysTraining 
         score={77} 
         loadRatio={1.0} 
@@ -108,9 +109,22 @@ const Dashboard = ({
         loadRatioData={userData.totalSessions >= 5 ? loadRatioData : null}
         recommendation={recommendedTraining}
         onStartTraining={handleStartTraining}
+        userData={userData}
       />
       
-      {/* Current Session - positioned after TodaysTraining for context */}
+      {/* Secondary Hero: Performance Statistics - Motivation & Progress */}
+      <AllTime 
+        available={avail.allMetrics} 
+        onViewAchievements={handleViewAchievements}
+        userData={userData}
+        sessions={sessions}
+        peakGrade={peakGrade}
+      />
+      
+      {/* Context: This Week - Recent trends and patterns */}
+      <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} />
+      
+      {/* Current Session - Contextual information when active */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
           {sessions.length > 0 ? (
@@ -133,15 +147,9 @@ const Dashboard = ({
           )}
         </div>
       </section>
+      
+      {/* Utility: Training Timer - Structured training tools */}
       <TimerCard />
-      <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} />
-      <AllTime 
-        available={avail.allMetrics} 
-        onViewAchievements={handleViewAchievements}
-        userData={userData}
-        sessions={sessions}
-        peakGrade={peakGrade}
-      />
       
       {/* Bottom Logo Section - Whoop Style */}
       <section className="pt-2 pb-32 flex items-center justify-center">
