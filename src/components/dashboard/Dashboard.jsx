@@ -27,7 +27,9 @@ const Dashboard = ({
   onNavigateToProgress,
   onNavigateToAccount,
   onViewAchievements,
-  onLogout
+  onLogout,
+  onNavigateToReadinessInfo,
+  onNavigateToLoadRatioInfo
 }) => {
   const avail = metricAvailability || getMetricAvailability(userData.totalSessions, userData.totalClimbs);
 
@@ -85,6 +87,9 @@ const Dashboard = ({
         recommendation={recommendedTraining}
         onStartTraining={handleStartTraining}
         userData={userData}
+        onNavigateToReadinessInfo={onNavigateToReadinessInfo}
+        onNavigateToLoadRatioInfo={onNavigateToLoadRatioInfo}
+        onNavigateToProgress={onNavigateToProgress}
       />
       
       {/* Context: This Week - Recent trends and patterns */}

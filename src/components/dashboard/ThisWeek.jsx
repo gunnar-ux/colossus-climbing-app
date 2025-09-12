@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ChevronDownIcon, LockClosedIcon } from '../ui/Icons.jsx';
 import { BarChart, Trend } from './Charts.jsx';
 import { roundRPE } from '../../utils/index.js';
+import { getCapacityRecommendations, calculatePersonalBaseline } from '../../utils/metrics.js';
 
 // ThisWeek component extracted from dashboard HTML
 // Preserves exact dark theme styling and expandable content behavior
@@ -9,11 +10,19 @@ import { roundRPE } from '../../utils/index.js';
 const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => {
   const [open, setOpen] = useState(false);
   
-  // Calculate real weekly data from sessions
+  // Get flash rate color based on performance ranges (same as SessionCard)
+  const getFlashRateColor = (rate) => {
+    if (rate >= 80) return 'text-green';      // 80-100%: Excellent (green)
+    if (rate >= 40) return 'text-blue';       // 40-79%: Good (blue)  
+    return 'text-red';                        // 0-39%: Needs work (red)
+  };
+  
+  // Calculate real weekly data from sessions with recommendation lines
   const calculateWeeklyData = () => {
     if (!available || !sessions || sessions.length === 0) {
       return {
         weeklyVolume: [2, 2, 2, 2, 2, 2, 2], // Demo data
+        recommendationLines: [0, 0, 0, 0, 0, 0, 0], // No recommendations for demo
         flashRate: 0,
         totalClimbs: 0
       };
@@ -37,10 +46,14 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
 
     // Initialize weekly volume array [Sun, Mon, Tue, Wed, Thu, Fri, Sat]
     const weeklyVolume = [0, 0, 0, 0, 0, 0, 0];
+    const recommendationLines = [0, 0, 0, 0, 0, 0, 0];
     let totalClimbs = 0;
     let totalFlashes = 0;
 
-    // Process each session
+    // Get user baseline for recommendations
+    const baseline = calculatePersonalBaseline(sessions);
+
+    // Process each session and calculate retrospective recommendations
     thisWeekSessions.forEach(session => {
       if (session.climbList && session.climbList.length > 0) {
         const sessionDate = new Date(session.timestamp);
@@ -56,13 +69,37 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
             totalFlashes++;
           }
         });
+
+        // Calculate what the recommendation would have been for that day
+        // Vary recommendations based on day of week and training patterns
+        let dayMultiplier = 1.0;
+        if (dayOfWeek === 0 || dayOfWeek === 6) dayMultiplier = 0.8; // Weekend - lighter
+        else if (dayOfWeek === 2 || dayOfWeek === 4) dayMultiplier = 1.2; // Tue/Thu - heavier
+        else dayMultiplier = 1.0; // Mon/Wed/Fri - moderate
+        
+        const retrospectiveRecommendation = Math.round(baseline.avgVolume * dayMultiplier);
+        recommendationLines[dayOfWeek] = retrospectiveRecommendation;
       }
     });
+
+    // For today only, calculate actual recommendation if we have CRS data
+    const today = new Date();
+    const todayOfWeek = today.getDay();
+    if (todayOfWeek >= 0 && todayOfWeek <= 6 && recommendationLines[todayOfWeek] === 0) {
+      // Apply same day-based multiplier for consistency
+      let dayMultiplier = 1.0;
+      if (todayOfWeek === 0 || todayOfWeek === 6) dayMultiplier = 0.8; // Weekend - lighter
+      else if (todayOfWeek === 2 || todayOfWeek === 4) dayMultiplier = 1.2; // Tue/Thu - heavier
+      else dayMultiplier = 1.0; // Mon/Wed/Fri - moderate
+      
+      recommendationLines[todayOfWeek] = Math.round(baseline.avgVolume * dayMultiplier);
+    }
 
     const flashRate = totalClimbs > 0 ? Math.round((totalFlashes / totalClimbs) * 100) : 0;
 
     return {
       weeklyVolume,
+      recommendationLines,
       flashRate,
       totalClimbs
     };
@@ -92,24 +129,35 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
   
   return (
     <section className="pt-4">
-      <div className="mx-5 bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
+      <div className="mx-5 bg-card border border-border rounded-col px-5 pt-5 pb-4 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <h3 className="font-bold text-base">This Week</h3>
             {!available && <LockClosedIcon className="w-4 h-4 text-graytxt/60" />}
           </div>
           <div className="text-sm">
-            <span className="text-white">Sessions:</span> <span className="text-graytxt font-medium">{available ? currentSessions : '--'}</span>
+            <span className="text-graytxt">Sessions:</span> <span className="text-white font-medium">{available ? currentSessions : '--'}</span>
           </div>
         </div>
-        <div className="mt-2 flex justify-center">
-          <BarChart values={weeklyVolume} labels={["S","M","T","W","T","F","S"]} height={90} />
+        <div className="mt-3 flex justify-center">
+          <BarChart 
+            values={weeklyVolume} 
+            recommendationLines={[]}
+            labels={["S","M","T","W","T","F","S"]} 
+            height={110} 
+          />
         </div>
         
-        {/* Flash Rate with trend indicator - simplified */}
+        {/* Metrics row */}
         <div className="mt-3 flex items-center justify-between">
-          <div className="text-sm">
-            <span className="text-white">Flash Rate:</span> <span className="text-graytxt font-medium">{available ? `${weeklyData.flashRate}%` : '--'}</span> {available && weeklyData.flashRate > 0 && <span className="text-green text-sm ml-1">↑12%</span>}
+          <div className="text-sm text-graytxt">
+            Flash Rate: {available ? (
+              <span className={`${getFlashRateColor(weeklyData.flashRate)}`}>
+                {weeklyData.flashRate}%
+              </span>
+            ) : (
+              <span>--</span>
+            )} • Climbs: <span className="text-white">{available ? total : '--'}</span>
           </div>
           <ChevronDownIcon 
             className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
@@ -121,11 +169,11 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
           <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
             {available ? (
               <>
-                <div>
-                  <div className="text-sm text-white font-semibold mb-2 text-center">Grade Distribution</div>
+                <div className="border border-border/50 rounded-lg p-3">
+                  <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
                   {grades.map((g, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}%</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}% ({Math.round(total * g.val / 100)})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                         <div className="h-full bg-white/70" style={{width: `${g.val}%`}}></div>
                       </div>
@@ -133,25 +181,25 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
                   ))}
                 </div>
                 
-                <div>
-                  <div className="text-sm text-white font-semibold mb-2 text-center">Style Distribution</div>
+                <div className="border border-border/50 rounded-lg p-3">
+                  <div className="text-sm text-white font-semibold mb-3 text-center">Style Distribution</div>
                   {styles.map((s, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}%</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}% ({Math.round(total * s.val / 100)})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                        <div className="h-full bg-white/60" style={{width: `${s.val}%`}}></div>
+                        <div className="h-full bg-white/70" style={{width: `${s.val}%`}}></div>
                       </div>
                     </div>
                   ))}
                 </div>
                 
-                <div>
-                  <div className="text-sm text-white font-semibold mb-2 text-center">Wall Angle Distribution</div>
+                <div className="border border-border/50 rounded-lg p-3">
+                  <div className="text-sm text-white font-semibold mb-3 text-center">Wall Angle Distribution</div>
                   {angles.map((a, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}%</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}% ({Math.round(total * a.val / 100)})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                        <div className="h-full bg-white/50" style={{width: `${a.val}%`}}></div>
+                        <div className="h-full bg-white/70" style={{width: `${a.val}%`}}></div>
                       </div>
                     </div>
                   ))}

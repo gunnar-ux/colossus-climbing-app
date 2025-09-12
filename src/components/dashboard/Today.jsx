@@ -18,8 +18,10 @@ const Today = ({ score = 77, loadRatio = 1.0, sessions = 0, crsData, loadRatioDa
   const crsMessage = (sessions >= 3 && crsData) ? crsData.message : null;
 
   const getCRSAdvice = (s) => {
-    if (s >= 77) return { msg: 'Optimal. Peak performance ready.' };
-    if (s >= 45) return { msg: 'Moderate. Balanced training recommended.' };
+    if (s >= 88) return { msg: 'Optimal. Maximum capacity available.' };
+    if (s >= 75) return { msg: 'Good. High capacity ready.' };
+    if (s >= 60) return { msg: 'Moderate. Balanced training recommended.' };
+    if (s >= 45) return { msg: 'Caution. Reduced capacity today.' };
     return { msg: 'Limited. Focus on technique and recovery.' };
   };
 

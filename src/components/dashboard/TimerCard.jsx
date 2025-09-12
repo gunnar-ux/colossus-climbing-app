@@ -13,6 +13,8 @@ const TimerCard = () => {
   const [startTime, setStartTime] = useState(null); // Track when timer started for persistence
   const [isCompleted, setIsCompleted] = useState(false); // Track if workout is completed
   const [selectedPreset, setSelectedPreset] = useState(null); // Track selected preset for UI
+  const [isStopwatchMode, setIsStopwatchMode] = useState(false); // Track if in stopwatch mode
+  const [stopwatchTime, setStopwatchTime] = useState(0); // Track elapsed time in stopwatch mode
   
   // Timer settings
   const [workTime, setWorkTime] = useState(''); // seconds
@@ -83,6 +85,8 @@ const TimerCard = () => {
       setRestTimeUnit(savedState.restTimeUnit || 'seconds');
       setStartTime(savedState.startTime || null);
       setIsCompleted(savedState.isCompleted || false);
+      setIsStopwatchMode(savedState.isStopwatchMode || false);
+      setStopwatchTime(savedState.stopwatchTime || 0);
     }
   }, []);
 
@@ -99,16 +103,18 @@ const TimerCard = () => {
       workTimeUnit,
       restTimeUnit,
       startTime,
-      isCompleted
+      isCompleted,
+      isStopwatchMode,
+      stopwatchTime
     };
     
     // Only save if timer is running or has been configured
-    if (isRunning || timeRemaining > 0 || workTime !== '' || restTime !== '' || totalRounds !== '') {
+    if (isRunning || timeRemaining > 0 || workTime !== '' || restTime !== '' || totalRounds !== '' || isStopwatchMode || stopwatchTime > 0) {
       saveTimerState(state);
     } else {
       clearTimerState();
     }
-  }, [isRunning, currentPhase, currentRound, timeRemaining, workTime, restTime, totalRounds, workTimeUnit, restTimeUnit, startTime, isCompleted]);
+  }, [isRunning, currentPhase, currentRound, timeRemaining, workTime, restTime, totalRounds, workTimeUnit, restTimeUnit, startTime, isCompleted, isStopwatchMode, stopwatchTime]);
 
   // Handle visibility changes (app backgrounding)
   useEffect(() => {
@@ -222,10 +228,16 @@ const TimerCard = () => {
 
   // Start timer
   const startTimer = () => {
-    // Don't start if no preset is selected and no custom settings are configured
     const hasCustomSettings = workTime !== '' && restTime !== '' && totalRounds !== '';
-    if (!selectedPreset && timeRemaining === 0 && !hasCustomSettings) {
-      return; // Do nothing - no workout configured
+    
+    // If no preset and no custom settings, start stopwatch mode
+    if (!selectedPreset && timeRemaining === 0 && !hasCustomSettings && !isStopwatchMode) {
+      setIsStopwatchMode(true);
+      setIsRunning(true);
+      setStartTime(Date.now());
+      setStopwatchTime(0);
+      setIsCompleted(false);
+      return;
     }
     
     if (!isRunning) {
@@ -268,6 +280,12 @@ const TimerCard = () => {
       clearInterval(intervalRef.current);
     }
     
+    // If in stopwatch mode, reset stopwatch
+    if (isStopwatchMode) {
+      setStopwatchTime(0);
+      return;
+    }
+    
     // If a preset is selected, restore to its initial state
     if (selectedPreset) {
       const preset = presets.find(p => p.name === selectedPreset);
@@ -296,44 +314,50 @@ const TimerCard = () => {
 
   // Timer logic effect
   useEffect(() => {
-    if (isRunning && timeRemaining > 0) {
+    if (isRunning) {
       intervalRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            // Phase complete
-            if (isRestOnlyMode) {
-              // Rest-only mode: auto-reset for next rest
-              setIsRunning(false);
-              setCurrentPhase('rest');
-              setCurrentRound(1);
-              setIsCompleted(false);
-              const restSeconds = convertToSeconds(restTime, restTimeUnit);
-              setTimeRemaining(restSeconds);
-              return restSeconds;
-            } else if (currentPhase === 'work') {
-              // Switch to rest
-              setCurrentPhase('rest');
-              const restSeconds = convertToSeconds(restTime, restTimeUnit);
-              return restSeconds;
-            } else {
-              // Rest complete, check if more rounds
-              if (currentRound < (parseInt(totalRounds) || 1)) {
-                setCurrentRound(prev => prev + 1);
-                setCurrentPhase('work');
-                const workSeconds = convertToSeconds(workTime, workTimeUnit);
-                return workSeconds;
-              } else {
-                // All rounds complete
+        if (isStopwatchMode) {
+          // Stopwatch mode: count up
+          setStopwatchTime(prev => prev + 1);
+        } else if (timeRemaining > 0) {
+          // Interval timer mode: count down
+          setTimeRemaining(prev => {
+            if (prev <= 1) {
+              // Phase complete
+              if (isRestOnlyMode) {
+                // Rest-only mode: auto-reset for next rest
                 setIsRunning(false);
-                setCurrentPhase('work');
+                setCurrentPhase('rest');
                 setCurrentRound(1);
-                setIsCompleted(true);
-                return 0;
+                setIsCompleted(false);
+                const restSeconds = convertToSeconds(restTime, restTimeUnit);
+                setTimeRemaining(restSeconds);
+                return restSeconds;
+              } else if (currentPhase === 'work') {
+                // Switch to rest
+                setCurrentPhase('rest');
+                const restSeconds = convertToSeconds(restTime, restTimeUnit);
+                return restSeconds;
+              } else {
+                // Rest complete, check if more rounds
+                if (currentRound < (parseInt(totalRounds) || 1)) {
+                  setCurrentRound(prev => prev + 1);
+                  setCurrentPhase('work');
+                  const workSeconds = convertToSeconds(workTime, workTimeUnit);
+                  return workSeconds;
+                } else {
+                  // All rounds complete
+                  setIsRunning(false);
+                  setCurrentPhase('work');
+                  setCurrentRound(1);
+                  setIsCompleted(true);
+                  return 0;
+                }
               }
             }
-          }
-          return prev - 1;
-        });
+            return prev - 1;
+          });
+        }
       }, 1000);
     } else {
       if (intervalRef.current) {
@@ -346,7 +370,7 @@ const TimerCard = () => {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isRunning, timeRemaining, currentPhase, currentRound, workTime, restTime, totalRounds, workTimeUnit, restTimeUnit]);
+  }, [isRunning, isStopwatchMode, timeRemaining, currentPhase, currentRound, workTime, restTime, totalRounds, workTimeUnit, restTimeUnit]);
 
   // Get phase color
   const getPhaseColor = () => {
@@ -391,11 +415,11 @@ const TimerCard = () => {
         {/* Timer Display */}
         <div className="flex items-center justify-between gap-4 mb-3">
           <div className={`text-4xl font-extrabold leading-none ${getPhaseColor()}`}>
-            {timeRemaining > 0 || selectedPreset ? formatTime(timeRemaining) : '--:--'}
+            {isStopwatchMode ? formatTime(stopwatchTime) : (timeRemaining > 0 || selectedPreset ? formatTime(timeRemaining) : '--:--')}
           </div>
           <div className="flex items-center gap-2">
             {/* Reset button - only show when timer is stopped and has been used */}
-            {!isRunning && (timeRemaining > 0 || isCompleted) && (
+            {!isRunning && (timeRemaining > 0 || isCompleted || (isStopwatchMode && stopwatchTime > 0)) && (
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
@@ -430,7 +454,11 @@ const TimerCard = () => {
         {/* Bottom status with dropdown toggle */}
         <div className="mt-2 flex items-center justify-between">
           <div className="text-sm">
-            {isCompleted ? (
+            {isStopwatchMode ? (
+              <span className={`${isRunning ? 'text-green font-semibold' : 'text-graytxt'}`}>
+                Stopwatch Mode
+              </span>
+            ) : isCompleted ? (
               <span className="text-green">{isRestOnlyMode ? 'Rest complete!' : 'Workout completed! Great job!'}</span>
             ) : isRestOnlyMode ? (
               <span className={`${isRunning ? 'text-blue font-semibold' : 'text-graytxt'}`}>
@@ -592,6 +620,8 @@ const TimerCard = () => {
                   setStartTime(null);
                   setIsCompleted(false);
                   setSelectedPreset(null);
+                  setIsStopwatchMode(false);
+                  setStopwatchTime(0);
                   // Reset custom settings to empty/default values
                   setWorkTime('');
                   setRestTime('');

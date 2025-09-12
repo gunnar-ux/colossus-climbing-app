@@ -105,10 +105,11 @@ function calculateVolumePattern(sessions) {
  * @returns {string} - Advice message
  */
 function getCRSMessage(score) {
-  if (score >= 77) return 'Excellent. Ready for high intensity training.';
-  if (score >= 67) return 'Good. Peak performance ready.';
-  if (score >= 45) return 'Moderate. Balanced training recommended.';
-  if (score >= 30) return 'Caution. Focus on recovery and technique.';
+  if (score >= 88) return 'Optimal. Maximum capacity available.';
+  if (score >= 75) return 'Good. High capacity ready.';
+  if (score >= 60) return 'Moderate. Balanced training recommended.';
+  if (score >= 45) return 'Caution. Reduced capacity today.';
+  if (score >= 30) return 'Limited. Focus on recovery and technique.';
   return 'Poor. Prioritize rest and light movement.';
 }
 
@@ -266,7 +267,127 @@ function reduceVolume(volume) {
 }
 
 /**
- * Get recommended training based on CRS and load
+ * Calculate personal baseline from user's session history
+ * @param {Array} sessions - User's session history
+ * @returns {Object} - Personal baseline metrics
+ */
+export function calculatePersonalBaseline(sessions) {
+  if (!sessions || sessions.length === 0) {
+    return {
+      avgSessionLoad: 120, // Conservative default
+      avgVolume: 12,
+      avgRPE: 6.5,
+      confidence: 'none'
+    };
+  }
+
+  // Use last 5-10 sessions for baseline calculation
+  const recentSessions = sessions.slice(0, Math.min(10, sessions.length));
+  const validSessions = recentSessions.filter(s => s.climbList && s.climbList.length > 0);
+
+  if (validSessions.length === 0) {
+    return {
+      avgSessionLoad: 120,
+      avgVolume: 12, 
+      avgRPE: 6.5,
+      confidence: 'none'
+    };
+  }
+
+  // Calculate averages
+  const totalLoad = validSessions.reduce((sum, s) => sum + calculateSessionLoad(s), 0);
+  const totalVolume = validSessions.reduce((sum, s) => sum + s.climbList.length, 0);
+  const totalRPE = validSessions.reduce((sum, s) => {
+    const sessionRPE = s.climbList.reduce((rpeSum, c) => rpeSum + c.rpe, 0) / s.climbList.length;
+    return sum + sessionRPE;
+  }, 0);
+
+  return {
+    avgSessionLoad: Math.round(totalLoad / validSessions.length),
+    avgVolume: Math.round(totalVolume / validSessions.length),
+    avgRPE: Math.round((totalRPE / validSessions.length) * 2) / 2, // Round to 0.5
+    confidence: validSessions.length >= 5 ? 'high' : validSessions.length >= 3 ? 'medium' : 'low'
+  };
+}
+
+/**
+ * Get load-based capacity recommendations (caps, not targets)
+ * @param {Object|null} crs - CRS calculation result
+ * @param {Object|null} loadRatio - Load ratio calculation result
+ * @param {Array} sessions - User's session history
+ * @returns {Object} - Capacity-based recommendations
+ */
+export function getCapacityRecommendations(crs, loadRatio, sessions) {
+  const baseline = calculatePersonalBaseline(sessions);
+  
+  // No data state - conservative defaults
+  if (!crs) {
+    return {
+      type: 'Start Easy',
+      volumeCap: '8-12',
+      rpeCap: '≤6',
+      focus: 'Build your baseline safely',
+      style: 'mixed'
+    };
+  }
+
+  // Calculate capacity multiplier based on CRS
+  let capacityMultiplier = 1.0;
+  if (crs.score >= 88) capacityMultiplier = 1.3;      // 130% capacity
+  else if (crs.score >= 75) capacityMultiplier = 1.15; // 115% capacity  
+  else if (crs.score >= 60) capacityMultiplier = 1.0;  // 100% capacity
+  else if (crs.score >= 45) capacityMultiplier = 0.8;  // 80% capacity
+  else capacityMultiplier = 0.6;                       // 60% capacity
+
+  // Adjust for load ratio if elevated
+  if (loadRatio && loadRatio.ratio > 1.3) {
+    capacityMultiplier *= 0.8; // Reduce by 20% if overreaching
+  }
+
+  // Calculate volume cap
+  const volumeCap = Math.round(baseline.avgVolume * capacityMultiplier);
+  const maxVolume = Math.min(volumeCap + 3, Math.round(volumeCap * 1.2)); // Small range
+
+  // Calculate RPE cap
+  let rpeCap = 6;
+  if (crs.score >= 88) rpeCap = 9;
+  else if (crs.score >= 75) rpeCap = 8; 
+  else if (crs.score >= 60) rpeCap = 7;
+  else if (crs.score >= 45) rpeCap = 6;
+  else rpeCap = 5;
+
+  // Determine training focus
+  let focus, style;
+  if (crs.score >= 88) {
+    focus = 'Maximum intensity projects';
+    style = 'power';
+  } else if (crs.score >= 75) {
+    focus = 'High intensity training';
+    style = 'power';
+  } else if (crs.score >= 60) {
+    focus = 'Balanced volume and intensity';
+    style = 'endurance';
+  } else if (crs.score >= 45) {
+    focus = 'Technique with light volume';
+    style = 'technical';
+  } else {
+    focus = 'Recovery and movement quality';
+    style = 'technical';
+  }
+
+  return {
+    type: focus,
+    volumeCap: volumeCap === maxVolume ? `${volumeCap}` : `${volumeCap}-${maxVolume}`,
+    rpeCap: rpeCap <= 6 ? `≤${rpeCap}` : `${rpeCap - 1}-${rpeCap}`,
+    focus,
+    style,
+    baselineLoad: baseline.avgSessionLoad,
+    targetLoad: Math.round(baseline.avgSessionLoad * capacityMultiplier)
+  };
+}
+
+/**
+ * Get recommended training based on CRS and load (LEGACY - keeping for compatibility)
  * @param {Object|null} crs - CRS calculation result
  * @param {Object|null} loadRatio - Load ratio calculation result
  * @param {Array} recentSessions - Recent session data
@@ -278,7 +399,7 @@ export function getRecommendedTraining(crs, loadRatio, recentSessions) {
     return {
       type: 'Track Climbs',
       volume: 'Start with 10-15',
-      rpe: 'Listen to your body',
+      effort: 'Listen to your body',
       focus: 'Begin building your climbing profile',
       style: 'mixed'
     };
@@ -292,7 +413,7 @@ export function getRecommendedTraining(crs, loadRatio, recentSessions) {
     recommendation = {
       type: 'Power',
       volume: '15-20',
-      rpe: '≤9',
+      effort: '≤9',
       focus: 'Projects and limit boulders',
       style: 'power'
     };
@@ -301,7 +422,7 @@ export function getRecommendedTraining(crs, loadRatio, recentSessions) {
     recommendation = {
       type: 'Capacity',
       volume: '12-18',
-      rpe: '≤7',
+      effort: '≤7',
       focus: 'Volume at moderate intensity',
       style: 'endurance'
     };
@@ -310,7 +431,7 @@ export function getRecommendedTraining(crs, loadRatio, recentSessions) {
     recommendation = {
       type: 'Skill',
       volume: '8-12',
-      rpe: '≤5',
+      effort: '≤5',
       focus: 'Technique and movement quality',
       style: 'technical'
     };

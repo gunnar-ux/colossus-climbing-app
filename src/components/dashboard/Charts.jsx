@@ -1,22 +1,103 @@
 // Chart components extracted from dashboard HTML
 // Preserves exact dark theme styling and visualization logic
 
-export const BarChart = ({ values = [10, 20, 30], labels = [], height = 90, onClick }) => {
+export const BarChart = ({ values = [10, 20, 30], recommendationLines = [], labels = [], height = 90, onClick }) => {
   const padding = 8, width = 260, gap = 6;
   const barW = (width - padding * 2 - gap * (values.length - 1)) / values.length;
-  const maxVal = Math.max(1, ...values);
+  
+  // Calculate max value considering both actual values and recommendation lines
+  const allValues = [...values, ...(recommendationLines || [])];
+  const maxVal = Math.max(1, ...allValues);
   
   return (
     <svg width={width} height={height} className="cursor-pointer" onClick={onClick}>
+      <defs>
+        {/* Diagonal pattern for background - lighter for better contrast */}
+        <pattern id="diagonalHatch" patternUnits="userSpaceOnUse" width="4" height="4">
+          <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+        </pattern>
+        {/* Subtle ice blue gradient for training days */}
+        <linearGradient id="iceBlueGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+          <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+        </linearGradient>
+      </defs>
+      
       {values.map((v, i) => {
-        const h = Math.max(2, (v / maxVal) * (height - 24));
+        const actualHeight = Math.max(2, (v / maxVal) * (height - 24));
+        const recommendationHeight = recommendationLines && recommendationLines[i] 
+          ? (recommendationLines[i] / maxVal) * (height - 24)
+          : 0;
+        
         const x = padding + i * (barW + gap);
-        const y = height - h - 18;
+        const actualY = height - actualHeight - 18;
+        const backgroundY = height - (height - 24) - 18; // Full height background
+        
+        // Use ice blue gradient
+        const barColor = "fill-[url(#iceBlueGradient)]";
+        
         return (
           <g key={i}>
-            <rect x={x} y={y} width={barW} height={h} rx="4" className="fill-white/70" />
+            {/* Layer 1: Diagonal pattern background (full height) */}
+            <rect 
+              x={x} 
+              y={backgroundY} 
+              width={barW} 
+              height={height - 24} 
+              rx="4" 
+              fill="url(#diagonalHatch)" 
+            />
+            
+            {/* Layer 2: Actual volume bar */}
+            {v > 0 && (
+              <rect 
+                x={x} 
+                y={actualY} 
+                width={barW} 
+                height={actualHeight} 
+                rx="4" 
+                fill="url(#iceBlueGradient)"
+                stroke="#0891b2"
+                strokeWidth="1"
+                strokeOpacity="0.4"
+              />
+            )}
+            
+            {/* Layer 3: Recommendation line - blue for better visual hierarchy */}
+            {recommendationLines && recommendationLines[i] > 0 && (
+              <line
+                x1={x}
+                y1={height - recommendationHeight - 18}
+                x2={x + barW}
+                y2={height - recommendationHeight - 18}
+                stroke="#3b82f6"
+                strokeWidth="3"
+                opacity="1"
+              />
+            )}
+            
+            {/* Volume number inside bar at bottom - white text for better contrast */}
+            {v > 0 && actualHeight > 16 && (
+              <text 
+                x={x + barW / 2} 
+                y={height - 22} 
+                textAnchor="middle" 
+                className="fill-white text-xs font-bold"
+              >
+                {v}
+              </text>
+            )}
+            
+            {/* Day labels */}
             {labels[i] && (
-              <text x={x + barW / 2} y={height - 2} textAnchor="middle" className="fill-gray-300 text-sm">{labels[i]}</text>
+              <text 
+                x={x + barW / 2} 
+                y={height - 2} 
+                textAnchor="middle" 
+                className="fill-gray-300 text-sm"
+              >
+                {labels[i]}
+              </text>
             )}
           </g>
         );

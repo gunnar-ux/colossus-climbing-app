@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDownIcon } from '../ui/Icons.jsx';
+import { ChevronDownIcon, TrophyIcon } from '../ui/Icons.jsx';
 import Progress from '../ui/Progress.jsx';
 import { roundRPE } from '../../utils/index.js';
 
@@ -16,10 +16,20 @@ const SessionCard = ({ session, index }) => {
     return 'text-red';                        // 0-39%: Needs work (red)
   };
   
+  // Example: Check if this is an exceptional session (for demo purposes)
+  const isExceptionalSession = session.flashRate >= 80 && session.climbs >= 10;
+  
   return (
-    <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3 cursor-pointer" onClick={() => setOpen(!open)}>
+    <div className={`${
+      isExceptionalSession 
+        ? 'bg-gradient-to-r from-emerald-950/25 to-green-900/20 border border-emerald-700/40 shadow-emerald-900/15 shadow-lg' 
+        : 'bg-card border border-border'
+    } rounded-col px-4 pt-4 pb-3 cursor-pointer`} onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
-          <div className="font-semibold text-base">{session.date === 'Now' ? 'Current Session' : session.date}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-semibold text-base">{session.date === 'Now' ? 'Current Session' : session.date}</div>
+            {isExceptionalSession && <TrophyIcon className="w-4 h-4 text-emerald-400" />}
+          </div>
           <div className="text-sm text-white">{session.climbs} Climbs</div>
         </div>
       <div className="flex items-center justify-between text-sm text-graytxt">
@@ -44,7 +54,7 @@ const SessionCard = ({ session, index }) => {
                   <span>{g.val}% ({g.count || 0})</span>
                 </div>
                 <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/80" style={{width: `${g.val}%`}}></div>
+                  <div className="h-full bg-white/70" style={{width: `${g.val}%`}}></div>
                 </div>
               </div>
             ))}

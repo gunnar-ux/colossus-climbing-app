@@ -10,6 +10,8 @@ import {
   UserCircleIcon as HeroUserCircleIcon,
   ClockIcon as HeroClockIcon,
   ChevronDownIcon as HeroChevronDownIcon,
+  ChevronRightIcon as HeroChevronRightIcon,
+  ChevronLeftIcon as HeroChevronLeftIcon,
   ArrowPathIcon as HeroResetIcon,
   LockClosedIcon as HeroLockIcon,
   SpeakerWaveIcon as HeroVolumeIcon,
@@ -21,7 +23,8 @@ import {
   XMarkIcon as HeroXIcon,
   ArrowRightOnRectangleIcon as HeroLogoutIcon,
   ArrowTopRightOnSquareIcon as HeroExternalIcon,
-  FireIcon as HeroFireIcon
+  FireIcon as HeroFireIcon,
+  RocketLaunchIcon as HeroRocketIcon
 } from '@heroicons/react/24/outline';
 
 // Navigation Icons (4 icons)
@@ -104,5 +107,17 @@ export const LockClosedIcon = ({ className = "w-5 h-5" }) => (
 
 export const FireIcon = ({ className = "w-5 h-5" }) => (
   <HeroFireIcon className={className} />
+);
+
+export const ChevronRightIcon = ({ className = "w-5 h-5" }) => (
+  <HeroChevronRightIcon className={className} />
+);
+
+export const ChevronLeftIcon = ({ className = "w-5 h-5" }) => (
+  <HeroChevronLeftIcon className={className} />
+);
+
+export const RocketLaunchIcon = ({ className = "w-5 h-5" }) => (
+  <HeroRocketIcon className={className} />
 );
 

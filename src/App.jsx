@@ -10,6 +10,8 @@ import AccountPage from './components/account/AccountPage.jsx';
 import TrackClimb from './components/tracker/TrackClimb.jsx';
 import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
 import LoadingScreen from './components/ui/LoadingScreen.jsx';
+import ReadinessInfoPage from './components/dashboard/ReadinessInfoPage.jsx';
+import LoadRatioInfoPage from './components/dashboard/LoadRatioInfoPage.jsx';
 import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icons.jsx';
 
 // Utils & Services
@@ -24,8 +26,13 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Don't show on tracker or onboarding pages
-  if (location.pathname === '/tracker' || location.pathname === '/onboarding') {
+  // Don't show on tracker, onboarding, or info pages
+  if (
+    location.pathname === '/tracker' || 
+    location.pathname === '/onboarding' ||
+    location.pathname === '/readiness-info' ||
+    location.pathname === '/load-ratio-info'
+  ) {
     return null;
   }
   
@@ -345,7 +352,13 @@ const AppContent = () => {
       {/* Page content */}
       <div 
         className="min-h-screen"
-        style={{ paddingBottom: location.pathname === '/tracker' ? 0 : '80px' }}
+        style={{ 
+          paddingBottom: (
+            location.pathname === '/tracker' || 
+            location.pathname === '/readiness-info' || 
+            location.pathname === '/load-ratio-info'
+          ) ? 0 : '80px' 
+        }}
       >
         <Routes>
                     <Route path="/" element={
@@ -355,6 +368,9 @@ const AppContent = () => {
                         user={user}
                         profile={profile || { id: user?.id, name: 'Gunnar', email: user?.email }}
                         onNavigateToTracker={() => navigate('/tracker')}
+                        onNavigateToProgress={() => navigate('/progress')}
+                        onNavigateToReadinessInfo={() => navigate('/readiness-info')}
+                        onNavigateToLoadRatioInfo={() => navigate('/load-ratio-info')}
                         onLogout={handleLogout}
                       />
                     } />
@@ -387,6 +403,22 @@ const AppContent = () => {
                         onBack={() => navigate('/')}
                         onClimbLogged={handleClimbLogged}
                         onLogout={handleLogout}
+                      />
+                    } />
+                    
+                    <Route path="/readiness-info" element={
+                      <ReadinessInfoPage 
+                        score={userData?.crsData?.score || 77}
+                        onBack={() => navigate('/')}
+                        onTrackClimbs={() => navigate('/tracker')}
+                      />
+                    } />
+                    
+                    <Route path="/load-ratio-info" element={
+                      <LoadRatioInfoPage 
+                        loadRatio={userData?.loadRatioData?.ratio || 1.0}
+                        onBack={() => navigate('/')}
+                        onTrackClimbs={() => navigate('/tracker')}
                       />
                     } />
         </Routes>

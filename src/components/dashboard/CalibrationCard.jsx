@@ -15,15 +15,15 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
 
   if (sessions >= 5 && climbs >= 50) {
     return (
-      <div className="mx-5 mt-3 p-3 bg-green/5 border border-green/20 border-l-2 border-l-green/60">
+      <div className="mx-5 mt-3 p-3 bg-gradient-to-r from-cyan-950/15 to-blue-950/15 border border-cyan-800/30 border-l-2 border-l-cyan-600/60">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-base font-medium text-green/90">✓ Fully Calibrated</span>
-            <span className="text-sm text-green/80">All metrics active</span>
+            <span className="text-base font-medium text-cyan-400/90">✓ Fully Calibrated</span>
+            <span className="text-sm text-cyan-400/80">All metrics active</span>
           </div>
           <button 
             onClick={onDismissCalibration}
-            className="w-6 h-6 rounded-full bg-green/15 hover:bg-green/25 text-green/80 flex items-center justify-center text-base transition"
+            className="w-6 h-6 rounded-full bg-cyan-950/20 hover:bg-cyan-950/30 text-cyan-400/80 flex items-center justify-center text-base transition"
             aria-label="Dismiss"
           >
             ×
@@ -35,12 +35,12 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
 
   return (
     <section className="px-5 pt-3">
-      <div className="bg-border/15 border border-border/30 border-l-2 border-l-green/40 p-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+      <div className="bg-gradient-to-r from-cyan-950/15 to-blue-950/15 border border-cyan-800/30 border-l-2 border-l-cyan-600/40 p-3 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
       {/* Single row: Title, Percent, Chevron */}
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-sm text-white">Dashboard calibrating...</h3>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-green font-medium">{Math.round(overallProgress)}%</span>
+          <span className="text-sm text-cyan-400 font-medium">{Math.round(overallProgress)}%</span>
           <ChevronDownIcon 
             className={`w-4 h-4 transition-transform duration-200 text-graytxt ${isExpanded ? 'rotate-180' : ''}`}
           />
@@ -60,7 +60,7 @@ const CalibrationCard = ({ sessions, climbs, onDismissCalibration }) => {
                   <span className="text-graytxt text-sm">{req.current}/{req.needed}</span>
                   <div className="w-16 h-1.5 bg-border rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-green transition-all duration-300" 
+                      className="h-full bg-cyan-400 transition-all duration-300" 
                       style={{width: `${Math.min((req.current / req.needed) * 100, 100)}%`}}
                     ></div>
                   </div>
