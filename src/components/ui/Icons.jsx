@@ -24,7 +24,8 @@ import {
   ArrowRightOnRectangleIcon as HeroLogoutIcon,
   ArrowTopRightOnSquareIcon as HeroExternalIcon,
   FireIcon as HeroFireIcon,
-  RocketLaunchIcon as HeroRocketIcon
+  RocketLaunchIcon as HeroRocketIcon,
+  ShareIcon as HeroShareIcon
 } from '@heroicons/react/24/outline';
 
 // Navigation Icons (4 icons)
@@ -119,5 +120,9 @@ export const ChevronLeftIcon = ({ className = "w-5 h-5" }) => (
 
 export const RocketLaunchIcon = ({ className = "w-5 h-5" }) => (
   <HeroRocketIcon className={className} />
+);
+
+export const ShareIcon = ({ className = "w-5 h-5" }) => (
+  <HeroShareIcon className={className} />
 );
 

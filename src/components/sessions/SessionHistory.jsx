@@ -30,7 +30,62 @@ const SessionHistory = ({ sessions = [] }) => {
     }
   };
 
-  const filteredSessions = getFilteredSessions();
+  // Generate 7-day week view with placeholders
+  const getWeekViewSessions = () => {
+    if (activeFilter !== 'Week') return getFilteredSessions();
+    
+    const weekSessions = [];
+    const today = new Date();
+    const hasMultipleSessions = sessions.length >= 3; // User has established sessions
+    
+    // Generate last 7 days (including today)
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dateString = date.toDateString();
+      const isToday = i === 0;
+      const isFuture = false; // We're only looking at past 7 days, so no future dates
+      
+      // Find session for this date
+      const sessionForDate = sessions.find(session => {
+        if (!session.timestamp) return false;
+        return new Date(session.timestamp).toDateString() === dateString;
+      });
+      
+      if (sessionForDate) {
+        weekSessions.push(sessionForDate);
+      } else {
+        // Determine what to show for empty days
+        let displayText;
+        if (!hasMultipleSessions) {
+          // Early user state - show "Upcoming Session" to fill screen
+          displayText = 'Upcoming Session';
+        } else if (isToday) {
+          // Today with no session yet
+          displayText = 'Today';
+        } else {
+          // Past date with no session - show the actual date
+          displayText = date.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+        
+        // Create placeholder for empty day
+        weekSessions.push({
+          id: `placeholder-${i}`,
+          date: displayText,
+          isPlaceholder: true,
+          timestamp: date.getTime(),
+          isEmpty: true // Flag to indicate this is an empty day, not upcoming
+        });
+      }
+    }
+    
+    return weekSessions;
+  };
+
+  const filteredSessions = activeFilter === 'Week' ? getWeekViewSessions() : getFilteredSessions();
 
   // Simple Placeholder Session Card - Visual Spaceholder Only
   const PlaceholderSessionCard = () => {
@@ -77,12 +132,33 @@ const SessionHistory = ({ sessions = [] }) => {
         {/* Sort sessions by timestamp (most recent first) and show them */}
         {[...filteredSessions]
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-          .map((session, i) => (
-            <SessionCard key={i} session={session} index={i} />
-          ))}
+          .map((session, i) => {
+            if (session.isPlaceholder) {
+              const isUpcomingSession = session.date === 'Upcoming Session';
+              const climbsText = isUpcomingSession ? '-- Climbs' : '0 Climbs';
+              const statsText = isUpcomingSession ? 'Peak: -- • Flash Rate: --% • XP: --' : 'No climbs logged';
+              
+              return (
+                <div key={session.id} className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="font-semibold text-base text-graytxt">
+                      {session.date}
+                    </div>
+                    <div className="text-sm text-graytxt/80">
+                      {climbsText}
+                    </div>
+                  </div>
+                  <div className="text-sm text-graytxt/80">
+                    {statsText}
+                  </div>
+                </div>
+              );
+            }
+            return <SessionCard key={session.id || i} session={session} index={i} />;
+          })}
         
-        {/* Show calibration placeholders if less than 5 total sessions - Simple visual spaceholders */}
-        {sessions.length < 5 && (
+        {/* Show calibration placeholders if less than 5 total sessions - Only for non-Week views */}
+        {activeFilter !== 'Week' && sessions.length < 5 && (
           <>
             {Array.from({ length: 5 - sessions.length }, (_, i) => (
               <PlaceholderSessionCard 
@@ -93,7 +169,7 @@ const SessionHistory = ({ sessions = [] }) => {
         )}
 
         {/* Empty state for filtered views */}
-        {filteredSessions.length === 0 && sessions.length > 0 && (
+        {filteredSessions.length === 0 && sessions.length > 0 && activeFilter !== 'Week' && (
           <div className="text-center py-8">
             <div className="text-graytxt text-sm">
               No sessions found for {activeFilter.toLowerCase()}

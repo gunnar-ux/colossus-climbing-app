@@ -24,7 +24,8 @@ export const BarChart = ({ values = [10, 20, 30], recommendationLines = [], labe
       </defs>
       
       {values.map((v, i) => {
-        const actualHeight = Math.max(2, (v / maxVal) * (height - 24));
+        const calculatedHeight = (v / maxVal) * (height - 24);
+        const actualHeight = v > 0 ? Math.max(18, calculatedHeight) : 2; // Ensure minimum 18px for number visibility
         const recommendationHeight = recommendationLines && recommendationLines[i] 
           ? (recommendationLines[i] / maxVal) * (height - 24)
           : 0;
@@ -76,8 +77,8 @@ export const BarChart = ({ values = [10, 20, 30], recommendationLines = [], labe
               />
             )}
             
-            {/* Volume number inside bar at bottom - white text for better contrast */}
-            {v > 0 && actualHeight > 16 && (
+            {/* Volume number inside bar at bottom - always visible now due to min height */}
+            {v > 0 && (
               <text 
                 x={x + barW / 2} 
                 y={height - 22} 
@@ -107,7 +108,7 @@ export const BarChart = ({ values = [10, 20, 30], recommendationLines = [], labe
 };
 
 export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) => {
-  const padding = 20, width = 260;
+  const padding = 30, width = 300;
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal;
@@ -132,7 +133,7 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
 
   // Determine format based on value range
   const formatValue = (val) => {
-    if (maxVal <= 10) return `V${val.toFixed(1)}`; // Grades
+    if (maxVal <= 10) return `V${Math.max(0, Math.round(val))}`; // Grades - show as whole numbers, minimum V0
     if (maxVal <= 20) return val.toFixed(1); // RPE
     return Math.round(val).toString(); // Volume
   };
@@ -144,23 +145,23 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
         const y = padding + (i * (height - padding * 2 - 18) / 2);
         return (
           <g key={i}>
-            <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#2a2a2a" strokeWidth="1" />
-            <text x={padding - 5} y={y + 3} textAnchor="end" className="fill-gray-400 text-sm">{formatValue(val)}</text>
+            <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#374151" strokeWidth="1" opacity="0.6" />
+            <text x={padding - 5} y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">{formatValue(val)}</text>
           </g>
         );
       })}
       
-      {/* Line */}
-      <path d={pathD} stroke="#4ade80" strokeWidth="2" fill="none" />
+      {/* Main line */}
+      <path d={pathD} stroke="#22d3ee" strokeWidth="2" fill="none" />
       
       {/* Points */}
       {points.map((point, i) => (
-        <circle key={i} cx={point.x} cy={point.y} r="2" className="fill-green" />
+        <circle key={i} cx={point.x} cy={point.y} r="2" className="fill-cyan-400" />
       ))}
       
       {/* Labels */}
       {labels.map((label, i) => (
-        <text key={i} x={points[i]?.x} y={height - 2} textAnchor="middle" className="fill-gray-300 text-sm">{label}</text>
+        <text key={i} x={points[i]?.x} y={height - 2} textAnchor="middle" className="fill-slate-400 text-xs">{label}</text>
       ))}
     </svg>
   );

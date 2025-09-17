@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDownIcon, TrophyIcon } from '../ui/Icons.jsx';
+import { ChevronDownIcon, TrophyIcon, ShareIcon } from '../ui/Icons.jsx';
 import Progress from '../ui/Progress.jsx';
 import { roundRPE } from '../../utils/index.js';
 
@@ -11,9 +11,8 @@ const SessionCard = ({ session, index }) => {
   
   // Get flash rate color based on performance ranges
   const getFlashRateColor = (rate) => {
-    if (rate >= 80) return 'text-green';      // 80-100%: Excellent (green)
-    if (rate >= 40) return 'text-blue';       // 40-79%: Good (blue)  
-    return 'text-red';                        // 0-39%: Needs work (red)
+    if (rate >= 85) return 'text-cyan-400';   // 85-100%: Exceptional (ice blue)
+    return 'text-white';                      // 0-84%: Normal (white)
   };
   
   // Example: Check if this is an exceptional session (for demo purposes)
@@ -22,99 +21,105 @@ const SessionCard = ({ session, index }) => {
   return (
     <div className={`${
       isExceptionalSession 
-        ? 'bg-gradient-to-r from-emerald-950/25 to-green-900/20 border border-emerald-700/40 shadow-emerald-900/15 shadow-lg' 
+        ? 'bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 shadow-cyan-900/15 shadow-lg' 
         : 'bg-card border border-border'
     } rounded-col px-4 pt-4 pb-3 cursor-pointer`} onClick={() => setOpen(!open)}>
+        {/* Row 1: Date/Focus and Share Icon */}
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
             <div className="font-semibold text-base">{session.date === 'Now' ? 'Current Session' : session.date}</div>
-            {isExceptionalSession && <TrophyIcon className="w-4 h-4 text-emerald-400" />}
+            {isExceptionalSession && <TrophyIcon className="w-4 h-4 text-cyan-400" />}
+            <div className={`text-sm px-2 py-0.5 rounded ${isExceptionalSession ? 'bg-cyan-900/30 text-cyan-400' : 'bg-border/30 text-graytxt'}`}>
+              {session.style || 'Mixed'} Focus
+            </div>
           </div>
-          <div className="text-sm text-white">{session.climbs} Climbs</div>
+          <ShareIcon className={`w-4 h-4 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'} hover:text-cyan-400 cursor-pointer transition-colors`} />
         </div>
-      <div className="flex items-center justify-between text-sm text-graytxt">
-        <div>
-          Peak: <span className="text-white">{session.peakGrade || 'V0'}</span> • Flash Rate: <span className={getFlashRateColor(session.flashRate || 0)}>{session.flashRate || 0}%</span> • XP: <span className="text-white">{session.totalXP || 0}</span>
+        
+        {/* Row 2: Session Stats */}
+        <div className={`flex items-center justify-between text-sm`}>
+          <div>
+            <span className="text-graytxt">Climbs:</span> <span className="text-white">{session.climbs}</span> • <span className="text-graytxt">Peak:</span> <span className="text-white">{session.peakGrade || 'V0'}</span> • <span className="text-graytxt">Flash Rate:</span> <span className={getFlashRateColor(session.flashRate || 0)}>{session.flashRate || 0}%</span>
+          </div>
+          <ChevronDownIcon 
+            className={`w-4 h-4 transition-transform duration-200 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'} ${open ? 'rotate-180' : ''}`}
+          />
         </div>
-        <ChevronDownIcon 
-          className={`w-4 h-4 transition-transform duration-200 text-graytxt ${open ? 'rotate-180' : ''}`}
-        />
-      </div>
       
       {/* Expandable content */}
       {open && (
-        <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+        <div className={`mt-4 pt-4 space-y-4 ${isExceptionalSession ? 'border-t border-cyan-700/40' : 'border-t border-border/50'}`}>
           {/* Grade Distribution */}
-          <div className="border border-border/50 rounded-lg p-3">
+          <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
             {(session.grades || []).map((g, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-graytxt">{g.label}</span>
+                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{g.label}</span>
                   <span>{g.val}% ({g.count || 0})</span>
                 </div>
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/70" style={{width: `${g.val}%`}}></div>
+                <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
+                  <div className={`h-full ${isExceptionalSession ? 'bg-cyan-400' : 'bg-white/70'}`} style={{width: `${g.val}%`}}></div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Style Distribution */}
-          <div className="border border-border/50 rounded-lg p-3">
+          <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Style Distribution</div>
             {(session.styles || []).map((s, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-graytxt">{s.label}</span>
+                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{s.label}</span>
                   <span>{s.val}% ({s.count || 0})</span>
                 </div>
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/70" style={{width: `${s.val}%`}}></div>
+                <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
+                  <div className={`h-full ${isExceptionalSession ? 'bg-cyan-400' : 'bg-white/70'}`} style={{width: `${s.val}%`}}></div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Wall Angles */}
-          <div className="border border-border/30 rounded-lg p-3">
+          <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/30'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Wall Angle Distribution</div>
             {(session.angles || []).map((w, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-graytxt">{w.label}</span>
+                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{w.label}</span>
                   <span>{w.val}% ({w.count || 0})</span>
                 </div>
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/70" style={{width: `${w.val}%`}}></div>
+                <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
+                  <div className={`h-full ${isExceptionalSession ? 'bg-cyan-400' : 'bg-white/70'}`} style={{width: `${w.val}%`}}></div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Boulder vs Board Distribution */}
-          <div className="border border-border/50 rounded-lg p-3">
+          <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Boulder vs Board</div>
             {session.types?.map((t, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className="text-graytxt">{t.label}</span>
+                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{t.label}</span>
                   <span>{t.val}% ({t.count || 0})</span>
                 </div>
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/70" style={{width: `${t.val}%`}}></div>
+                <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
+                  <div className={`h-full ${isExceptionalSession ? 'bg-cyan-400' : 'bg-white/70'}`} style={{width: `${t.val}%`}}></div>
                 </div>
               </div>
             ))}
           </div>
 
           {/* Average Perceived Effort */}
-          <div className="border border-border/50 rounded-lg p-3">
+          <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Average Perceived Effort</div>
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
-                  <div className="h-full bg-white/70" style={{width: `${Math.min((roundRPE(session.avgRPE) / 10) * 100, 100)}%`}}></div>
+                <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
+                  <div className={`h-full ${isExceptionalSession ? 'bg-cyan-400' : 'bg-white/70'}`} style={{width: `${Math.min((roundRPE(session.avgRPE) / 10) * 100, 100)}%`}}></div>
                 </div>
               </div>
               <div className="text-sm">{roundRPE(session.avgRPE)}/10</div>
@@ -126,18 +131,18 @@ const SessionCard = ({ session, index }) => {
             <div className="text-sm text-white font-semibold mb-2 text-center">Individual Climbs</div>
             <ul className="space-y-2">
               {(session.climbList || []).map((c, i) => (
-                <li key={i} className="flex items-center justify-between border border-border/60 rounded-lg px-3 py-2">
+                <li key={i} className={`flex items-center justify-between rounded-lg px-3 py-2 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/60'}`}>
                   <div className="flex items-center gap-2">
-                    <div className="text-lg font-bold text-white">{c.grade}</div>
-                    <div className="text-sm text-graytxt px-1.5 py-0.5 rounded border border-border/40">
+                    <div className={`text-lg font-bold ${isExceptionalSession ? 'text-cyan-400' : 'text-white'}`}>{c.grade}</div>
+                    <div className={`text-sm px-1.5 py-0.5 rounded border border-border/40 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}`}>
                       {c.type === 'BOARD' ? 'Board' : 'Boulder'}
                     </div>
                   </div>
                   <div className="text-right">
-                    <div className="text-sm text-white">
+                    <div className={`text-sm ${isExceptionalSession ? 'text-cyan-400' : 'text-white'}`}>
                       {c.allStyles && c.allStyles.length > 0 ? c.allStyles.join(', ') : c.style} {c.angle}
                     </div>
-                    <div className="text-sm text-graytxt">
+                    <div className={`text-sm ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}`}>
                       Perceived Effort: {roundRPE(c.rpe)} • Att: {c.attempts}
                     </div>
                   </div>

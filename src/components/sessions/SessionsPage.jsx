@@ -2,7 +2,6 @@ import { useRef } from 'react';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
-import CompactOverview from './CompactOverview.jsx';
 import SessionHistory from './SessionHistory.jsx';
 import TimerCard from '../dashboard/TimerCard.jsx';
 
@@ -37,13 +36,7 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
         onTitleClick={handleScrollToTop}
       />
       
-      {/* 1. Overview first - compact stats */}
-      <CompactOverview sessions={sessions} />
-      
-      {/* 2. Timer second - primary action */}
-      <TimerCard />
-      
-      {/* 3. History third - filtered session list */}
+        {/* Session History - filtered session list */}
       <SessionHistory sessions={sessions} />
 
       {/* Bottom Logo Section - Whoop Style */}

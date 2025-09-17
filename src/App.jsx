@@ -198,10 +198,49 @@ const AppContent = () => {
       console.log('🔥 About to save climb payload:', climbPayload);
       console.log('🔥 Original climb data:', climbData);
 
-      // Find or create today's session (database-first approach)
+      // Smart session detection with 2-hour gap threshold
+      const SESSION_GAP_THRESHOLD = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+      
       let sessionId;
-      let currentSession = sessions.find(s => s.date === "Now" || 
-        new Date(s.timestamp).toDateString() === new Date().toDateString());
+      let currentSession = sessions.find(s => s.date === "Now");
+      
+      // Check if we need a new session based on time gap
+      if (currentSession && currentSession.climbList && currentSession.climbList.length > 0) {
+        const lastClimbTime = Math.max(...currentSession.climbList.map(climb => climb.timestamp));
+        const timeGap = timestamp - lastClimbTime;
+        
+        if (timeGap > SESSION_GAP_THRESHOLD) {
+          console.log(`🕐 Time gap of ${Math.round(timeGap / (1000 * 60))} minutes detected. Creating new session.`);
+          
+          // End the current session by setting end_time in database
+          try {
+            await database.sessions.update(currentSession.id, {
+              end_time: new Date(lastClimbTime).toISOString()
+            });
+            console.log('🏁 Previous session ended in database');
+          } catch (error) {
+            console.warn('⚠️ Failed to end previous session in database:', error);
+          }
+          
+          // Update local session state to show it's ended
+          const sessionDate = new Date(currentSession.startTime);
+          const today = new Date();
+          const isToday = sessionDate.toDateString() === today.toDateString();
+          const formattedDate = isToday ? 
+            sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) :
+            sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            
+          setSessions(prevSessions => 
+            prevSessions.map(s => 
+              s.id === currentSession.id 
+                ? { ...s, date: formattedDate, endTime: lastClimbTime, duration: calculateSessionDuration(s.startTime, lastClimbTime) }
+                : s
+            )
+          );
+          
+          currentSession = null; // Force creation of new session
+        }
+      }
       
       if (!currentSession) {
         // Create new session in database first
@@ -284,7 +323,7 @@ const AppContent = () => {
             ...session,
             climbList: updatedClimbList,
             climbs: updatedClimbList.length,
-            endTime: timestamp,
+            endTime: timestamp, // Set to current climb timestamp
             duration: calculateSessionDuration(session.startTime, timestamp),
             ...sessionStats
           };

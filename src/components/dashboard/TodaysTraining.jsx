@@ -175,7 +175,7 @@ const TodaysTraining = ({
               onNavigateToProgress?.();
             }}
           >
-            <RocketLaunchIcon className="w-4 h-4 text-orange-500" />
+            <RocketLaunchIcon className="w-4 h-4 text-cyan-400" />
             <span>{totalXP.toLocaleString()} XP</span>
           </div>
         </div>
@@ -224,7 +224,7 @@ const TodaysTraining = ({
               <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white transform -translate-x-0.5 z-10"></div>
               {/* Load ratio indicator bar */}
               <div 
-                className={`absolute top-0 h-full ${loadColor(currentLoadRatio) === 'text-green' ? 'bg-green' : 'bg-red'} transition-all duration-300`}
+                className={`absolute top-0 h-full ${loadColor(currentLoadRatio) === 'text-cyan-400' ? 'bg-cyan-400' : 'bg-red'} transition-all duration-300`}
                 style={{
                   left: currentLoadRatio <= 1.0 ? `${50 - (1.0 - currentLoadRatio) * 25}%` : '50%',
                   width: currentLoadRatio <= 1.0 

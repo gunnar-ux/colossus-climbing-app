@@ -7,8 +7,8 @@ const MobileBottomNav = ({ activeRoute, onNavigate }) => {
   
   const navItems = [
     { id: 'dashboard', label: 'Home', icon: <HomeIcon /> },
-    { id: 'sessions', label: 'Sessions', icon: <ListIcon /> },
     { id: 'progress', label: 'Progress', icon: <TrendingIcon /> },
+    { id: 'sessions', label: 'Sessions', icon: <ListIcon /> },
     { id: 'account', label: 'Account', icon: <UserIcon /> }
   ];
 

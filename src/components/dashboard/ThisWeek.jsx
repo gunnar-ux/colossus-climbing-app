@@ -12,9 +12,8 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
   
   // Get flash rate color based on performance ranges (same as SessionCard)
   const getFlashRateColor = (rate) => {
-    if (rate >= 80) return 'text-green';      // 80-100%: Excellent (green)
-    if (rate >= 40) return 'text-blue';       // 40-79%: Good (blue)  
-    return 'text-red';                        // 0-39%: Needs work (red)
+    if (rate >= 85) return 'text-cyan-400';   // 85-100%: Exceptional (ice blue)
+    return 'text-white';                      // 0-84%: Normal (white)
   };
   
   // Calculate real weekly data from sessions with recommendation lines

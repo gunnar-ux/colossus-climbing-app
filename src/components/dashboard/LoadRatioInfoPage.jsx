@@ -49,7 +49,7 @@ const LoadRatioInfoPage = ({
               <div className="absolute top-0 left-1/2 w-1 h-full bg-white transform -translate-x-0.5 z-10"></div>
               {/* Load ratio indicator bar */}
               <div 
-                className={`absolute top-0 h-full ${loadColor(loadRatio) === 'text-green' ? 'bg-green' : 'bg-red'} transition-all duration-300`}
+                className={`absolute top-0 h-full ${loadColor(loadRatio) === 'text-cyan-400' ? 'bg-cyan-400' : 'bg-red'} transition-all duration-300`}
                 style={{
                   left: loadRatio <= 1.0 ? `${50 - (1.0 - loadRatio) * 25}%` : '50%',
                   width: loadRatio <= 1.0 
@@ -85,7 +85,7 @@ const LoadRatioInfoPage = ({
               <span className="text-graytxt">Low - Can increase volume</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-green font-medium">0.8-1.3x</span>
+              <span className="text-cyan-400 font-medium">0.8-1.3x</span>
               <span className="text-graytxt">Optimal - Balanced training</span>
             </div>
             <div className="flex justify-between items-center">

@@ -83,11 +83,11 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
       })}
 
       {/* Line */}
-      <path d={pathD} stroke="#4ade80" strokeWidth="2" fill="none" />
+      <path d={pathD} stroke="#22d3ee" strokeWidth="2" fill="none" />
 
       {/* Points */}
       {points.map((point, i) => (
-        <circle key={i} cx={point.x} cy={point.y} r="2" className="fill-green" />
+        <circle key={i} cx={point.x} cy={point.y} r="2" className="fill-cyan-400" />
       ))}
 
       {/* Labels */}
@@ -108,7 +108,7 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
 
 // Trend indicator component
 export const Trend = ({ dir = 'flat', children }) => {
-  const color = dir === 'up' ? 'text-green' : dir === 'down' ? 'text-graytxt' : 'text-white';
+  const color = dir === 'up' ? 'text-cyan-400' : dir === 'down' ? 'text-graytxt' : 'text-white';
   const arrow = dir === 'up' ? '▲' : dir === 'down' ? '▼' : '→';
   return (
     <span className={`inline-flex items-center gap-1 ${color}`}>

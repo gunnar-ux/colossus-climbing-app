@@ -78,6 +78,8 @@ export function useDataHydration(user, profile) {
 
   // Transform database sessions to match app's expected format
   const transformDatabaseSessions = (dbSessions) => {
+    const SESSION_GAP_THRESHOLD = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
+    
     return dbSessions.map(session => {
       const rawClimbs = session.climbs || [];
       
@@ -85,13 +87,32 @@ export function useDataHydration(user, profile) {
       const transformedClimbs = rawClimbs.map(transformClimb);
       const sessionStats = calculateSessionStats(transformedClimbs);
       
+      // Smart session ending: if session has no end_time but last climb was > 2 hours ago, consider it ended
+      let endTime = session.end_time ? new Date(session.end_time).getTime() : null;
+      let sessionDate = formatSessionDate(session.start_time);
+      
+      if (!session.end_time && transformedClimbs.length > 0) {
+        const lastClimbTime = Math.max(...transformedClimbs.map(climb => climb.timestamp));
+        const timeSinceLastClimb = Date.now() - lastClimbTime;
+        
+        if (timeSinceLastClimb > SESSION_GAP_THRESHOLD) {
+          // Session should be considered ended
+          endTime = lastClimbTime;
+          sessionDate = formatSessionDate(session.start_time); // Don't show as "Now"
+          console.log(`🏁 Auto-ending stale session ${session.id} - last climb was ${Math.round(timeSinceLastClimb / (1000 * 60))} minutes ago`);
+        } else {
+          // Session is still active
+          sessionDate = "Now";
+        }
+      }
+      
       return {
         id: session.id,
-        date: formatSessionDate(session.start_time),
+        date: sessionDate,
         timestamp: new Date(session.start_time).getTime(),
         startTime: new Date(session.start_time).getTime(),
-        endTime: session.end_time ? new Date(session.end_time).getTime() : null,
-        duration: calculateDuration(session.start_time, session.end_time),
+        endTime: endTime,
+        duration: calculateDuration(session.start_time, endTime ? new Date(endTime).toISOString() : null),
         climbs: rawClimbs.length,
         medianGrade: session.median_grade || calculateMedianGrade(rawClimbs),
         avgRPE: session.avg_rpe || calculateAvgRPE(rawClimbs),
@@ -128,13 +149,9 @@ export function useDataHydration(user, profile) {
   const formatSessionDate = (dateString) => {
     const date = new Date(dateString);
     const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
 
     if (date.toDateString() === today.toDateString()) {
       return "Now"; // Will be changed to "Now" for active sessions
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return "Yesterday";
     } else {
       return date.toLocaleDateString('en-US', { 
         month: 'short', 

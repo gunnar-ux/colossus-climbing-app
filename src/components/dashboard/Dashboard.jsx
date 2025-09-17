@@ -7,7 +7,9 @@ import { getMetricAvailability, clamp } from '../../utils/index.js';
 import CalibrationCard from './CalibrationCard.jsx';
 import TodaysTraining from './TodaysTraining.jsx';
 import ThisWeek from './ThisWeek.jsx';
+import TimerCard from './TimerCard.jsx';
 import SessionCard from '../sessions/SessionCard.jsx';
+import SocialCard from './SocialCard.jsx';
 
 
 // Dashboard component extracted from dashboard HTML
@@ -16,6 +18,7 @@ import SessionCard from '../sessions/SessionCard.jsx';
 const Dashboard = ({ 
   userData = { totalSessions: 0, totalClimbs: 0 }, 
   sessions = [],
+  profile,
   metricAvailability,
   isCalibrationDismissed = false,
   onCalibrationDismiss,
@@ -95,6 +98,9 @@ const Dashboard = ({
       {/* Context: This Week - Recent trends and patterns */}
       <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} sessions={sessions} />
       
+      {/* Training Timer - Preparation for session */}
+      <TimerCard />
+      
       {/* Current Session - Contextual information when active */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
@@ -118,6 +124,16 @@ const Dashboard = ({
           )}
         </div>
       </section>
+      
+      {/* Social Card - Shareable session summary */}
+      {sessions.length > 0 && sessions[0] && sessions[0].climbList && sessions[0].climbList.length > 0 && (
+        <SocialCard 
+          session={sessions[0]} 
+          profile={profile}
+          userData={userData}
+          sessions={sessions}
+        />
+      )}
       
       
       {/* Bottom Logo Section - Whoop Style */}

@@ -9,16 +9,16 @@ const BottomNavigation = ({ activeItem, onNavigateTo }) => {
       icon: <HomeIcon />
     },
     {
-      id: 'sessions',
-      label: 'Sessions',
-      route: '/sessions',
-      icon: <ListIcon />
-    },
-    {
       id: 'progress',
       label: 'Progress',
       route: '/progress',
       icon: <TrendingIcon />
+    },
+    {
+      id: 'sessions',
+      label: 'Sessions',
+      route: '/sessions',
+      icon: <ListIcon />
     },
     {
       id: 'account',

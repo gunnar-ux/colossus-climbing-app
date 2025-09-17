@@ -83,11 +83,11 @@ const WelcomePage = ({ onComplete }) => {
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-white">Moderate</div>
-                  <div className="text-blue/70 font-semibold">35-66</div>
+                  <div className="text-cyan-400/70 font-semibold">35-66</div>
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-white">Optimal</div>
-                  <div className="text-green/70 font-semibold">67+</div>
+                  <div className="text-cyan-400/70 font-semibold">67+</div>
                 </div>
               </div>
             </div>

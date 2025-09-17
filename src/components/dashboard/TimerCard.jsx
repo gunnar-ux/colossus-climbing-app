@@ -202,6 +202,10 @@ const TimerCard = () => {
 
   // Apply preset configuration
   const applyPreset = (preset) => {
+    // Exit stopwatch mode when applying a preset
+    setIsStopwatchMode(false);
+    setStopwatchTime(0);
+    
     setWorkTime(preset.work);
     setRestTime(preset.rest);
     setTotalRounds(preset.rounds);
@@ -374,15 +378,15 @@ const TimerCard = () => {
 
   // Get phase color
   const getPhaseColor = () => {
-    // Only show green/blue when timer is actively running
+    // Only show ice blue when timer is actively running
     if (!isRunning) return 'text-white';
-    return currentPhase === 'work' ? 'text-green' : 'text-blue';
+    return currentPhase === 'work' ? 'text-cyan-400' : 'text-cyan-400';
   };
 
   // Get phase background
   const getPhaseBackground = () => {
     if (!isRunning && timeRemaining === 0) return 'bg-border';
-    return currentPhase === 'work' ? 'bg-green' : 'bg-blue';
+    return currentPhase === 'work' ? 'bg-cyan-400' : 'bg-cyan-400';
   };
 
   return (
@@ -394,14 +398,14 @@ const TimerCard = () => {
           <div className="flex items-center gap-1">
             {!isRestOnlyMode && Array.from({ length: parseInt(totalRounds) || 0 }, (_, index) => {
               const roundNumber = index + 1;
-              // Only show green dots when timer is actively running and for completed/current rounds
+              // Only show ice blue dots when timer is actively running and for completed/current rounds
               const isActiveOrCompleted = isRunning && timeRemaining > 0 && roundNumber <= currentRound;
               
               return (
                 <div
                   key={index}
                   className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    isActiveOrCompleted ? 'bg-green' : 'bg-border'
+                    isActiveOrCompleted ? 'bg-cyan-400' : 'bg-border'
                   }`}
                 />
               );
@@ -455,22 +459,22 @@ const TimerCard = () => {
         <div className="mt-2 flex items-center justify-between">
           <div className="text-sm">
             {isStopwatchMode ? (
-              <span className={`${isRunning ? 'text-green font-semibold' : 'text-graytxt'}`}>
+              <span className={`${isRunning ? 'text-white font-semibold' : 'text-graytxt'}`}>
                 Stopwatch Mode
               </span>
             ) : isCompleted ? (
-              <span className="text-green">{isRestOnlyMode ? 'Rest complete!' : 'Workout completed! Great job!'}</span>
+              <span className="text-cyan-400">{isRestOnlyMode ? 'Rest complete!' : 'Workout completed! Great job!'}</span>
             ) : isRestOnlyMode ? (
-              <span className={`${isRunning ? 'text-blue font-semibold' : 'text-graytxt'}`}>
+              <span className={`${isRunning ? 'text-cyan-400 font-semibold' : 'text-graytxt'}`}>
                 Rest: {convertToSeconds(restTime, restTimeUnit)}s
               </span>
             ) : selectedPreset || (workTime !== '' && restTime !== '' && totalRounds !== '') ? (
               <span>
-                <span className={`${isRunning && currentPhase === 'work' ? 'text-green font-semibold' : 'text-graytxt'}`}>
+                <span className={`${isRunning && currentPhase === 'work' ? 'text-cyan-400 font-semibold' : 'text-graytxt'}`}>
                   Work: {convertToSeconds(workTime, workTimeUnit)}s
                 </span>
                 <span className="text-graytxt"> • </span>
-                <span className={`${isRunning && currentPhase === 'rest' ? 'text-blue font-semibold' : 'text-graytxt'}`}>
+                <span className={`${isRunning && currentPhase === 'rest' ? 'text-white font-semibold' : 'text-graytxt'}`}>
                   Rest: {convertToSeconds(restTime, restTimeUnit)}s
                 </span>
                 <span className="text-graytxt"> • {totalRounds || 0} Rounds</span>
