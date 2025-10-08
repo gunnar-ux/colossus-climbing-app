@@ -1,3 +1,7 @@
+// ⚠️ DEPRECATED: This hook has been merged into AuthContext for better performance and UX
+// Keeping this file for reference and rollback safety only
+// DO NOT USE - Use useAuth() from AuthContext instead
+//
 // Data hydration hook - loads user data from database on app start
 import { useState, useEffect } from 'react';
 import { database } from '../lib/supabase.js';

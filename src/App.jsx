@@ -20,7 +20,6 @@ import { roundRPE, getMetricAvailability } from './utils/index.js';
 import { calculateSessionStats } from './utils/sessionCalculations.js';
 import { calculateCRS, calculateLoadRatio, getCapacityRecommendations } from './utils/metrics.js';
 import { database } from './lib/supabase.js';
-import { useDataHydration } from './hooks/useDataHydration.js';
 
 // Persistent Bottom Navigation Component
 const BottomNavigation = () => {
@@ -97,21 +96,37 @@ const BottomNavigation = () => {
 const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, profile, loading, profileLoading, isAuthenticated, hasProfile, signOut, loadProfile } = useAuth();
-  
-  // Data hydration from database
   const { 
+    user, 
+    profile, 
     sessions, 
     userData, 
-    dataLoading, 
     setSessions, 
-    setUserData 
-  } = useDataHydration(user, profile);
+    setUserData,
+    isInitializing,
+    isAuthenticated, 
+    hasProfile, 
+    signOut, 
+    loadProfile 
+  } = useAuth();
   
   // Metric calculations state - CRS and Load Ratio
   const [crsData, setCrsData] = useState(null);
   const [loadRatioData, setLoadRatioData] = useState(null);
   const [recommendedTraining, setRecommendedTraining] = useState(null);
+  
+  // Minimum loading screen display time (for full animation)
+  const [minLoadingComplete, setMinLoadingComplete] = useState(false);
+  
+  // Ensure loading screen shows for minimum animation duration (3.3 seconds)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMinLoadingComplete(true);
+      console.log('⏱️ Minimum loading time complete');
+    }, 3300);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   // Calculate CRS and Load Ratio when sessions or userData changes
   useEffect(() => {
@@ -168,18 +183,11 @@ const AppContent = () => {
   const handleLogout = async () => {
     try {
       console.log('🚪 Logging out user...');
-      await signOut(); // This will clear auth state and redirect
-      
-      // Clear local state as well
-      setUserData(getCleanInitialData());
-      setSessions(getCleanInitialSessions());
-      
+      await signOut(); // This clears all state in AuthContext
+      navigate('/');
       console.log('🚪 Logout successful');
     } catch (error) {
       console.error('🚪 Logout error:', error);
-      // Still clear local state even if signOut fails
-      setUserData(getCleanInitialData());
-      setSessions(getCleanInitialSessions());
       navigate('/');
     }
   };
@@ -407,30 +415,30 @@ const AppContent = () => {
     // Data is now stored in database and synced to local state
   };
   
-  // AUTH CHECK - AFTER ALL HOOKS
-  if (loading) {
+  // AUTH CHECK - Ensure both auth initialization AND minimum animation time complete
+  console.log('🎯 App render - isInitializing:', isInitializing, 'minLoadingComplete:', minLoadingComplete, 'isAuth:', isAuthenticated, 'hasProfile:', !!profile, 'sessions:', sessions.length)
+  
+  // Show loading screen until BOTH conditions are met:
+  // 1. Auth/data has finished loading (!isInitializing)
+  // 2. Minimum animation time has passed (minLoadingComplete)
+  if (isInitializing || !minLoadingComplete) {
+    console.log('🎯 Showing LoadingScreen')
     return <LoadingScreen />;
   }
   
-  // If not authenticated, show simple auth page
+  // If not authenticated, show onboarding/auth
   if (!isAuthenticated) {
+    console.log('🎯 Not authenticated - showing onboarding')
     return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
-  }
-  
-  // If authenticated but profile is still loading, show loading screen
-  if (isAuthenticated && profileLoading) {
-    return <LoadingScreen />;
   }
   
   // If authenticated but no profile, show onboarding to create profile
   if (isAuthenticated && !profile) {
+    console.log('🎯 Authenticated but no profile - showing onboarding')
     return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
   }
   
-  // If profile loaded but data is still loading, show loading screen
-  if (isAuthenticated && profile && dataLoading) {
-    return <LoadingScreen />;
-  }
+  console.log('🎯 Rendering main app')
   
   return (
     <div className="bg-black text-white min-h-screen">

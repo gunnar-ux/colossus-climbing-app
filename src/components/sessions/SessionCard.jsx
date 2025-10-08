@@ -1,67 +1,38 @@
 import { useState } from 'react';
 import { ChevronDownIcon, LightningIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
-import Progress from '../ui/Progress.jsx';
 import { LineChart } from '../dashboard/Charts.jsx';
 import { roundRPE } from '../../utils/index.js';
 
-// SessionCard component extracted from sessions.html
-// Preserves exact dark theme styling, collapsible animations, and data visualization
+// SessionCard component - Clean, minimal design optimized for social sharing
+// Key features: Grade progression chart, powered by POGO attribution, streamlined metrics
 
 const SessionCard = ({ session, index, profile, allSessions }) => {
   const [open, setOpen] = useState(false);
   
-  // Get flash rate color based on performance ranges
   const getFlashRateColor = (rate) => {
-    if (rate >= 85) return 'text-cyan-400';   // 85-100%: Exceptional (ice blue)
-    return 'text-white';                      // 0-84%: Normal (white)
+    if (rate >= 85) return 'text-cyan-400';
+    return 'text-white';
   };
   
-  // Example: Check if this is an exceptional session (for demo purposes)
   const isExceptionalSession = session.flashRate >= 80 && session.climbs >= 10;
   
-  // Prepare grade progression chart data (exact same logic as SocialCard)
   const prepareGradeProgressionChart = () => {
     if (!session.climbList || session.climbList.length === 0) return { values: [], labels: [] };
     
-    // Sort climbs by timestamp to get chronological order
     const sortedClimbs = [...session.climbList].sort((a, b) => 
       (a.timestamp || 0) - (b.timestamp || 0)
     );
 
-    // Extract grade values in chronological order
     const values = sortedClimbs.map(climb => 
       parseInt(climb.grade.replace('V', '')) || 0
     );
     
-    
-    return { values, labels: [] }; // No labels for clean look in SessionCard
+    return { values, labels: [] };
   };
 
   const chartData = prepareGradeProgressionChart();
-  
-  // Calculate session duration for x-axis title
-  const calculateSessionDuration = () => {
-    if (!session.climbList || session.climbList.length === 0) return "0m";
-    
-    const startTime = session.startTime;
-    const lastClimbTime = Math.max(...session.climbList.map(climb => climb.timestamp));
-    
-    const durationMs = lastClimbTime - startTime;
-    const durationMins = Math.floor(durationMs / (1000 * 60));
-    
-    if (durationMins < 60) {
-      return `${Math.max(durationMins, 1)}m`; // Minimum 1 minute
-    } else {
-      const hours = Math.floor(durationMins / 60);
-      const mins = durationMins % 60;
-      return `${hours}h ${mins}m`;
-    }
-  };
-
-  const sessionDuration = calculateSessionDuration();
   const totalClimbs = session.climbList ? session.climbList.length : 0;
   
-  // Calculate session focus based on most common climb style
   const getSessionFocus = () => {
     if (!session.climbList || session.climbList.length === 0) return 'Mixed Session';
     
@@ -74,21 +45,19 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
     const mostCommonStyle = Object.entries(styleCounts)
       .sort(([,a], [,b]) => b - a)[0]?.[0] || 'Technical';
     
-    // Map styles to session focus
     if (mostCommonStyle === 'Technical') return 'Skill Session';
     if (mostCommonStyle === 'Simple') return 'Capacity Session';  
     if (mostCommonStyle === 'Power') return 'Power Session';
     return 'Mixed Session';
   };
 
-  // Calculate session XP
   const getSessionXP = () => {
     if (!session.climbList || session.climbList.length === 0) return 0;
     
     return session.climbList.reduce((sum, climb) => {
       const baseXP = 10;
       const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
-      const gradeMultiplier = gradeNum + 1; // V0=1x, V1=2x, V2=3x, etc.
+      const gradeMultiplier = gradeNum + 1;
       const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
       const climbXP = baseXP * gradeMultiplier * flashBonus;
       return sum + climbXP;
@@ -104,127 +73,108 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
         ? 'bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 shadow-cyan-900/15 shadow-lg' 
         : 'bg-card border border-border'
     } rounded-col px-4 pt-4 pb-3 cursor-pointer`} onClick={() => setOpen(!open)}>
-        {/* Row 1: Session Focus and XP */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-2">
-            <div className="font-semibold text-base">{sessionFocus}</div>
-            {isExceptionalSession && <LightningIcon className="w-4 h-4 text-cyan-400" />}
-          </div>
-          <div className="flex items-center gap-1 text-sm">
-            <RocketLaunchIcon className="w-4 h-4 text-cyan-400" />
-            <span className="text-white">+{sessionXP.toLocaleString()} XP</span>
-          </div>
+      {/* Row 1: Session Focus and XP */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="font-semibold text-base">{sessionFocus}</div>
+          {isExceptionalSession && <LightningIcon className="w-4 h-4 text-cyan-400" />}
         </div>
+        <div className="flex items-center gap-1 text-sm">
+          <RocketLaunchIcon className="w-4 h-4 text-cyan-400" />
+          <span className="text-white">+{sessionXP.toLocaleString()} XP</span>
+        </div>
+      </div>
 
-        {/* Row 2: Date and Avg Effort */}
-        <div className="flex items-center justify-between mb-1">
-          <div className="text-sm text-graytxt">
-            {session.date === 'Now' ? 'Current Session' : session.date}
-          </div>
-          <div className="text-sm text-graytxt">
-            Avg Effort: {session.avgRPE ? roundRPE(session.avgRPE) : '--'}
-          </div>
+      {/* Row 2: Date and Total */}
+      <div className="flex items-center justify-between mb-0">
+        <div className="text-sm text-graytxt">
+          {session.date === 'Now' ? 'Current Session' : session.date}
         </div>
-        
-        {/* Grade Progression Chart - Multiple climbs */}
-        {chartData.values.length >= 2 && (
-          <div className="px-2 py-0">
-            <div className="flex justify-center relative">
-              <LineChart 
-                values={chartData.values}
-                labels={chartData.labels}
-                height={140}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* Single Climb - Custom visualization */}
-        {chartData.values.length === 1 && (
-          <div className="px-2 py-0">
-            <div className="flex justify-center relative" style={{ height: '140px' }}>
-              {/* Custom single point chart */}
-              <svg width="300" height="140" className="overflow-visible">
-                {/* Background grid lines */}
-                <defs>
-                  <linearGradient id="singleClimbGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.1" />
-                    <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.05" />
-                  </linearGradient>
-                </defs>
-                
-                {/* Grid lines for context */}
-                {[8, 4, 0].map((grade, i) => {
-                  const y = 20 + (i * 40);
-                  return (
-                    <g key={grade}>
-                      <line x1="30" y1={y} x2="270" y2={y} stroke="#374151" strokeWidth="1" opacity="0.3" />
-                      <text x="25" y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">V{grade}</text>
-                    </g>
-                  );
-                })}
-                
-                {/* Single climb point - upgraded for max grade */}
-                {(() => {
-                  const climbGrade = chartData.values[0];
-                  const y = 20 + ((8 - climbGrade) / 8) * 80; // Position based on grade
-                  return (
-                    <g>
-                      {/* Subtle glow for prominence */}
-                      <circle cx="150" cy={y} r="6" fill="#22d3ee" opacity="0.2" />
-                      <circle cx="150" cy={y} r="4" fill="#22d3ee" opacity="0.3" />
-                      {/* Main point - slightly larger than LineChart */}
-                      <circle cx="150" cy={y} r="3" fill="#22d3ee" stroke="#0891b2" strokeWidth="1" />
-                      {/* Grade label above */}
-                      <text x="150" y={y - 12} textAnchor="middle" className="fill-white text-xs font-medium">
-                        V{climbGrade}
-                      </text>
-                    </g>
-                  );
-                })()}
-              </svg>
-            </div>
-          </div>
-        )}
-        
-        {/* No Climbs - Show placeholder */}
-        {chartData.values.length === 0 && (
-          <div className="px-2 py-3">
-            <div className="text-center text-slate-500 text-sm">
-              No climbs logged
-            </div>
-          </div>
-        )}
-        
-        {/* Stats Tile - Like Social Card */}
-        <div className="px-2 -mt-6 pb-2">
-          <div className="border border-cyan-700/50 rounded-xl p-3 bg-gradient-to-r from-cyan-950/20 to-blue-950/15">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-lg font-bold text-white">{totalClimbs}</div>
-                <div className="text-xs text-slate-400">Total Volume</div>
-              </div>
-              <div className="text-center">
-                <div className="text-lg font-bold text-white">{session.peakGrade || 'V0'}</div>
-                <div className="text-xs text-slate-400">Hardest Send</div>
-              </div>
-              <div className="text-center">
-                <div className={`text-lg font-bold ${getFlashRateColor(session.flashRate || 0)}`}>{session.flashRate || 0}%</div>
-                <div className="text-xs text-slate-400">Flash Rate</div>
-              </div>
-            </div>
-          </div>
+        <div className="text-sm text-graytxt">
+          Total: <span className="text-white font-medium">{totalClimbs}</span>
         </div>
-        
-        {/* Row 2: Attribution and Expand Button */}
-        <div className="flex items-center justify-center px-4 pb-3 relative">
-          <div className="text-xs text-slate-400">
+      </div>
+      
+      {/* Grade Progression Chart - Multiple climbs */}
+      {chartData.values.length >= 2 && (
+        <div className="px-2 py-0 mb-4">
+          <div className="flex justify-center relative">
+            <LineChart 
+              values={chartData.values}
+              labels={chartData.labels}
+              height={140}
+            />
+          </div>
+          {/* powered by POGO - right below chart */}
+          <div className="text-center text-xs text-slate-400 -mt-8">
             powered by <span className="text-white font-semibold">POGO</span>
           </div>
-          <ChevronDownIcon 
-            className={`absolute right-4 w-4 h-4 transition-transform duration-200 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'} ${open ? 'rotate-180' : ''}`}
-          />
         </div>
+      )}
+
+      {/* Single Climb - Custom visualization */}
+      {chartData.values.length === 1 && (
+        <div className="px-2 py-0 mb-4">
+          <div className="flex justify-center relative" style={{ height: '140px' }}>
+            <svg width="300" height="140" className="overflow-visible">
+              <defs>
+                <linearGradient id="singleClimbGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.1" />
+                  <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.05" />
+                </linearGradient>
+              </defs>
+              
+              {[8, 4, 0].map((grade, i) => {
+                const y = 20 + (i * 40);
+                return (
+                  <g key={grade}>
+                    <line x1="30" y1={y} x2="270" y2={y} stroke="#374151" strokeWidth="1" opacity="0.3" />
+                    <text x="25" y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">V{grade}</text>
+                  </g>
+                );
+              })}
+              
+              {(() => {
+                const climbGrade = chartData.values[0];
+                const y = 20 + ((8 - climbGrade) / 8) * 80;
+                return (
+                  <g>
+                    <circle cx="150" cy={y} r="6" fill="#22d3ee" opacity="0.2" />
+                    <circle cx="150" cy={y} r="4" fill="#22d3ee" opacity="0.3" />
+                    <circle cx="150" cy={y} r="3" fill="#22d3ee" stroke="#0891b2" strokeWidth="1" />
+                    <text x="150" y={y - 12} textAnchor="middle" className="fill-white text-xs font-medium">
+                      V{climbGrade}
+                    </text>
+                  </g>
+                );
+              })()}
+            </svg>
+          </div>
+          {/* powered by POGO - right below chart */}
+          <div className="text-center text-xs text-slate-400 -mt-8">
+            powered by <span className="text-white font-semibold">POGO</span>
+          </div>
+        </div>
+      )}
+      
+      {/* No Climbs */}
+      {chartData.values.length === 0 && (
+        <div className="px-2 py-3">
+          <div className="text-center text-slate-500 text-sm">
+            No climbs logged
+          </div>
+        </div>
+      )}
+      
+      {/* Simplified metrics row - Hardest, Flash Rate + Chevron */}
+      <div className="flex items-center justify-between text-sm px-2">
+        <div className="text-graytxt">
+          Hardest: <span className="text-white font-medium">{session.peakGrade || 'V0'}</span> • Flash Rate: <span className={`font-medium ${getFlashRateColor(session.flashRate || 0)}`}>{session.flashRate || 0}%</span>
+        </div>
+        <ChevronDownIcon 
+          className={`w-4 h-4 transition-transform duration-200 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'} ${open ? 'rotate-180' : ''}`}
+        />
+      </div>
       
       {/* Expandable content */}
       {open && (
@@ -277,7 +227,7 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
             ))}
           </div>
 
-          {/* Boulder vs Board Distribution */}
+          {/* Boulder vs Board */}
           <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Boulder vs Board</div>
             {session.types?.map((t, i) => (

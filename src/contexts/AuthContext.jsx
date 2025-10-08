@@ -1,6 +1,7 @@
 // Authentication context for managing user state across the app
-import { createContext, useContext, useEffect, useState } from 'react'
+import { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react'
 import { supabase, auth, database } from '../lib/supabase.js'
+import { calculateSessionStats } from '../utils/sessionCalculations.js'
 
 const AuthContext = createContext({})
 
@@ -13,137 +14,278 @@ export function useAuth() {
 }
 
 export function AuthProvider({ children }) {
+  // Auth state
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [profileLoading, setProfileLoading] = useState(false)
+  
+  // Data state
+  const [sessions, setSessions] = useState([])
+  const [userData, setUserData] = useState({
+    totalSessions: 0,
+    totalClimbs: 0
+  })
+  
+  // Single loading flag for entire initialization
+  const [isInitializing, setIsInitializing] = useState(true)
+
+  // Helper functions for data transformation (from useDataHydration)
+  const transformDatabaseSessions = (dbSessions) => {
+    const SESSION_GAP_THRESHOLD = 2 * 60 * 60 * 1000 // 2 hours
+    
+    return dbSessions.map(session => {
+      const rawClimbs = session.climbs || []
+      const transformedClimbs = rawClimbs.map(transformClimb)
+      const sessionStats = calculateSessionStats(transformedClimbs)
+      
+      let endTime = session.end_time ? new Date(session.end_time).getTime() : null
+      let sessionDate = formatSessionDate(session.start_time)
+      
+      if (!session.end_time && transformedClimbs.length > 0) {
+        const lastClimbTime = Math.max(...transformedClimbs.map(climb => climb.timestamp))
+        const timeSinceLastClimb = Date.now() - lastClimbTime
+        
+        if (timeSinceLastClimb > SESSION_GAP_THRESHOLD) {
+          endTime = lastClimbTime
+          sessionDate = formatSessionDate(session.start_time)
+        } else {
+          sessionDate = "Now"
+        }
+      }
+      
+      return {
+        id: session.id,
+        date: sessionDate,
+        timestamp: new Date(session.start_time).getTime(),
+        startTime: new Date(session.start_time).getTime(),
+        endTime: endTime,
+        duration: calculateDuration(session.start_time, endTime ? new Date(endTime).toISOString() : null),
+        climbs: rawClimbs.length,
+        medianGrade: session.median_grade || calculateMedianGrade(rawClimbs),
+        avgRPE: session.avg_rpe || calculateAvgRPE(rawClimbs),
+        climbList: transformedClimbs,
+        totalXP: session.total_xp || sessionStats.totalXP || 0,
+        ...sessionStats
+      }
+    })
+  }
+
+  const transformClimb = (climb) => ({
+    id: climb.id,
+    timestamp: new Date(climb.timestamp).getTime(),
+    grade: climb.grade,
+    style: normalizeStyle(climb.style),
+    styles: [normalizeStyle(climb.style)],
+    angle: normalizeAngle(climb.wall_angle),
+    wall: normalizeAngle(climb.wall_angle),
+    rpe: climb.rpe,
+    attempts: climb.attempts,
+    type: climb.climb_type || 'BOULDER'
+  })
+
+  const formatSessionDate = (dateString) => {
+    const date = new Date(dateString)
+    const today = new Date()
+    if (date.toDateString() === today.toDateString()) {
+      return "Now"
+    }
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
+
+  const calculateDuration = (startTime, endTime) => {
+    if (!endTime) return "Active"
+    const start = new Date(startTime)
+    const end = new Date(endTime)
+    const diffMs = end - start
+    const diffMins = Math.floor(diffMs / (1000 * 60))
+    if (diffMins < 60) return `${diffMins}m`
+    const hours = Math.floor(diffMins / 60)
+    const mins = diffMins % 60
+    return `${hours}h ${mins}m`
+  }
+
+  const calculateMedianGrade = (climbs) => {
+    if (climbs.length === 0) return 'V0'
+    const gradeValues = climbs.map(climb => 
+      parseInt(climb.grade.replace('V', '')) || 0
+    ).sort((a, b) => a - b)
+    const median = gradeValues[Math.floor(gradeValues.length / 2)]
+    return `V${median}`
+  }
+
+  const calculateAvgRPE = (climbs) => {
+    if (climbs.length === 0) return 0
+    const total = climbs.reduce((sum, climb) => sum + (climb.rpe || 0), 0)
+    return Math.round((total / climbs.length) * 2) / 2
+  }
+
+  const normalizeStyle = (style) => {
+    if (style === 'POWERFUL') return 'Power'
+    if (style === 'TECHNICAL') return 'Technical'
+    if (style === 'SIMPLE') return 'Simple'
+    return style
+  }
+
+  const normalizeAngle = (angle) => {
+    if (!angle) return 'Vertical'
+    if (angle === 'SLAB') return 'Slab'
+    if (angle === 'VERTICAL') return 'Vertical'
+    if (angle === 'OVERHANG') return 'Overhang'
+    return angle
+  }
+
+  // Load user data (sessions and userData)
+  const loadUserData = async (userId) => {
+    try {
+      console.log('📊 Loading user sessions from database...')
+      const { data: dbSessions, error: sessionsError } = await database.sessions.getByUserId(userId, 50)
+      
+      if (sessionsError) {
+        console.error('📊 Error loading sessions:', sessionsError)
+        return
+      }
+
+      console.log('📊 Loaded sessions:', dbSessions?.length || 0)
+      const transformedSessions = transformDatabaseSessions(dbSessions || [])
+      setSessions(transformedSessions)
+      console.log('📊 Sessions loaded successfully')
+    } catch (error) {
+      console.error('📊 Failed to load user data:', error)
+    }
+  }
+
+  // Track if this is the initial mount (to prevent duplicate loading)
+  const isInitialMount = useRef(true)
 
   useEffect(() => {
-    // Check for existing Supabase session
+    // Initialize auth and listen for changes
     const initAuth = async () => {
       try {
         console.log('🔐 Initializing auth...')
         const { data: { session } } = await supabase.auth.getSession()
-        console.log('🔐 Current session:', session?.user?.id, session?.user?.email)
         
         if (session?.user) {
+          console.log('🔐 Existing session found:', session.user.email)
           setUser(session.user)
-          // Profile loading will be handled by auth state change listener
+          
+          // Load user data immediately on app open
+          try {
+            console.log('🔐 Loading existing user data...')
+            
+            // Step 1: Load profile
+            const { data: profileData, error: profileError } = await database.users.getById(session.user.id)
+            
+            if (profileError || !profileData) {
+              console.log('🔐 No profile found')
+              setProfile(null)
+              setIsInitializing(false)
+              isInitialMount.current = false
+              return
+            }
+            
+            console.log('🔐 Profile loaded:', profileData.name)
+            setProfile(profileData)
+            localStorage.setItem('userProfile', JSON.stringify(profileData))
+            
+            // Step 2: Load sessions
+            await loadUserData(session.user.id)
+            
+            // Step 3: Update userData
+            setUserData({
+              totalSessions: profileData.total_sessions || 0,
+              totalClimbs: profileData.total_climbs || 0
+            })
+            
+            console.log('🔐 ✅ Existing user loaded successfully')
+          } catch (loadError) {
+            console.error('🔐 Failed to load existing user:', loadError)
+          } finally {
+            setIsInitializing(false)
+            isInitialMount.current = false
+          }
         } else {
-          console.log('🔐 No active session found')
-          // Clear any stale profile data
-          setUser(null)
-          setProfile(null)
+          console.log('🔐 No active session')
+          setIsInitializing(false)
+          isInitialMount.current = false
         }
       } catch (error) {
-        console.error('Auth init error:', error)
-        // Clear everything on error
-        setUser(null)
-        setProfile(null)
-      } finally {
-        setLoading(false)
+        console.error('🔐 Auth init error:', error)
+        setIsInitializing(false)
+        isInitialMount.current = false
       }
     }
 
-    // Initialize auth
     initAuth()
 
       // Listen for auth changes
       const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-        console.log('🔐 Auth event:', event, 'User ID:', session?.user?.id, 'Email:', session?.user?.email)
+        console.log('🔐 Auth event:', event, 'User:', session?.user?.email, 'isInitialMount:', isInitialMount.current)
 
-        // Only process INITIAL_SESSION to avoid duplicate loads
-        if (event === 'SIGNED_IN' && user !== null) {
-          console.log('🔐 Skipping SIGNED_IN - already have user, waiting for INITIAL_SESSION')
+        // ALWAYS skip on initial mount - initAuth handles it
+        if (isInitialMount.current) {
+          console.log('🔐 Initial mount - auth listener skipping, initAuth is handling')
           return
         }
-        
-        console.log('🔐 Processing auth event:', event)
 
-        if (session?.user && session.user.id) {
-        console.log('🔐 Valid session found, loading profile for:', session.user.id)
-        setUser(session.user)
-        setProfileLoading(true)
-        
-        try {
-          // First try to load from localStorage for instant loading
-          const storedProfile = localStorage.getItem('userProfile')
-          if (storedProfile) {
-            const parsedProfile = JSON.parse(storedProfile)
-            console.log('🔐 Using cached profile for instant load:', parsedProfile.name)
-            setProfile(parsedProfile)
-            setProfileLoading(false)
-            setLoading(false)
-            
-            // Still try to refresh from database in background
-            database.users.getById(session.user.id).then(({ data, error }) => {
-              if (!error && data) {
-                console.log('🔐 Updated profile from database:', data.name)
-                setProfile(data)
-                localStorage.setItem('userProfile', JSON.stringify(data))
-              }
-            }).catch(err => console.log('🔐 Background profile refresh failed:', err.message))
-            
-            return
-          }
-          
-          console.log('🔐 Loading user profile from database...')
-          
-          // Add timeout to prevent hanging - reduced to 5s for faster fallback
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Database query timeout')), 5000)
-          );
-          
-          const result = await Promise.race([
-            database.users.getById(session.user.id),
-            timeoutPromise
-          ]);
-          
-          const { data: existingProfile, error } = result
-          console.log('🔐 Profile query result:', { existingProfile, error })
-          
-          if (error) {
-            console.error('🔐 Profile query error:', error)
-            setProfile(null)
-          } else if (!existingProfile) {
-            console.log('🔐 No profile found - user will need to complete onboarding')
-            setProfile(null)
-          } else {
-            console.log('🔐 Profile loaded successfully:', existingProfile.name)
-            setProfile(existingProfile)
-            // Store profile in localStorage for persistence
-            localStorage.setItem('userProfile', JSON.stringify(existingProfile))
-          }
-        } catch (error) {
-          console.error('🔐 Profile loading failed:', error)
-          
-          // Try to load from localStorage as fallback
-          try {
-            const storedProfile = localStorage.getItem('userProfile')
-            if (storedProfile) {
-              const parsedProfile = JSON.parse(storedProfile)
-              console.log('🔐 Using stored profile as fallback:', parsedProfile.name)
-              setProfile(parsedProfile)
-            } else {
-              setProfile(null)
-            }
-          } catch (storageError) {
-            console.error('🔐 Failed to load from localStorage:', storageError)
-            setProfile(null)
-          }
-        } finally {
-          setProfileLoading(false)
-          setLoading(false)
+        // Handle signed out
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          console.log('🔐 User signed out - clearing all state')
+          setUser(null)
+          setProfile(null)
+          setSessions([])
+          setUserData({ totalSessions: 0, totalClimbs: 0 })
+          setIsInitializing(false)
+          localStorage.removeItem('userProfile')
+          return
         }
-      } else {
-        console.log('🔐 No valid session, clearing auth state')
-        setUser(null)
-        setProfile(null)
-        setLoading(false)
-        // Clear stored profile
-        localStorage.removeItem('userProfile')
-      }
-    })
+
+        // Handle sign-ins (only for NEW logins, not initial app load)
+        if (session?.user && event === 'SIGNED_IN') {
+          console.log('🔐 New login detected, loading user data for:', session.user.email)
+          setUser(session.user)
+          
+          try {
+            // Step 1: Load profile
+            console.log('🔐 Step 1/3: Loading profile...')
+            const { data: profileData, error: profileError } = await database.users.getById(session.user.id)
+            
+            if (profileError) {
+              console.error('🔐 Profile error:', profileError)
+              setProfile(null)
+              setIsInitializing(false)
+              return
+            }
+            
+            if (!profileData) {
+              console.log('🔐 No profile found - needs onboarding')
+              setProfile(null)
+              setIsInitializing(false)
+              return
+            }
+            
+            console.log('🔐 Profile loaded:', profileData.name)
+            setProfile(profileData)
+            localStorage.setItem('userProfile', JSON.stringify(profileData))
+            
+            // Step 2: Load sessions
+            console.log('🔐 Step 2/3: Loading sessions...')
+            await loadUserData(session.user.id)
+            
+            // Step 3: Update userData from profile
+            console.log('🔐 Step 3/3: Syncing userData...')
+            setUserData({
+              totalSessions: profileData.total_sessions || 0,
+              totalClimbs: profileData.total_climbs || 0
+            })
+            
+            console.log('🔐 ✅ Complete! User fully initialized')
+            setIsInitializing(false)
+            
+          } catch (error) {
+            console.error('🔐 Failed to initialize user:', error)
+            setIsInitializing(false)
+          }
+        }
+      })
 
     return () => subscription.unsubscribe()
   }, [])
@@ -219,13 +361,25 @@ export function AuthProvider({ children }) {
 
   const signOut = async () => {
     try {
+      console.log('🚪 Signing out...')
+      
+      // Clear all state immediately
+      setUser(null)
+      setProfile(null)
+      setSessions([])
+      setUserData({ totalSessions: 0, totalClimbs: 0 })
+      localStorage.removeItem('userProfile')
+      
+      // Sign out from Supabase
       const { error } = await supabase.auth.signOut()
       
       if (error) throw error
       
+      console.log('🚪 Sign out successful')
       return { success: true }
     } catch (error) {
-      console.error('Signout error:', error)
+      console.error('🚪 Signout error:', error)
+      // State already cleared, so user experience is still good
       return { success: false, error: error.message }
     }
   }
@@ -320,16 +474,28 @@ export function AuthProvider({ children }) {
   }
 
   // Debug auth state
-  console.log('🔐 AuthContext render - User:', !!user, 'Profile:', !!profile, 'Loading:', loading)
+  console.log('🔐 AuthContext - User:', !!user, 'Profile:', !!profile, 'Sessions:', sessions.length, 'Initializing:', isInitializing)
   
-  const value = {
-    // State
+  const value = useMemo(() => ({
+    // Auth state
     user,
     profile,
-    loading,
-    profileLoading,
     isAuthenticated: !!user,
     hasProfile: !!profile,
+    
+    // Data state
+    sessions,
+    userData,
+    setSessions,
+    setUserData,
+    
+    // Loading state
+    isInitializing,
+    
+    // Backwards compatibility (deprecated)
+    loading: isInitializing,
+    profileLoading: false,
+    dataLoading: false,
     
     // Methods
     signUp,
@@ -340,7 +506,7 @@ export function AuthProvider({ children }) {
     updateEmail,
     updatePassword,
     loadProfile
-  }
+  }), [user, profile, sessions, userData, isInitializing])
 
   return (
     <AuthContext.Provider value={value}>

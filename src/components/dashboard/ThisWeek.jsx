@@ -108,6 +108,25 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
   const weeklyVolume = weeklyData.weeklyVolume;
   const total = weeklyData.totalClimbs;
   const avgRPE = available ? roundRPE(6.8) : 0;
+  
+  // Get current week date range (Sunday to Saturday)
+  const getWeekDateRange = () => {
+    const now = new Date();
+    const currentDay = now.getDay(); // 0 = Sunday
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - currentDay);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+    
+    const formatDate = (date) => {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      return `${month}/${day}`;
+    };
+    
+    return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
+  };
   const grades = available ? [
     {label:'V3', val:20}, {label:'V4', val:40}, {label:'V5', val:30}, {label:'V6', val:10},
   ] : [
@@ -134,8 +153,8 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
             <h3 className="font-bold text-base">This Week</h3>
             {!available && <LockClosedIcon className="w-4 h-4 text-graytxt/60" />}
           </div>
-          <div className="text-sm">
-            <span className="text-graytxt">Sessions:</span> <span className="text-white font-medium">{available ? currentSessions : '--'}</span>
+          <div className="text-sm text-graytxt">
+            {getWeekDateRange()}
           </div>
         </div>
         <div className="mt-3 flex justify-center">
@@ -304,3 +323,4 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
 };
 
 export default ThisWeek;
+

@@ -249,6 +249,54 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     return (recentSessions.length / 4).toFixed(1);
   };
 
+  // Calculate lifetime grade distribution
+  const calculateGradeDistribution = () => {
+    const allGrades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9'];
+    
+    if (!sessions || sessions.length === 0) {
+      return { 
+        distribution: allGrades.map(grade => ({ label: grade, count: 0, percentage: 0, heightPercentage: 0 })),
+        totalClimbs: 0
+      };
+    }
+    
+    const gradeCounts = {};
+    let totalClimbs = 0;
+    
+    // Initialize all grades to 0
+    allGrades.forEach(grade => {
+      gradeCounts[grade] = 0;
+    });
+    
+    // Count climbs by grade
+    sessions.forEach(session => {
+      if (session.climbList && session.climbList.length > 0) {
+        session.climbList.forEach(climb => {
+          const grade = climb.grade || 'V0';
+          if (gradeCounts[grade] !== undefined) {
+            gradeCounts[grade]++;
+            totalClimbs++;
+          }
+        });
+      }
+    });
+    
+    // Find max count for scaling bars
+    const maxCount = Math.max(...Object.values(gradeCounts), 1);
+    
+    // Convert to array with percentages relative to max
+    const distribution = allGrades.map(grade => ({
+      label: grade,
+      count: gradeCounts[grade],
+      percentage: totalClimbs > 0 ? Math.round((gradeCounts[grade] / totalClimbs) * 100) : 0,
+      heightPercentage: (gradeCounts[grade] / maxCount) * 100
+    }));
+    
+    return { distribution, totalClimbs };
+  };
+
+  const { distribution: gradeDistribution, totalClimbs: totalGradeClimbs } = calculateGradeDistribution();
+
   return (
     <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
 
@@ -258,96 +306,170 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         onTitleClick={handleScrollToTop}
       />
 
-      {/* Enhanced Performance Profile - Sharable Identity Card */}
+      {/* Level & Experience Card */}
       <section className="px-5 pt-4">
-        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-3 mb-4 shadow-lg">
-          {/* Header with Name & XP Progress */}
-          <div className="mb-6">
-            {/* Row 1: Main titles */}
-            <div className="flex items-baseline justify-between mb-2">
-              <h2 className="text-white text-lg font-bold">Performance Stats</h2>
-              <div className="flex items-center gap-2">
-                <RocketLaunchIcon className="w-4 h-4 text-cyan-400" />
-                <div className="text-lg font-bold text-white">{totalPoints.toLocaleString()}</div>
-              </div>
-            </div>
-            
-            {/* Row 2: Subtitles */}
-            <div className="flex items-baseline justify-between mb-3">
-              <div className="text-graytxt text-sm">
-                {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
-              </div>
-              <div className="text-graytxt text-sm">Total XP</div>
-            </div>
-            <div className="w-full h-2 bg-border rounded-full overflow-hidden mb-4">
-              <div 
-                className="h-full bg-cyan-400 transition-all duration-300" 
-                style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
-              ></div>
+        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5 mb-4">
+          {/* Row 1: Main titles */}
+          <div className="flex items-baseline justify-between mb-2">
+            <h2 className="text-white text-base font-bold">Level & Experience</h2>
+            <div className="flex items-center gap-2">
+              <RocketLaunchIcon className="w-3.5 h-3.5 text-cyan-400" />
+              <div className="text-base font-bold text-white">{totalPoints.toLocaleString()}</div>
             </div>
           </div>
+          
+          {/* Row 2: Subtitles */}
+          <div className="flex items-baseline justify-between mb-3">
+            <div className="text-graytxt text-sm">
+              {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
+            </div>
+            <div className="text-graytxt text-sm">Total XP</div>
+          </div>
+          <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-cyan-400 transition-all duration-300" 
+              style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
+            ></div>
+          </div>
+        </div>
+      </section>
 
-          {/* 1x3 Metrics Cards - Compact with External Titles */}
-          <div className="space-y-3 mb-3">
+      {/* Grade Distribution Card */}
+      <section className="px-5 pt-0">
+        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5 mb-4">
+          {/* Header with Title and Total */}
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-white text-base font-bold">Grade Distribution</h2>
+            {totalGradeClimbs > 0 && (
+              <div className="text-sm text-graytxt">
+                Total: <span className="text-white font-medium">{totalGradeClimbs}</span>
+              </div>
+            )}
+          </div>
+          
+          {totalGradeClimbs > 0 ? (
+            <div>
+              {/* Histogram */}
+              <div className="relative h-32 mb-2">
+                <div className="flex items-end justify-between gap-1 h-full">
+                  {gradeDistribution.map((grade, index) => (
+                    <div key={index} className="flex-1 relative h-full">
+                      {/* Diagonal pattern background */}
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 top-0 rounded"
+                        style={{
+                          background: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(107, 114, 128, 0.25) 2px, rgba(107, 114, 128, 0.25) 4px)'
+                        }}
+                      ></div>
+                      
+                      {/* Bar */}
+                      <div 
+                        className="absolute bottom-0 left-0 right-0 rounded border border-cyan-600/40 transition-all duration-300"
+                        style={{
+                          height: grade.count > 0 ? `${Math.max(grade.heightPercentage, 18)}%` : '2px',
+                          minHeight: grade.count > 0 ? '28px' : '2px',
+                          background: grade.count > 0 
+                            ? 'linear-gradient(to top, rgba(8, 51, 68, 0.3), rgba(21, 94, 117, 0.2))'
+                            : 'rgba(8, 51, 68, 0.2)',
+                          opacity: grade.count > 0 ? 1 : 0.3
+                        }}
+                      >
+                        {/* Count */}
+                        {grade.count > 0 && (
+                          <div className="absolute inset-x-0 bottom-1 text-center text-xs text-white font-bold">
+                            {grade.count}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Grade Labels */}
+              <div className="flex items-center justify-between gap-1">
+                {gradeDistribution.map((grade, index) => (
+                  <div key={index} className="flex-1 text-center">
+                    <div className={`text-[11px] font-medium ${grade.count > 0 ? 'text-white' : 'text-graytxt/50'}`}>
+                      V{grade.label.replace('V', '')}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center text-graytxt text-sm py-8">
+              No climbs logged yet. Start tracking to see your grade distribution!
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Performance Stats Card */}
+      <section className="px-5 pt-0">
+        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5 mb-4">
+          <h2 className="text-white text-base font-bold mb-4">Performance Stats</h2>
+          
+          <div className="space-y-3">
             {/* Records */}
             <div>
-              <div className="text-sm text-white font-semibold mb-2 text-center">Records</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateMaxGrade()}</div>
-                    <div className="text-slate-400 text-xs">Hardest</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateMaxFlash()}</div>
-                    <div className="text-slate-400 text-xs">Max Flash</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateMaxVolume()}</div>
-                    <div className="text-slate-400 text-xs">Max Vol</div>
-                  </div>
+              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Records</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Hardest Send</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateMaxGrade()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Max Flash</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateMaxFlash()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Max Volume</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateMaxVolume()}</span>
                 </div>
               </div>
             </div>
+
+            {/* Divider */}
+            <div className="border-t border-border/40"></div>
 
             {/* Totals */}
             <div>
-              <div className="text-sm text-white font-semibold mb-2 text-center">Totals</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{userData.totalClimbs || 0}</div>
-                    <div className="text-slate-400 text-xs">Climbs</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{userData.totalSessions || 0}</div>
-                    <div className="text-slate-400 text-xs">Sessions</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateTotalFlashed()}</div>
-                    <div className="text-slate-400 text-xs">Flashed</div>
-                  </div>
+              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Totals</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Total Climbs</span>
+                  <span className="text-sm font-bold text-cyan-400">{userData.totalClimbs || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Total Sessions</span>
+                  <span className="text-sm font-bold text-cyan-400">{userData.totalSessions || 0}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Total Flashed</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateTotalFlashed()}</span>
                 </div>
               </div>
             </div>
 
+            {/* Divider */}
+            <div className="border-t border-border/40"></div>
+
             {/* Averages */}
             <div>
-              <div className="text-sm text-white font-semibold mb-2 text-center">Averages</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateAvgFlashRate()}%</div>
-                    <div className="text-slate-400 text-xs">Flash</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateAvgClimbsPerSession()}</div>
-                    <div className="text-slate-400 text-xs">Climbs/S</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-white text-base font-bold">{calculateSessionsPerWeek()}/wk</div>
-                    <div className="text-slate-400 text-xs">Sessions</div>
-                  </div>
+              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Averages</div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Flash Rate</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateAvgFlashRate()}%</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Climbs per Session</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateAvgClimbsPerSession()}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-graytxt">Sessions per Week</span>
+                  <span className="text-sm font-bold text-cyan-400">{calculateSessionsPerWeek()}/wk</span>
                 </div>
               </div>
             </div>

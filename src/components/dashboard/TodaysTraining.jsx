@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronRightIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
+import { ChevronRightIcon } from '../ui/Icons.jsx';
 import { readinessTextColor, readinessGradient, loadColor } from '../../utils/index.js';
 import { getCapacityRecommendations } from '../../utils/metrics.js';
 
@@ -17,45 +17,7 @@ const TodaysTraining = ({
   userData = { totalSessions: 0, totalClimbs: 0 },
   onNavigateToReadinessInfo,
   onNavigateToLoadRatioInfo,
-  onNavigateToProgress
 }) => {
-  
-  // Calculate total XP from sessions (same logic as Progress page)
-  const calculateTotalXP = () => {
-    if (!sessions || sessions.length === 0) {
-      return 0; // No sessions = no XP
-    }
-    
-    let sessionXP = 0;
-    
-    sessions.forEach(session => {
-      if (session.climbList && session.climbList.length > 0) {
-        session.climbList.forEach(climb => {
-          // Base XP
-          const baseXP = 10;
-          
-          // Grade multiplier (V0=1x, V1=2x, V2=3x, etc.)
-          const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
-          const gradeMultiplier = gradeNum + 1;
-          
-          // Flash bonus (1.2x for first attempt)
-          const flashBonus = climb.attempts === 1 ? 1.2 : 1.0;
-          
-          // Calculate climb XP
-          const climbXP = baseXP * gradeMultiplier * flashBonus;
-          sessionXP += climbXP;
-        });
-      }
-    });
-    
-    return Math.floor(sessionXP);
-  };
-
-  // Get total XP - use userData if available, otherwise calculate from sessions
-  const totalXP = userData?.totalXP || calculateTotalXP();
-  const currentLevel = Math.floor(totalXP / 150) + 1;
-  const pointsInCurrentLevel = totalXP % 150;
-  const xpToNextLevel = 150 - pointsInCurrentLevel;
   
   // Determine display state based on CRS data availability
   const isCalibrating = userData.totalSessions < 5;
@@ -161,22 +123,25 @@ const TodaysTraining = ({
     onStartTraining?.();
   };
 
+  // Get today's date formatted
+  const getTodaysDate = () => {
+    const today = new Date();
+    return today.toLocaleDateString('en-US', { 
+      weekday: 'short', 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+
   return (
     <section className="px-5 pt-4">
       <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5">
         
-        {/* Header with title and total XP */}
+        {/* Header with title and today's date */}
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-bold text-base">Today's Readiness</h3>
-          <div 
-            className="flex items-center gap-1 text-sm text-graytxt cursor-pointer hover:text-white transition-colors"
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigateToProgress?.();
-            }}
-          >
-            <RocketLaunchIcon className="w-4 h-4 text-cyan-400" />
-            <span>{totalXP.toLocaleString()} XP</span>
+          <div className="text-sm text-graytxt">
+            {getTodaysDate()}
           </div>
         </div>
 

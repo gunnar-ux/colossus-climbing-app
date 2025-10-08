@@ -250,10 +250,10 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
 
       {/* Comprehensive Profile Card */}
       <section className="px-5 pt-4">
-        <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-col p-4 mb-8 shadow-cyan-900/15 shadow-lg">
+        <div className="bg-card border border-border rounded-col p-4 mb-8">
           {/* Header with Avatar and Name */}
           <div className="flex items-center gap-4 mb-6">
-            <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center">
+            <div className="w-16 h-16 bg-border/40 rounded-full flex items-center justify-center">
               <span className="text-2xl font-bold text-white">
                 {personalForm.name ? personalForm.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase() || 'C'}
               </span>
