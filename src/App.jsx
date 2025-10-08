@@ -16,8 +16,9 @@ import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icon
 
 // Utils & Services
 import { getCleanInitialData, getCleanInitialSessions } from './utils/appReset.js';
-import { roundRPE } from './utils/index.js';
+import { roundRPE, getMetricAvailability } from './utils/index.js';
 import { calculateSessionStats } from './utils/sessionCalculations.js';
+import { calculateCRS, calculateLoadRatio, getCapacityRecommendations } from './utils/metrics.js';
 import { database } from './lib/supabase.js';
 import { useDataHydration } from './hooks/useDataHydration.js';
 
@@ -106,6 +107,51 @@ const AppContent = () => {
     setSessions, 
     setUserData 
   } = useDataHydration(user, profile);
+  
+  // Metric calculations state - CRS and Load Ratio
+  const [crsData, setCrsData] = useState(null);
+  const [loadRatioData, setLoadRatioData] = useState(null);
+  const [recommendedTraining, setRecommendedTraining] = useState(null);
+  
+  // Calculate CRS and Load Ratio when sessions or userData changes
+  useEffect(() => {
+    if (!sessions || sessions.length === 0) {
+      setCrsData(null);
+      setLoadRatioData(null);
+      setRecommendedTraining(null);
+      return;
+    }
+    
+    // Calculate CRS if user has 3+ sessions
+    let calculatedCRS = null;
+    if (userData.totalSessions >= 3) {
+      calculatedCRS = calculateCRS(userData.totalSessions, userData.totalClimbs, sessions);
+      setCrsData(calculatedCRS);
+      console.log('📊 CRS calculated:', calculatedCRS);
+    } else {
+      setCrsData(null);
+    }
+    
+    // Calculate Load Ratio if user has 5+ sessions
+    let calculatedLoadRatio = null;
+    if (userData.totalSessions >= 5) {
+      calculatedLoadRatio = calculateLoadRatio(sessions);
+      setLoadRatioData(calculatedLoadRatio);
+      console.log('📊 Load Ratio calculated:', calculatedLoadRatio);
+    } else {
+      setLoadRatioData(null);
+    }
+    
+    // Calculate recommended training based on freshly calculated metrics
+    const recommendations = getCapacityRecommendations(
+      calculatedCRS,
+      calculatedLoadRatio,
+      sessions
+    );
+    setRecommendedTraining(recommendations);
+    console.log('📊 Recommended Training:', recommendations);
+    
+  }, [sessions, userData.totalSessions, userData.totalClimbs]);
   
   // Session loading is now handled by useDataHydration hook
   
@@ -406,6 +452,9 @@ const AppContent = () => {
                         sessions={sessions}
                         user={user}
                         profile={profile || { id: user?.id, name: 'Gunnar', email: user?.email }}
+                        crsData={crsData}
+                        loadRatioData={loadRatioData}
+                        recommendedTraining={recommendedTraining}
                         onNavigateToTracker={() => navigate('/tracker')}
                         onNavigateToProgress={() => navigate('/progress')}
                         onNavigateToReadinessInfo={() => navigate('/readiness-info')}
@@ -417,7 +466,13 @@ const AppContent = () => {
                     <Route path="/sessions" element={
                       <SessionsPage 
                         sessions={sessions}
+                        profile={profile}
+                        userData={userData}
+                        metricAvailability={getMetricAvailability(userData.totalSessions, userData.totalClimbs)}
                         onNavigateToTracker={() => navigate('/tracker')}
+                        onNavigateToProgress={() => navigate('/progress')}
+                        onNavigateToDashboard={() => navigate('/')}
+                        onNavigateToAccount={() => navigate('/account')}
                       />
                     } />
                     
@@ -447,7 +502,7 @@ const AppContent = () => {
                     
                     <Route path="/readiness-info" element={
                       <ReadinessInfoPage 
-                        score={userData?.crsData?.score || 77}
+                        score={crsData?.score || 77}
                         onBack={() => navigate('/')}
                         onTrackClimbs={() => navigate('/tracker')}
                       />
@@ -455,7 +510,7 @@ const AppContent = () => {
                     
                     <Route path="/load-ratio-info" element={
                       <LoadRatioInfoPage 
-                        loadRatio={userData?.loadRatioData?.ratio || 1.0}
+                        loadRatio={loadRatioData?.ratio || 1.0}
                         onBack={() => navigate('/')}
                         onTrackClimbs={() => navigate('/tracker')}
                       />

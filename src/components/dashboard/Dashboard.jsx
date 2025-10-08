@@ -6,10 +6,8 @@ import { getMetricAvailability, clamp } from '../../utils/index.js';
 
 import CalibrationCard from './CalibrationCard.jsx';
 import TodaysTraining from './TodaysTraining.jsx';
-import ThisWeek from './ThisWeek.jsx';
 import TimerCard from './TimerCard.jsx';
 import SessionCard from '../sessions/SessionCard.jsx';
-import SocialCard from './SocialCard.jsx';
 
 
 // Dashboard component extracted from dashboard HTML
@@ -95,17 +93,11 @@ const Dashboard = ({
         onNavigateToProgress={onNavigateToProgress}
       />
       
-      {/* Context: This Week - Recent trends and patterns */}
-      <ThisWeek available={avail.weeklyTrends} currentSessions={userData.totalSessions} sessions={sessions} />
-      
-      {/* Training Timer - Preparation for session */}
-      <TimerCard />
-      
       {/* Current Session - Contextual information when active */}
       <section className="pt-4">
         <div className="mx-5 space-y-3">
           {sessions.length > 0 ? (
-            <SessionCard key={0} session={sessions[0]} index={0} />
+            <SessionCard key={0} session={sessions[0]} index={0} profile={profile} allSessions={sessions} />
           ) : (
             // Empty state session card - matches sessions page placeholder style
             <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
@@ -125,16 +117,8 @@ const Dashboard = ({
         </div>
       </section>
       
-      {/* Social Card - Shareable session summary */}
-      {sessions.length > 0 && sessions[0] && sessions[0].climbList && sessions[0].climbList.length > 0 && (
-        <SocialCard 
-          session={sessions[0]} 
-          profile={profile}
-          userData={userData}
-          sessions={sessions}
-        />
-      )}
-      
+      {/* Training Timer - Preparation for session */}
+      <TimerCard />
       
       {/* Bottom Logo Section - Whoop Style */}
       <section className="pt-2 pb-32 flex items-center justify-center">

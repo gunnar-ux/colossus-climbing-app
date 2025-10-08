@@ -4,7 +4,7 @@ import SessionCard from './SessionCard.jsx';
 // Session History with filtering tabs
 // Provides Week/Month/All Time filtering like Account page
 
-const SessionHistory = ({ sessions = [] }) => {
+const SessionHistory = ({ sessions = [], profile }) => {
   const [activeFilter, setActiveFilter] = useState('Week');
   
   // Filter sessions based on active tab
@@ -154,7 +154,7 @@ const SessionHistory = ({ sessions = [] }) => {
                 </div>
               );
             }
-            return <SessionCard key={session.id || i} session={session} index={i} />;
+            return <SessionCard key={session.id || i} session={session} index={i} profile={profile} allSessions={sessions} />;
           })}
         
         {/* Show calibration placeholders if less than 5 total sessions - Only for non-Week views */}

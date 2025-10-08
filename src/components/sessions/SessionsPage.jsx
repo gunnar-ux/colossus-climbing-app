@@ -4,12 +4,13 @@ import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 import SessionHistory from './SessionHistory.jsx';
 import TimerCard from '../dashboard/TimerCard.jsx';
+import ThisWeek from '../dashboard/ThisWeek.jsx';
 
 
 
 // SessionsPage component - standardized with consistent header behavior
 
-const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNavigateToProgress, onNavigateToDashboard, onNavigateToAccount }) => {
+const SessionsPage = ({ sessions = [], profile, userData, metricAvailability, onNavigateBack, onNavigateToTracker, onNavigateToProgress, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
 
   const handleBackClick = () => {
@@ -36,8 +37,15 @@ const SessionsPage = ({ sessions = [], onNavigateBack, onNavigateToTracker, onNa
         onTitleClick={handleScrollToTop}
       />
       
-        {/* Session History - filtered session list */}
-      <SessionHistory sessions={sessions} />
+      {/* This Week - Weekly trends and patterns */}
+      <ThisWeek 
+        available={metricAvailability?.weeklyTrends || (userData?.totalSessions >= 3)} 
+        currentSessions={userData?.totalSessions || 0} 
+        sessions={sessions} 
+      />
+      
+      {/* Session History - filtered session list */}
+      <SessionHistory sessions={sessions} profile={profile} />
 
       {/* Bottom Logo Section - Whoop Style */}
       <section className="pt-2 pb-32 flex items-center justify-center">

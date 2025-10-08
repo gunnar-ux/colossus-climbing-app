@@ -260,7 +260,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
       {/* Enhanced Performance Profile - Sharable Identity Card */}
       <section className="px-5 pt-4">
-        <div className="bg-card border border-border rounded-col p-5 mb-4 shadow-lg">
+        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-3 mb-4 shadow-lg">
           {/* Header with Name & XP Progress */}
           <div className="mb-6">
             {/* Row 1: Main titles */}
@@ -288,23 +288,23 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           </div>
 
           {/* 1x3 Metrics Cards - Compact with External Titles */}
-          <div className="space-y-3 mb-6">
+          <div className="space-y-3 mb-3">
             {/* Records */}
             <div>
               <div className="text-sm text-white font-semibold mb-2 text-center">Records</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3 shadow-cyan-900/15 shadow-lg">
+              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateMaxGrade()}</div>
-                    <div className="text-white text-xs">Hardest</div>
+                    <div className="text-white text-base font-bold">{calculateMaxGrade()}</div>
+                    <div className="text-slate-400 text-xs">Hardest</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateMaxFlash()}</div>
-                    <div className="text-white text-xs">Max Flash</div>
+                    <div className="text-white text-base font-bold">{calculateMaxFlash()}</div>
+                    <div className="text-slate-400 text-xs">Max Flash</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateMaxVolume()}</div>
-                    <div className="text-white text-xs">Max Vol</div>
+                    <div className="text-white text-base font-bold">{calculateMaxVolume()}</div>
+                    <div className="text-slate-400 text-xs">Max Vol</div>
                   </div>
                 </div>
               </div>
@@ -313,19 +313,19 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             {/* Totals */}
             <div>
               <div className="text-sm text-white font-semibold mb-2 text-center">Totals</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3 shadow-cyan-900/15 shadow-lg">
+              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{userData.totalClimbs || 0}</div>
-                    <div className="text-white text-xs">Climbs</div>
+                    <div className="text-white text-base font-bold">{userData.totalClimbs || 0}</div>
+                    <div className="text-slate-400 text-xs">Climbs</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{userData.totalSessions || 0}</div>
-                    <div className="text-white text-xs">Sessions</div>
+                    <div className="text-white text-base font-bold">{userData.totalSessions || 0}</div>
+                    <div className="text-slate-400 text-xs">Sessions</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateTotalFlashed()}</div>
-                    <div className="text-white text-xs">Flashed</div>
+                    <div className="text-white text-base font-bold">{calculateTotalFlashed()}</div>
+                    <div className="text-slate-400 text-xs">Flashed</div>
                   </div>
                 </div>
               </div>
@@ -334,19 +334,19 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             {/* Averages */}
             <div>
               <div className="text-sm text-white font-semibold mb-2 text-center">Averages</div>
-              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3 shadow-cyan-900/15 shadow-lg">
+              <div className="bg-gradient-to-r from-cyan-950/25 to-blue-950/20 border border-cyan-700/40 rounded-lg p-3">
                 <div className="grid grid-cols-3 gap-4">
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateAvgFlashRate()}%</div>
-                    <div className="text-white text-xs">Flash</div>
+                    <div className="text-white text-base font-bold">{calculateAvgFlashRate()}%</div>
+                    <div className="text-slate-400 text-xs">Flash</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateAvgClimbsPerSession()}</div>
-                    <div className="text-white text-xs">Climbs/S</div>
+                    <div className="text-white text-base font-bold">{calculateAvgClimbsPerSession()}</div>
+                    <div className="text-slate-400 text-xs">Climbs/S</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-cyan-400 text-base font-bold">{calculateSessionsPerWeek()}/wk</div>
-                    <div className="text-white text-xs">Sessions</div>
+                    <div className="text-white text-base font-bold">{calculateSessionsPerWeek()}/wk</div>
+                    <div className="text-slate-400 text-xs">Sessions</div>
                   </div>
                 </div>
               </div>

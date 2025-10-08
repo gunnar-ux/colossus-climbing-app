@@ -45,5 +45,32 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	
+	<!-- Facebook App ID for Instagram Stories sharing -->
+	<key>FacebookAppID</key>
+	<string>1840929596840822</string>
+	<key>FacebookClientToken</key>
+	<string>018b2eef6004e3209fac31724458c0e1</string>
+	<key>FacebookDisplayName</key>
+	<string>POGO</string>
+	
+	<!-- URL Schemes for Facebook SDK -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1840929596840822</string>
+			</array>
+		</dict>
+	</array>
+	
+	<!-- Instagram Stories URL Scheme -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
 </dict>
 </plist>

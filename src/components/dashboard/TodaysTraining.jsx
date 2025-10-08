@@ -241,16 +241,44 @@ const TodaysTraining = ({
           <div className="text-sm font-bold text-graytxt">Recommended Training</div>
         </div>
 
-        {/* Training parameters - compact 2 rows */}
+        {/* Training parameters - compact 2 rows with diagonal lines, blue hue, and blue outline */}
         <div className="space-y-2 mb-4">
-          <div className="bg-border/30 border border-border/60 rounded-lg px-3 py-2 flex items-center justify-between shadow-inner">
-            <span className="text-white font-medium text-sm">Total Volume</span>
-            <span className="text-white text-sm">{capacityRec.volumeCap}</span>
+          <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+            {/* Diagonal pattern background */}
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+              <defs>
+                <pattern id="diagonalHatch1" patternUnits="userSpaceOnUse" width="4" height="4">
+                  <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                </pattern>
+                <linearGradient id="iceBlueGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#diagonalHatch1)" rx="8"/>
+              <rect width="100%" height="100%" fill="url(#iceBlueGradient1)" rx="8"/>
+            </svg>
+            <span className="relative text-white font-medium text-sm">Total Volume</span>
+            <span className="relative text-white text-sm">{capacityRec.volumeCap}</span>
           </div>
           
-          <div className="bg-border/30 border border-border/60 rounded-lg px-3 py-2 flex items-center justify-between shadow-inner">
-            <span className="text-white font-medium text-sm">Max Effort</span>
-            <span className="text-white text-sm">{capacityRec.rpeCap}</span>
+          <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+            {/* Diagonal pattern background */}
+            <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+              <defs>
+                <pattern id="diagonalHatch2" patternUnits="userSpaceOnUse" width="4" height="4">
+                  <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                </pattern>
+                <linearGradient id="iceBlueGradient2" x1="0%" y1="100%" x2="0%" y2="0%">
+                  <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                </linearGradient>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#diagonalHatch2)" rx="8"/>
+              <rect width="100%" height="100%" fill="url(#iceBlueGradient2)" rx="8"/>
+            </svg>
+            <span className="relative text-white font-medium text-sm">Max Effort</span>
+            <span className="relative text-white text-sm">{capacityRec.rpeCap}</span>
           </div>
         </div>
 

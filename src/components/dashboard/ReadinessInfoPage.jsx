@@ -10,7 +10,10 @@ const ReadinessInfoPage = ({
 }) => {
   return (
     <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
-      <div className="flex items-center justify-between p-5">
+      <div 
+        className="flex items-center justify-between p-5"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top) + 1.25rem)' }}
+      >
         <div className="w-10"></div> {/* Spacer for centering */}
         <h1 className="text-sm font-bold text-white tracking-wider flex-1 text-center" style={{ fontFamily: 'Oswald, sans-serif' }}>
           CLIMBER READINESS SCORE

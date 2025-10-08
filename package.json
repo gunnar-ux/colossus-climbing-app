@@ -10,11 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@capacitor/browser": "^7.0.2",
     "@capacitor/cli": "^7.4.3",
     "@capacitor/core": "^7.4.3",
+    "@capacitor/filesystem": "^7.1.4",
     "@capacitor/ios": "^7.4.3",
+    "@capacitor/share": "^7.0.2",
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.56.0",
+    "html2canvas": "^1.4.1",
     "lottie-react": "^2.4.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

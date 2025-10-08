@@ -1,4 +1,5 @@
-import { ShareIcon, RocketLaunchIcon, PlusIcon } from '../ui/Icons.jsx';
+import { useRef } from 'react';
+import { RocketLaunchIcon } from '../ui/Icons.jsx';
 import { LineChart } from './Charts.jsx';
 
 // SocialCard component for sharing climbing session summaries
@@ -10,6 +11,7 @@ const SocialCard = ({
   userData,
   sessions = []
 }) => {
+  const cardRef = useRef(null);
   
   if (!session || !session.climbList || session.climbList.length === 0) {
     return null; // Don't render if no session data
@@ -174,14 +176,20 @@ const SocialCard = ({
     return session.date;
   };
 
-  const handleShare = () => {
-    // TODO: Implement social sharing functionality
-    console.log('Share social card');
-  };
+
 
   return (
     <section className="px-5 pt-4">
-      <div className="bg-gradient-to-br from-cyan-950/30 via-slate-900/40 to-blue-950/25 border border-cyan-700/50 shadow-cyan-900/20 shadow-xl rounded-2xl overflow-hidden aspect-[3/4] max-w-sm mx-auto">
+      <div 
+        ref={cardRef}
+        data-testid="social-card"
+        className="bg-card border border-border rounded-col overflow-hidden max-w-sm mx-auto relative"
+        style={{
+          // Reduced height to minimize negative space
+          minHeight: '320px',
+          minWidth: '300px'
+        }}
+      >
         {/* Header Section */}
         <div className="px-5 pt-5 pb-0">
           <div className="mb-2">
@@ -206,67 +214,43 @@ const SocialCard = ({
 
         </div>
 
-        {/* Grade Progression Chart */}
-        {chartData.values.length > 1 && (
-          <div className="px-5 pb-0">
+        {/* Grade Progression Chart - THE MOST IMPORTANT VISUALIZATION */}
+        {chartData.values.length > 0 && (
+          <div className="px-5">
             <div className="flex justify-center relative">
               <LineChart 
                 values={chartData.values}
-                labels={[]} // Remove x-axis labels
-                height={160}
+                labels={[]} // Remove x-axis climb count numbers
+                height={140} // Reduced height
               />
-              {/* Session Summary - overlay on chart */}
-              <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 text-xs text-slate-400">
+              {/* Session Summary - positioned closer to chart */}
+              <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 text-xs text-slate-400">
                 {totalClimbs} climbs in {actualDuration}
               </div>
             </div>
           </div>
         )}
 
-        <div className="px-5">
-          {/* Hardest Send Section */}
+        <div className="px-5 -mt-2">
+          {/* Stats Section - Streamlined with Hardest Send */}
           <div className="mb-2">
-            <div className="text-sm text-slate-400 mb-2">Hardest Send</div>
-            {(() => {
-              // Find the hardest climb with full details
-              const hardestClimb = session.climbList.reduce((max, climb) => {
-                const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
-                const maxNum = parseInt(max.grade.replace('V', '')) || 0;
-                return gradeNum > maxNum ? climb : max;
-              }, session.climbList[0]);
-
-              return (
-                <div className="flex items-center justify-between rounded-xl px-4 py-3 border border-cyan-700/50 bg-gradient-to-r from-cyan-950/20 to-blue-950/15">
-                  <div className="flex items-center gap-2">
-                    <div className="text-lg font-bold text-white">{hardestClimb.grade}</div>
-                    <div className="text-sm px-1.5 py-0.5 rounded border border-slate-600/40 text-white">
-                      {hardestClimb.type === 'BOARD' ? 'Board' : 'Boulder'}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-sm text-white">
-                      {hardestClimb.style} {hardestClimb.angle}
-                    </div>
-                    <div className="text-sm text-slate-400">
-                      RPE: {hardestClimb.rpe} • Att: {hardestClimb.attempts}
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-          </div>
-
-          {/* Stats Section - With Container */}
-          <div className="mb-3">
-            <div className="border border-cyan-700/50 rounded-xl p-4 bg-gradient-to-r from-cyan-950/20 to-blue-950/15">
+            <div className="border border-cyan-700/50 rounded-xl p-3 bg-gradient-to-r from-cyan-950/20 to-blue-950/15">
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-lg font-bold text-white">{totalClimbs}</div>
                   <div className="text-xs text-slate-400">Total Volume</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-white">{hardestFlashGrade}</div>
-                  <div className="text-xs text-slate-400">Hardest Flash</div>
+                  <div className="text-lg font-bold text-white">{(() => {
+                    // Find the hardest climb grade
+                    const hardestClimb = session.climbList.reduce((max, climb) => {
+                      const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+                      const maxNum = parseInt(max.grade.replace('V', '')) || 0;
+                      return gradeNum > maxNum ? climb : max;
+                    }, session.climbList[0]);
+                    return hardestClimb.grade;
+                  })()}</div>
+                  <div className="text-xs text-slate-400">Hardest Send</div>
                 </div>
                 <div className="text-center">
                   <div className={`text-lg font-bold ${getFlashRateColor(flashRate)}`}>{flashRate}%</div>
@@ -278,11 +262,12 @@ const SocialCard = ({
         </div>
         
         {/* App Attribution */}
-        <div className="px-5 pb-4">
+        <div className="px-5 pb-3">
           <div className="text-xs text-slate-400 text-center">
             powered by <span className="text-white font-semibold">POGO</span>
           </div>
         </div>
+        
       </div>
     </section>
   );
