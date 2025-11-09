@@ -12,6 +12,12 @@ import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
 import LoadingScreen from './components/ui/LoadingScreen.jsx';
 import ReadinessInfoPage from './components/dashboard/ReadinessInfoPage.jsx';
 import LoadRatioInfoPage from './components/dashboard/LoadRatioInfoPage.jsx';
+import ChartTestingPage from './components/dashboard/ChartTestingPage.jsx';
+import StatsTestingPage from './components/progress/StatsTestingPage.jsx';
+import LoadRatioTestingPage from './components/dashboard/LoadRatioTestingPage.jsx';
+import ReadinessLoadTestingPage from './components/dashboard/ReadinessLoadTestingPage.jsx';
+import ReadinessLoadV2TestingPage from './components/dashboard/ReadinessLoadV2TestingPage.jsx';
+import QuickSetupTestPage from './components/onboarding/QuickSetupTestPage.jsx';
 import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icons.jsx';
 
 // Utils & Services
@@ -249,8 +255,6 @@ const AppContent = () => {
         timestamp: new Date(timestamp).toISOString()
       };
       
-      console.log('🔥 About to save climb payload:', climbPayload);
-      console.log('🔥 Original climb data:', climbData);
 
       // Smart session detection with 2-hour gap threshold
       const SESSION_GAP_THRESHOLD = 2 * 60 * 60 * 1000; // 2 hours in milliseconds
@@ -306,7 +310,6 @@ const AppContent = () => {
           gym_location: 'Session'
         };
         
-        console.log('🔥 Creating new session in database:', sessionData);
         const { data: sessionResult, error: sessionError } = await database.sessions.create(sessionData);
         if (sessionError) throw sessionError;
         
@@ -348,18 +351,26 @@ const AppContent = () => {
       // Add session_id to climb payload
       climbPayload.session_id = sessionId;
       
-      // Save climb to Supabase
-      console.log('🔥 Calling database.climbs.create with payload:', climbPayload);
-      const { data: climbResult, error: climbError } = await database.climbs.create(climbPayload);
-      
-      console.log('🔥 Database response:', { climbResult, climbError });
+      // Save climb to Supabase with timeout
+      let climbResult, climbError;
+      try {
+        const dbPromise = database.climbs.create(climbPayload);
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Database call timed out after 10s')), 10000)
+        );
+        
+        const response = await Promise.race([dbPromise, timeoutPromise]);
+        climbResult = response.data;
+        climbError = response.error;
+      } catch (err) {
+        console.error('Failed to save climb:', err);
+        throw err;
+      }
       
       if (climbError) {
-        console.error('🔥 Database error details:', climbError);
+        console.error('Database error:', climbError);
         throw climbError;
       }
-
-      console.log('🔥 Climb saved to Supabase successfully:', climbResult);
       
       // Update local state immediately after successful save
       const currentSessionId = sessionId;
@@ -377,12 +388,10 @@ const AppContent = () => {
             ...session,
             climbList: updatedClimbList,
             climbs: updatedClimbList.length,
-            endTime: timestamp, // Set to current climb timestamp
+            endTime: timestamp,
             duration: calculateSessionDuration(session.startTime, timestamp),
             ...sessionStats
           };
-          
-          console.log('🔥 Updated local session state:', updatedSessions[sessionIndex]);
         }
         
         return updatedSessions;
@@ -397,19 +406,12 @@ const AppContent = () => {
       // Refresh profile data to sync with database totals for calibration card
       try {
         await loadProfile(user.id);
-        console.log('🔥 Profile refreshed after climb logging');
       } catch (profileError) {
-        console.warn('🔥 Failed to refresh profile after climb logging:', profileError);
-        // Don't throw - this is not critical for the climb logging flow
+        console.warn('Failed to refresh profile after climb logging:', profileError);
       }
       
     } catch (error) {
-      console.error('🔥 Failed to save climb to Supabase:', error);
-      console.error('🔥 Error details:', error.message);
-      console.error('🔥 Error stack:', error.stack);
-      console.error('🔥 User ID:', user?.id);
-      console.error('🔥 Climb payload that failed:', climbPayload);
-      // Continue with local state update even if Supabase fails
+      console.error('Failed to save climb:', error);
     }
     
     // Data is now stored in database and synced to local state
@@ -429,13 +431,13 @@ const AppContent = () => {
   // If not authenticated, show onboarding/auth
   if (!isAuthenticated) {
     console.log('🎯 Not authenticated - showing onboarding')
-    return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
+    return <OnboardingApp onComplete={() => navigate('/')} />;
   }
   
   // If authenticated but no profile, show onboarding to create profile
   if (isAuthenticated && !profile) {
     console.log('🎯 Authenticated but no profile - showing onboarding')
-    return <OnboardingApp onComplete={() => navigate('/dashboard')} />;
+    return <OnboardingApp onComplete={() => navigate('/')} />;
   }
   
   console.log('🎯 Rendering main app')
@@ -523,6 +525,13 @@ const AppContent = () => {
                         onTrackClimbs={() => navigate('/tracker')}
                       />
                     } />
+                    
+        <Route path="/chart-testing" element={<ChartTestingPage />} />
+        <Route path="/stats-testing" element={<StatsTestingPage />} />
+        <Route path="/loadratio-testing" element={<LoadRatioTestingPage />} />
+        <Route path="/readiness-load-testing" element={<ReadinessLoadTestingPage />} />
+        <Route path="/readiness-load-v2" element={<ReadinessLoadV2TestingPage />} />
+        <Route path="/quick-setup-test" element={<QuickSetupTestPage />} />
         </Routes>
       </div>
       

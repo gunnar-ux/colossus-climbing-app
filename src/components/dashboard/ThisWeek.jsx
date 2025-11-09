@@ -20,8 +20,8 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
   const calculateWeeklyData = () => {
     if (!available || !sessions || sessions.length === 0) {
       return {
-        weeklyVolume: [2, 2, 2, 2, 2, 2, 2], // Demo data
-        recommendationLines: [0, 0, 0, 0, 0, 0, 0], // No recommendations for demo
+        weeklyVolume: [0, 0, 0, 0, 0, 0, 0], // Empty state
+        recommendationLines: [0, 0, 0, 0, 0, 0, 0], // No recommendations
         flashRate: 0,
         totalClimbs: 0
       };

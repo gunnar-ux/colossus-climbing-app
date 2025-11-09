@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SessionCard from './SessionCard.jsx';
+import EmptySessionCard from './EmptySessionCard.jsx';
 
 // Session History with filtering tabs
 // Provides Week/Month/All Time filtering like Account page
@@ -87,24 +88,7 @@ const SessionHistory = ({ sessions = [], profile }) => {
 
   const filteredSessions = activeFilter === 'Week' ? getWeekViewSessions() : getFilteredSessions();
 
-  // Simple Placeholder Session Card - Visual Spaceholder Only
-  const PlaceholderSessionCard = () => {
-    return (
-      <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
-        <div className="flex items-center justify-between mb-2">
-          <div className="font-semibold text-base text-graytxt">
-            Upcoming Session
-          </div>
-          <div className="text-sm text-graytxt/80">
-            -- Climbs
-          </div>
-        </div>
-        <div className="text-sm text-graytxt/80">
-          Peak: -- • Flash Rate: --% • XP: --
-        </div>
-      </div>
-    );
-  };
+  // PlaceholderSessionCard is now replaced by EmptySessionCard component
 
   return (
     <section className="pt-4 pb-20">
@@ -134,25 +118,7 @@ const SessionHistory = ({ sessions = [], profile }) => {
           .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
           .map((session, i) => {
             if (session.isPlaceholder) {
-              const isUpcomingSession = session.date === 'Upcoming Session';
-              const climbsText = isUpcomingSession ? '-- Climbs' : '0 Climbs';
-              const statsText = isUpcomingSession ? 'Peak: -- • Flash Rate: --% • XP: --' : 'No climbs logged';
-              
-              return (
-                <div key={session.id} className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="font-semibold text-base text-graytxt">
-                      {session.date}
-                    </div>
-                    <div className="text-sm text-graytxt/80">
-                      {climbsText}
-                    </div>
-                  </div>
-                  <div className="text-sm text-graytxt/80">
-                    {statsText}
-                  </div>
-                </div>
-              );
+              return <EmptySessionCard key={session.id} title={session.date} />;
             }
             return <SessionCard key={session.id || i} session={session} index={i} profile={profile} allSessions={sessions} />;
           })}
@@ -161,8 +127,9 @@ const SessionHistory = ({ sessions = [], profile }) => {
         {activeFilter !== 'Week' && sessions.length < 5 && (
           <>
             {Array.from({ length: 5 - sessions.length }, (_, i) => (
-              <PlaceholderSessionCard 
+              <EmptySessionCard 
                 key={`placeholder-${sessions.length + i + 1}`}
+                title="Upcoming Session"
               />
             ))}
           </>

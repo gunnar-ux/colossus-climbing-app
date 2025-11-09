@@ -8,6 +8,7 @@ import CalibrationCard from './CalibrationCard.jsx';
 import TodaysTraining from './TodaysTraining.jsx';
 import TimerCard from './TimerCard.jsx';
 import SessionCard from '../sessions/SessionCard.jsx';
+import EmptySessionCard from '../sessions/EmptySessionCard.jsx';
 
 
 // Dashboard component extracted from dashboard HTML
@@ -99,20 +100,7 @@ const Dashboard = ({
           {sessions.length > 0 ? (
             <SessionCard key={0} session={sessions[0]} index={0} profile={profile} allSessions={sessions} />
           ) : (
-            // Empty state session card - matches sessions page placeholder style
-            <div className="bg-card/50 border border-border/60 rounded-col px-4 pt-4 pb-3 opacity-80">
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-semibold text-base text-graytxt">
-                  Upcoming Session
-                </div>
-                <div className="text-sm text-graytxt/80">
-                  -- Climbs
-                </div>
-              </div>
-              <div className="text-sm text-graytxt/80">
-                Peak: -- • Flash Rate: --% • XP: --
-              </div>
-            </div>
+            <EmptySessionCard title="Upcoming Session" />
           )}
         </div>
       </section>
@@ -129,6 +117,7 @@ const Dashboard = ({
         />
       </section>
       
+      {/* Floating Action Button */}
       <FAB onClick={handleFABClick} />
     </div>
   );

@@ -141,15 +141,30 @@ export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 90 }) 
   return (
     <svg width={width} height={height}>
       {/* Grid lines */}
-      {[chartMax, (chartMin + chartMax) / 2, chartMin].map((val, i) => {
-        const y = padding + (i * (height - padding * 2 - 18) / 2);
-        return (
-          <g key={i}>
-            <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#374151" strokeWidth="1" opacity="0.6" />
-            <text x={padding - 5} y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">{formatValue(val)}</text>
-          </g>
-        );
-      })}
+      {(() => {
+        const gridValues = [chartMax, (chartMin + chartMax) / 2, chartMin];
+        const formattedValues = gridValues.map(formatValue);
+        const seenLabels = new Set();
+        
+        return gridValues.map((val, i) => {
+          const y = padding + (i * (height - padding * 2 - 18) / 2);
+          const label = formattedValues[i];
+          const shouldShowLabel = !seenLabels.has(label);
+          
+          if (shouldShowLabel) {
+            seenLabels.add(label);
+          }
+          
+          return (
+            <g key={i}>
+              <line x1={padding} y1={y} x2={width - padding} y2={y} stroke="#374151" strokeWidth="1" opacity="0.6" />
+              {shouldShowLabel && (
+                <text x={padding - 5} y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">{label}</text>
+              )}
+            </g>
+          );
+        });
+      })()}
       
       {/* Main line */}
       <path d={pathD} stroke="#22d3ee" strokeWidth="2" fill="none" />

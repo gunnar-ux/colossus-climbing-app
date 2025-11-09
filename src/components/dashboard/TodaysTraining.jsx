@@ -154,49 +154,49 @@ const TodaysTraining = ({
         <div className="grid grid-cols-2 gap-3 mb-4">
           {/* Readiness container - clickable */}
           <div 
-            className="bg-border/30 border border-border/60 rounded-lg p-3 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
+            className="bg-border/30 border border-border/60 rounded-lg p-2.5 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               onNavigateToReadinessInfo?.();
             }}
           >
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-xs text-white font-bold uppercase tracking-wide">Readiness</div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[11px] text-white font-bold uppercase tracking-wide">Readiness</div>
               <ChevronRightIcon className="w-3 h-3 text-graytxt" />
             </div>
-            <div className={`text-3xl font-extrabold leading-none ${readinessTextColor(currentScore)} mb-2`}>{currentScore}%</div>
-            <div className="h-2 bg-border rounded-full overflow-hidden">
+            <div className="flex items-baseline justify-between mb-1.5">
+              <div className={`text-3xl font-extrabold leading-none ${readinessTextColor(currentScore)}`}>{currentScore}%</div>
+              <div className="text-[10px] text-graytxt uppercase font-semibold tracking-wide">
+                {currentScore >= 75 ? 'Ready' : 'Rest'}
+              </div>
+            </div>
+            <div className="h-1.5 bg-border rounded-full overflow-hidden">
               <div className={`bg-gradient-to-r ${readinessGradient(currentScore)} h-full`} style={{width: `${currentScore}%`}}></div>
             </div>
           </div>
 
           {/* Load Ratio container - clickable */}
           <div 
-            className="bg-border/30 border border-border/60 rounded-lg p-3 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
+            className="bg-border/30 border border-border/60 rounded-lg p-2.5 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
               onNavigateToLoadRatioInfo?.();
             }}
           >
-            <div className="flex items-center justify-between mb-1">
-              <div className="text-xs text-white font-bold uppercase tracking-wide">Load Ratio</div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[11px] text-white font-bold uppercase tracking-wide">Load Ratio</div>
               <ChevronRightIcon className="w-3 h-3 text-graytxt" />
             </div>
-            <div className={`text-3xl font-extrabold leading-none ${loadColor(currentLoadRatio)} mb-2`}>{currentLoadRatio.toFixed(1)}x</div>
-            {/* Balanced indicator with center baseline */}
-            <div className="relative h-2 bg-border rounded-full overflow-hidden">
-              {/* Center baseline marker (1.0x) */}
-              <div className="absolute top-0 left-1/2 w-0.5 h-full bg-white transform -translate-x-0.5 z-10"></div>
-              {/* Load ratio indicator bar */}
-              <div 
-                className={`absolute top-0 h-full ${loadColor(currentLoadRatio) === 'text-cyan-400' ? 'bg-cyan-400' : 'bg-red'} transition-all duration-300`}
-                style={{
-                  left: currentLoadRatio <= 1.0 ? `${50 - (1.0 - currentLoadRatio) * 25}%` : '50%',
-                  width: currentLoadRatio <= 1.0 
-                    ? `${(1.0 - currentLoadRatio) * 25}%`
-                    : `${Math.min(50, (currentLoadRatio - 1.0) * 25)}%`
-                }}
-              ></div>
+            <div className="flex items-baseline justify-between mb-1.5">
+              <div className={`text-3xl font-extrabold leading-none ${loadColor(currentLoadRatio)}`}>{currentLoadRatio.toFixed(1)}x</div>
+              <div className={`text-[10px] uppercase font-semibold tracking-wide ${currentLoadRatio >= 0.8 && currentLoadRatio <= 1.3 ? 'text-cyan-400' : 'text-red'}`}>
+                {currentLoadRatio < 0.8 ? 'Low' : currentLoadRatio <= 1.3 ? 'Good' : 'High'}
+              </div>
+            </div>
+            <div className="flex gap-0.5">
+              <div className={`h-1.5 rounded-sm ${currentLoadRatio < 0.8 ? 'flex-[0.6] bg-red' : 'flex-[0.6] bg-border/40'}`}></div>
+              <div className={`h-1.5 rounded-sm ${currentLoadRatio >= 0.8 && currentLoadRatio <= 1.3 ? 'flex-1 bg-cyan-400' : 'flex-1 bg-border/40'}`}></div>
+              <div className={`h-1.5 rounded-sm ${currentLoadRatio > 1.3 ? 'flex-[0.6] bg-red' : 'flex-[0.6] bg-border/40'}`}></div>
             </div>
           </div>
         </div>

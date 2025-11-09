@@ -49,6 +49,8 @@ function calculateLoadRecovery(sessions) {
  * @param {Array} recent - Recent 7-day sessions
  * @param {Array} baseline - Baseline 28-day sessions
  * @returns {number} - Trend score (0-100)
+ * 
+ * Note: For CRS (readiness), low load = high readiness (fully recovered)
  */
 function calculateLoadTrend(recent, baseline) {
   if (baseline.length === 0) return 75; // Default middle score
@@ -60,10 +62,13 @@ function calculateLoadTrend(recent, baseline) {
   
   const ratio = recentLoad / (baselineAvg * 7);
   
-  if (ratio < 0.8) return 60;   // Undertraining
-  if (ratio <= 1.3) return 100; // Optimal
-  if (ratio <= 1.5) return 50;  // Caution
-  return 20; // Danger - overreaching
+  // CRS measures readiness, not training adherence
+  // Low ratio = low fatigue = HIGH readiness
+  if (ratio < 0.3) return 100;  // Very low load = fully recovered = maximum readiness
+  if (ratio < 0.8) return 90;   // Low load = well recovered = high readiness
+  if (ratio <= 1.3) return 100; // Optimal load = balanced readiness
+  if (ratio <= 1.5) return 50;  // Elevated load = reduced readiness
+  return 20; // High load = overreaching = low readiness
 }
 
 /**
@@ -157,9 +162,11 @@ export function calculateCRS(sessionCount, climbCount, sessions) {
   const baselineSessions = validSessions.filter(s => s.timestamp > twentyEightDaysAgo);
   
   // Calculate components
-  const loadRecovery = calculateLoadRecovery(recentSessions);
+  // Load Recovery and RPE Recovery should use ALL sessions to find most recent,
+  // not just sessions within the 7-day window
+  const loadRecovery = calculateLoadRecovery(validSessions);
   const loadTrend = calculateLoadTrend(recentSessions, baselineSessions);
-  const rpeRecovery = calculateRPERecovery(recentSessions);
+  const rpeRecovery = calculateRPERecovery(validSessions);
   const volumePattern = calculateVolumePattern(recentSessions);
   
   const score = Math.round(

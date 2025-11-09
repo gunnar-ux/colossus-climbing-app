@@ -319,6 +319,29 @@ export function AuthProvider({ children }) {
       
       if (data.user) {
         console.log('🔐 SignUp SUCCESS! User created:', data.user.id)
+        
+        // Create minimal user profile in database
+        try {
+          const { error: profileError } = await supabase
+            .from('users')
+            .insert({
+              id: data.user.id,
+              email: data.user.email,
+              onboarding_completed: false,
+              name: '' // Optional, can be filled later
+            })
+          
+          if (profileError) {
+            console.error('🔐 Failed to create user profile:', profileError)
+            // Continue anyway - profile creation can be retried
+          } else {
+            console.log('🔐 Minimal user profile created')
+          }
+        } catch (profileError) {
+          console.error('🔐 Profile creation exception:', profileError)
+          // Continue anyway
+        }
+        
         return { success: true, user: data.user }
       }
       
@@ -481,7 +504,7 @@ export function AuthProvider({ children }) {
     user,
     profile,
     isAuthenticated: !!user,
-    hasProfile: !!profile,
+    hasProfile: !!profile && profile.onboarding_completed,
     
     // Data state
     sessions,

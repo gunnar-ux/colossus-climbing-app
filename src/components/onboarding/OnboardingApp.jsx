@@ -1,23 +1,18 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import AuthPage from './AuthPage.jsx';
-import PersonalInfo from './PersonalInfo.jsx';
-import PhysicalStats from './PhysicalStats.jsx';
+import QuickSetup from './QuickSetup.jsx';
 
-// OnboardingApp state machine extracted from HTML
-// Manages signup → welcome → dashboard flow for Week 1 retention
+// OnboardingApp - Simplified flow for rapid onboarding
+// Auth → Optional Quick Setup → Dashboard
+// Collects flash grade and typical volume to seed baseline data
 
 const OnboardingApp = ({ onComplete }) => {
-  const { isAuthenticated, hasProfile } = useAuth();
+  const { isAuthenticated, hasProfile, user } = useAuth();
   
   // Start at step 2 if already authenticated, step 1 if not
   const [step, setStep] = useState(isAuthenticated ? 2 : 1);
-  const [userData, setUserData] = useState({
-    name: '', age: '', gender: '', location: '',
-    height: { feet: '', inches: '' },
-    weight: { value: '', unit: 'lbs' },
-    apeIndex: ''
-  });
+  const [userId, setUserId] = useState(user?.id || null);
 
   console.log('🔄 OnboardingApp - Authenticated:', isAuthenticated, 'HasProfile:', hasProfile, 'Step:', step);
 
@@ -32,7 +27,7 @@ const OnboardingApp = ({ onComplete }) => {
     return (
       <AuthPage 
         onComplete={(data) => { 
-          setUserData(prev => ({...prev, ...data})); 
+          setUserId(data.id);
           setStep(2);
         }}
         onError={(error) => {
@@ -42,30 +37,18 @@ const OnboardingApp = ({ onComplete }) => {
     );
   }
 
-  // Step 2: Personal Info
-  if (step === 2) {
-    return (
-      <PersonalInfo 
-        onComplete={(data) => { 
-          setUserData(prev => ({...prev, ...data})); 
-          setStep(3);
-        }}
-        onBack={() => setStep(1)}
-        initialData={userData}
-      />
-    );
-  }
-
-  // Step 3: Physical Stats
+  // Step 2: Quick Setup (optional)
   return (
-    <PhysicalStats 
-      onComplete={(data) => { 
-        const completeUserData = {...userData, ...data};
-        setUserData(completeUserData); 
+    <QuickSetup 
+      userId={userId || user?.id}
+      onComplete={(data) => {
+        console.log('✅ Quick setup completed:', data);
         onComplete?.();
       }}
-      onBack={() => setStep(2)}
-      userData={userData}
+      onSkip={() => {
+        console.log('⏭️ Quick setup skipped');
+        onComplete?.();
+      }}
     />
   );
 };

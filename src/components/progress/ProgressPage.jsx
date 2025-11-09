@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
-import { LineChart, Trend } from '../ui/Charts.jsx';
+import { LineChart, TrendChart, Trend } from '../ui/Charts.jsx';
 import { MountainIcon, LightningIcon, TargetIcon, ChevronDownIcon, ClockIcon, ChartBarIcon, TrophyIcon, LockClosedIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
 
 // Progress & Achievements page component
@@ -11,6 +11,7 @@ import { MountainIcon, LightningIcon, TargetIcon, ChevronDownIcon, ClockIcon, Ch
 const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker, onNavigateToSessions, onNavigateToDashboard, onNavigateToAccount }) => {
   const containerRef = useRef(null);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+  const [activeStatsTab, setActiveStatsTab] = useState('records');
 
   const handleBackClick = () => {
     onNavigateBack?.();
@@ -73,8 +74,67 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       };
     }
 
-    // For now, return sample data until we have enough sessions to calculate meaningful weekly trends
-    // This will be populated with real data once user has 6+ weeks of climbing
+    // If performance trends are unlocked, calculate real data
+    if (performanceTrendsUnlocked) {
+      const validSessions = sessions.filter(s => s.timestamp);
+      if (validSessions.length === 0) {
+        return {
+          volume: [18, 22, 19, 25, 28, 31],
+          avgGrade: [4.0, 4.1, 4.2, 4.3, 4.4, 4.5],
+          flashRate: [48, 55, 62, 59, 65, 67]
+        };
+      }
+
+      // Get earliest session timestamp
+      const earliestSession = validSessions.reduce((earliest, session) => 
+        session.timestamp < earliest.timestamp ? session : earliest
+      );
+      const startTime = earliestSession.timestamp;
+      const now = Date.now();
+
+      // Calculate 6 weekly buckets from first session to now
+      const weeklyBuckets = Array(6).fill(null).map((_, index) => {
+        const weekStart = startTime + (index * 7 * 24 * 60 * 60 * 1000);
+        const weekEnd = weekStart + (7 * 24 * 60 * 60 * 1000);
+        
+        // Get sessions in this week
+        const weekSessions = validSessions.filter(s => 
+          s.timestamp >= weekStart && s.timestamp < weekEnd
+        );
+
+        // Calculate stats for this week
+        let totalVolume = 0;
+        let totalGradePoints = 0;
+        let totalClimbs = 0;
+        let totalFlashed = 0;
+
+        weekSessions.forEach(session => {
+          if (session.climbList && session.climbList.length > 0) {
+            session.climbList.forEach(climb => {
+              totalVolume++;
+              totalClimbs++;
+              const gradeNum = parseInt(climb.grade.replace('V', '')) || 0;
+              totalGradePoints += gradeNum;
+              if (climb.attempts === 1) totalFlashed++;
+            });
+          }
+        });
+
+        return {
+          volume: totalVolume,
+          avgGrade: totalClimbs > 0 ? totalGradePoints / totalClimbs : 0,
+          flashRate: totalClimbs > 0 ? Math.round((totalFlashed / totalClimbs) * 100) : 0
+        };
+      });
+
+      return {
+        volume: weeklyBuckets.map(w => w.volume),
+        avgGrade: weeklyBuckets.map(w => w.avgGrade),
+        flashRate: weeklyBuckets.map(w => w.flashRate)
+      };
+    }
+
+    // Still locked - show sample data
     return {
       volume: [18, 22, 19, 25, 28, 31],
       avgGrade: [4.0, 4.1, 4.2, 4.3, 4.4, 4.5],
@@ -84,6 +144,28 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
 
   const weeklyData = calculateWeeklyData();
   const weekLabels = ['W1', 'W2', 'W3', 'W4', 'W5', 'W6'];
+
+  // Calculate trend percentages for charts
+  const calculateTrend = (data) => {
+    if (!data || data.length < 2) return { change: 0, percentage: 0, direction: 'flat' };
+    
+    const firstValue = data[0] || 0;
+    const lastValue = data[data.length - 1] || 0;
+    
+    if (firstValue === 0) {
+      return { change: lastValue, percentage: 0, direction: lastValue > 0 ? 'up' : 'flat' };
+    }
+    
+    const change = lastValue - firstValue;
+    const percentage = Math.round((change / firstValue) * 100);
+    const direction = change > 0 ? 'up' : change < 0 ? 'down' : 'flat';
+    
+    return { change, percentage, direction };
+  };
+
+  const volumeTrend = calculateTrend(weeklyData.volume);
+  const gradeTrend = calculateTrend(weeklyData.avgGrade);
+  const flashRateTrend = calculateTrend(weeklyData.flashRate);
 
 
   // Achievement milestones
@@ -117,9 +199,9 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     }
   ];
 
-  // Calculate level and experience points with enhanced system
+  // Calculate level and experience points with climbing-grade inspired progression
   const calculateTotalXP = () => {
-    // Enhanced formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
+    // Original formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
     if (!sessions || sessions.length === 0) {
       return 0; // No sessions = no XP
     }
@@ -149,10 +231,52 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     return Math.floor(totalXP);
   };
   
+  // Level thresholds - inspired by climbing grades, V17 is the peak
+  // Total XP needed to reach each level (matching V-grade progression)
+  const LEVEL_THRESHOLDS = [
+    0,          // Level 0 (absolute beginner, starting point)
+    100,        // Level 1
+    500,        // Level 2
+    1000,       // Level 3
+    2500,       // Level 4
+    5000,       // Level 5
+    7500,       // Level 6
+    10000,      // Level 7
+    25000,      // Level 8
+    50000,      // Level 9
+    100000,     // Level 10
+    125000,     // Level 11
+    150000,     // Level 12
+    200000,     // Level 13
+    250000,     // Level 14
+    500000,     // Level 15
+    1000000,    // Level 16
+    5000000,    // Level 17 (legendary - matching V17)
+  ];
+  
+  // Calculate level from XP using threshold array
+  const calculateLevelFromXP = (xp) => {
+    for (let i = LEVEL_THRESHOLDS.length - 1; i >= 0; i--) {
+      if (xp >= LEVEL_THRESHOLDS[i]) {
+        return i + 1;
+      }
+    }
+    return 1;
+  };
+  
   const totalPoints = calculateTotalXP();
-  const currentLevel = Math.floor(totalPoints / 150) + 1;
-  const nextLevelPoints = currentLevel * 150;
-  const pointsInCurrentLevel = totalPoints % 150;
+  const currentLevel = calculateLevelFromXP(totalPoints);
+  const maxLevel = LEVEL_THRESHOLDS.length;
+  
+  // Calculate XP progress for current level
+  const currentLevelThreshold = LEVEL_THRESHOLDS[currentLevel - 1] || 0;
+  const nextLevelThreshold = LEVEL_THRESHOLDS[currentLevel] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+  const nextLevelPoints = nextLevelThreshold;
+  const pointsInCurrentLevel = totalPoints - currentLevelThreshold;
+  const xpNeededForNextLevel = nextLevelThreshold - currentLevelThreshold;
+  
+  // Check if max level reached
+  const isMaxLevel = currentLevel >= maxLevel;
 
   // Calculate metrics for 3x3 grid
   const calculateMaxGrade = () => {
@@ -321,14 +445,17 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
           {/* Row 2: Subtitles */}
           <div className="flex items-baseline justify-between mb-3">
             <div className="text-graytxt text-sm">
-              {150 - pointsInCurrentLevel} XP to Level {currentLevel + 1}
+              {isMaxLevel 
+                ? 'MAX LEVEL - Legendary Climber' 
+                : `${xpNeededForNextLevel - pointsInCurrentLevel} XP to Level ${currentLevel + 1}`
+              }
             </div>
             <div className="text-graytxt text-sm">Total XP</div>
           </div>
           <div className="w-full h-2 bg-border rounded-full overflow-hidden">
             <div 
               className="h-full bg-cyan-400 transition-all duration-300" 
-              style={{width: `${(pointsInCurrentLevel / 150) * 100}%`}}
+              style={{width: isMaxLevel ? '100%' : `${(pointsInCurrentLevel / xpNeededForNextLevel) * 100}%`}}
             ></div>
           </div>
         </div>
@@ -347,133 +474,260 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             )}
           </div>
           
-          {totalGradeClimbs > 0 ? (
-            <div>
-              {/* Histogram */}
-              <div className="relative h-32 mb-2">
-                <div className="flex items-end justify-between gap-1 h-full">
-                  {gradeDistribution.map((grade, index) => (
-                    <div key={index} className="flex-1 relative h-full">
-                      {/* Diagonal pattern background */}
-                      <div 
-                        className="absolute bottom-0 left-0 right-0 top-0 rounded"
-                        style={{
-                          background: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(107, 114, 128, 0.25) 2px, rgba(107, 114, 128, 0.25) 4px)'
-                        }}
-                      ></div>
-                      
-                      {/* Bar */}
-                      <div 
-                        className="absolute bottom-0 left-0 right-0 rounded border border-cyan-600/40 transition-all duration-300"
-                        style={{
-                          height: grade.count > 0 ? `${Math.max(grade.heightPercentage, 18)}%` : '2px',
-                          minHeight: grade.count > 0 ? '28px' : '2px',
-                          background: grade.count > 0 
-                            ? 'linear-gradient(to top, rgba(8, 51, 68, 0.3), rgba(21, 94, 117, 0.2))'
-                            : 'rgba(8, 51, 68, 0.2)',
-                          opacity: grade.count > 0 ? 1 : 0.3
-                        }}
-                      >
-                        {/* Count */}
-                        {grade.count > 0 && (
-                          <div className="absolute inset-x-0 bottom-1 text-center text-xs text-white font-bold">
-                            {grade.count}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              
-              {/* Grade Labels */}
-              <div className="flex items-center justify-between gap-1">
+          <div>
+            {/* Histogram - always show with texture pattern */}
+            <div className="relative h-32 mb-2">
+              <div className="flex items-end justify-between gap-1 h-full">
                 {gradeDistribution.map((grade, index) => (
-                  <div key={index} className="flex-1 text-center">
-                    <div className={`text-[11px] font-medium ${grade.count > 0 ? 'text-white' : 'text-graytxt/50'}`}>
-                      V{grade.label.replace('V', '')}
+                  <div key={index} className="flex-1 relative h-full">
+                    {/* Diagonal pattern background */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 top-0 rounded"
+                      style={{
+                        background: 'repeating-linear-gradient(45deg, transparent, transparent 2px, rgba(107, 114, 128, 0.25) 2px, rgba(107, 114, 128, 0.25) 4px)'
+                      }}
+                    ></div>
+                    
+                    {/* Bar */}
+                    <div 
+                      className="absolute bottom-0 left-0 right-0 rounded border border-cyan-600/40 transition-all duration-300"
+                      style={{
+                        height: grade.count > 0 ? `${Math.max(grade.heightPercentage, 18)}%` : '2px',
+                        minHeight: grade.count > 0 ? '28px' : '2px',
+                        background: grade.count > 0 
+                          ? 'linear-gradient(to top, rgba(8, 51, 68, 0.3), rgba(21, 94, 117, 0.2))'
+                          : 'rgba(8, 51, 68, 0.2)',
+                        opacity: grade.count > 0 ? 1 : 0.3
+                      }}
+                    >
+                      {/* Count */}
+                      {grade.count > 0 && (
+                        <div className="absolute inset-x-0 bottom-1 text-center text-xs text-white font-bold">
+                          {grade.count}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="text-center text-graytxt text-sm py-8">
-              No climbs logged yet. Start tracking to see your grade distribution!
+            
+            {/* Grade Labels */}
+            <div className="flex items-center justify-between gap-1">
+              {gradeDistribution.map((grade, index) => (
+                <div key={index} className="flex-1 text-center">
+                  <div className={`text-[11px] font-medium ${grade.count > 0 ? 'text-white' : 'text-graytxt/50'}`}>
+                    V{grade.label.replace('V', '')}
+                  </div>
+                </div>
+              ))}
             </div>
-          )}
+          </div>
         </div>
       </section>
 
-      {/* Performance Stats Card */}
-      <section className="px-5 pt-0">
-        <div className="bg-card border border-border rounded-col px-5 pt-5 pb-5 mb-4">
-          <h2 className="text-white text-base font-bold mb-4">Performance Stats</h2>
+      {/* Performance Stats Card - Tabbed with Segmented Control */}
+      <section className="px-5 pt-4">
+        <div className="bg-card border border-border rounded-col px-4 pt-4 pb-4 mb-4">
+          <h2 className="text-white text-base font-bold mb-3">Performance Stats</h2>
           
-          <div className="space-y-3">
-            {/* Records */}
-            <div>
-              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Records</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Hardest Send</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateMaxGrade()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Max Flash</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateMaxFlash()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Max Volume</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateMaxVolume()}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-border/40"></div>
-
-            {/* Totals */}
-            <div>
-              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Totals</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Total Climbs</span>
-                  <span className="text-sm font-bold text-cyan-400">{userData.totalClimbs || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Total Sessions</span>
-                  <span className="text-sm font-bold text-cyan-400">{userData.totalSessions || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Total Flashed</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateTotalFlashed()}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-border/40"></div>
-
-            {/* Averages */}
-            <div>
-              <div className="text-xs text-white uppercase tracking-wide mb-2 text-center font-semibold">Averages</div>
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Flash Rate</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateAvgFlashRate()}%</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Climbs per Session</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateAvgClimbsPerSession()}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-graytxt">Sessions per Week</span>
-                  <span className="text-sm font-bold text-cyan-400">{calculateSessionsPerWeek()}/wk</span>
-                </div>
-              </div>
-            </div>
+          {/* Segmented Control */}
+          <div className="bg-border/30 border border-border/60 rounded-lg p-1 mb-3 flex gap-1">
+            {[
+              { id: 'records', label: 'Records' },
+              { id: 'totals', label: 'Totals' },
+              { id: 'averages', label: 'Averages' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveStatsTab(tab.id)}
+                className={`flex-1 py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
+                  activeStatsTab === tab.id
+                    ? 'bg-cyan-900/60 text-cyan-400 shadow-sm'
+                    : 'text-graytxt'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
+
+          {/* Records Stats */}
+          {activeStatsTab === 'records' && (
+            <div className="space-y-2">
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-records-1" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-records-1" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-records-1)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-records-1)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Hardest Send</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateMaxGrade()}</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-records-2" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-records-2" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-records-2)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-records-2)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Max Flash</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateMaxFlash()}</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-records-3" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-records-3" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-records-3)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-records-3)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Max Volume</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateMaxVolume()}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Totals Stats */}
+          {activeStatsTab === 'totals' && (
+            <div className="space-y-2">
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-totals-1" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-totals-1" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-totals-1)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-totals-1)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Total Climbs</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{userData.totalClimbs || 0}</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-totals-2" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-totals-2" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-totals-2)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-totals-2)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Total Sessions</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{userData.totalSessions || 0}</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-totals-3" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-totals-3" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-totals-3)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-totals-3)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Total Flashed</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateTotalFlashed()}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Averages Stats */}
+          {activeStatsTab === 'averages' && (
+            <div className="space-y-2">
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-averages-1" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-averages-1" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-averages-1)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-averages-1)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Flash Rate</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateAvgFlashRate()}%</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-averages-2" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-averages-2" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-averages-2)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-averages-2)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Climbs per Session</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateAvgClimbsPerSession()}</span>
+              </div>
+              
+              <div className="relative rounded-lg px-3 py-2 flex items-center justify-between shadow-inner overflow-hidden" style={{border: '1px solid rgba(8, 145, 178, 0.4)'}}>
+                <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                  <defs>
+                    <pattern id="diagonalHatch-averages-3" patternUnits="userSpaceOnUse" width="4" height="4">
+                      <path d="m0,4 l4,-4 M-1,1 l2,-2 M3,5 l2,-2" stroke="#6b7280" strokeWidth="0.6" opacity="0.4"/>
+                    </pattern>
+                    <linearGradient id="iceBlueGradient-averages-3" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#083344" stopOpacity="0.3" />
+                      <stop offset="100%" stopColor="#155e75" stopOpacity="0.2" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#diagonalHatch-averages-3)" rx="8"/>
+                  <rect width="100%" height="100%" fill="url(#iceBlueGradient-averages-3)" rx="8"/>
+                </svg>
+                <span className="relative text-white font-medium text-sm">Sessions per Week</span>
+                <span className="relative text-cyan-400 font-bold text-sm">{calculateSessionsPerWeek()}/wk</span>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -518,33 +772,54 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         <h2 className="text-base font-bold mb-4 text-white">Performance Trends</h2>
         
         <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm' : ''}`}>
-          <div className="bg-card border border-border rounded-col p-4">
-            <div className="text-sm mb-3 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
+            <div className="text-sm mb-2">
               <span className="font-semibold text-white">Weekly Volume (Capacity)</span>
-              <Trend dir="up">+72% in 6 weeks</Trend>
+            </div>
+            <div className="flex justify-center mb-2">
+              <TrendChart values={weeklyData.volume} labels={weekLabels} height={110} formatType="number" />
             </div>
             <div className="flex justify-center">
-              <LineChart values={weeklyData.volume} labels={weekLabels} height={80} />
+              <Trend dir={volumeTrend.direction}>
+                {performanceTrendsUnlocked 
+                  ? `${volumeTrend.percentage >= 0 ? '+' : ''}${volumeTrend.percentage}% in 6 weeks`
+                  : '+72% in 6 weeks'
+                }
+              </Trend>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-col p-4">
-            <div className="text-sm mb-3 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
+            <div className="text-sm mb-2">
               <span className="font-semibold text-white">Weekly Avg Grade (Intensity)</span>
-              <Trend dir="up">+0.6 grades</Trend>
+            </div>
+            <div className="flex justify-center mb-2">
+              <TrendChart values={weeklyData.avgGrade} labels={weekLabels} height={110} formatType="decimal" />
             </div>
             <div className="flex justify-center">
-              <LineChart values={weeklyData.avgGrade} labels={weekLabels} height={80} />
+              <Trend dir={gradeTrend.direction}>
+                {performanceTrendsUnlocked
+                  ? `${gradeTrend.change >= 0 ? '+' : ''}${gradeTrend.change.toFixed(1)} grades`
+                  : '+0.6 grades'
+                }
+              </Trend>
             </div>
           </div>
 
-          <div className="bg-card border border-border rounded-col p-4">
-            <div className="text-sm mb-3 flex items-center justify-between">
+          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
+            <div className="text-sm mb-2">
               <span className="font-semibold text-white">Weekly Flash Rate (Skill)</span>
-              <Trend dir="up">+19% success rate</Trend>
+            </div>
+            <div className="flex justify-center mb-2">
+              <TrendChart values={weeklyData.flashRate} labels={weekLabels} height={110} formatType="percentage" />
             </div>
             <div className="flex justify-center">
-              <LineChart values={weeklyData.flashRate} labels={weekLabels} height={80} />
+              <Trend dir={flashRateTrend.direction}>
+                {performanceTrendsUnlocked
+                  ? `${flashRateTrend.change >= 0 ? '+' : ''}${flashRateTrend.change}% success rate`
+                  : '+19% success rate'
+                }
+              </Trend>
             </div>
           </div>
         </div>
