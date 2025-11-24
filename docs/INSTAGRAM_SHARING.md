@@ -2,8 +2,7 @@
 
 ## Overview
 
-The POGO climbing app now supports sharing beautiful session summaries directly to Instagram Stories. This feature is designed to drive organic growth by allowing users to showcase their climbing achievements with a professionally designed social card.
-
+The POGO climbing app now supports sharing beautiful session summaries directly to Instagram Stories. This feature is designed to drive organic growth by allowing users to showcase their climbing achievements with a professionally designed social card
 ## Features
 
 ### ✨ What's Included

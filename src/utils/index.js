@@ -29,3 +29,45 @@ export const roundRPE = (rpe) => {
   if (typeof rpe !== 'number' || isNaN(rpe)) return 0;
   return Math.round(rpe * 2) / 2;
 };
+
+// Get session display date with session number for days with multiple sessions
+export const getSessionDisplayDate = (session, allSessions) => {
+  // Handle "Now" special case
+  if (session.date === 'Now') {
+    // Check if there are other sessions today
+    const today = new Date().toDateString();
+    const todaySessions = allSessions.filter(s => {
+      if (!s.timestamp) return false;
+      return new Date(s.timestamp).toDateString() === today;
+    });
+    
+    if (todaySessions.length > 1) {
+      // Find which number this session is
+      const sortedTodaySessions = todaySessions.sort((a, b) => a.timestamp - b.timestamp);
+      const sessionNumber = sortedTodaySessions.findIndex(s => s.id === session.id) + 1;
+      return `Now • Session ${sessionNumber}`;
+    }
+    return 'Now';
+  }
+  
+  // For completed sessions, check if there are multiple sessions on the same day
+  if (!session.timestamp) return session.date;
+  
+  const sessionDate = new Date(session.timestamp).toDateString();
+  const sameDaySessions = allSessions.filter(s => {
+    if (!s.timestamp) return false;
+    // Exclude "Now" sessions from counting
+    if (s.date === 'Now') return false;
+    return new Date(s.timestamp).toDateString() === sessionDate;
+  });
+  
+  // Only show session numbers if there are multiple sessions on this day
+  if (sameDaySessions.length > 1) {
+    // Sort by timestamp to determine session order
+    const sortedSessions = sameDaySessions.sort((a, b) => a.timestamp - b.timestamp);
+    const sessionNumber = sortedSessions.findIndex(s => s.id === session.id) + 1;
+    return `${session.date} • Session ${sessionNumber}`;
+  }
+  
+  return session.date;
+};

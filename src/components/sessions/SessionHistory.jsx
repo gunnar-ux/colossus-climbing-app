@@ -31,62 +31,7 @@ const SessionHistory = ({ sessions = [], profile }) => {
     }
   };
 
-  // Generate 7-day week view with placeholders
-  const getWeekViewSessions = () => {
-    if (activeFilter !== 'Week') return getFilteredSessions();
-    
-    const weekSessions = [];
-    const today = new Date();
-    const hasMultipleSessions = sessions.length >= 3; // User has established sessions
-    
-    // Generate last 7 days (including today)
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - i);
-      const dateString = date.toDateString();
-      const isToday = i === 0;
-      const isFuture = false; // We're only looking at past 7 days, so no future dates
-      
-      // Find session for this date
-      const sessionForDate = sessions.find(session => {
-        if (!session.timestamp) return false;
-        return new Date(session.timestamp).toDateString() === dateString;
-      });
-      
-      if (sessionForDate) {
-        weekSessions.push(sessionForDate);
-      } else {
-        // Determine what to show for empty days
-        let displayText;
-        if (!hasMultipleSessions) {
-          // Early user state - show "Upcoming Session" to fill screen
-          displayText = 'Upcoming Session';
-        } else if (isToday) {
-          // Today with no session yet
-          displayText = 'Today';
-        } else {
-          // Past date with no session - show the actual date
-          displayText = date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric'
-          });
-        }
-        
-        // Create placeholder for empty day
-        weekSessions.push({
-          id: `placeholder-${i}`,
-          date: displayText,
-          isPlaceholder: true,
-          timestamp: date.getTime(),
-          isEmpty: true // Flag to indicate this is an empty day, not upcoming
-        });
-      }
-    }
-    
-    return weekSessions;
-  };
-
-  const filteredSessions = activeFilter === 'Week' ? getWeekViewSessions() : getFilteredSessions();
+  const filteredSessions = getFilteredSessions();
 
   // PlaceholderSessionCard is now replaced by EmptySessionCard component
 
@@ -113,35 +58,34 @@ const SessionHistory = ({ sessions = [], profile }) => {
 
       {/* Session List */}
       <div className="mx-5 space-y-3">
-        {/* Sort sessions by timestamp (most recent first) and show them */}
-        {[...filteredSessions]
-          .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-          .map((session, i) => {
-            if (session.isPlaceholder) {
-              return <EmptySessionCard key={session.id} title={session.date} />;
-            }
-            return <SessionCard key={session.id || i} session={session} index={i} profile={profile} allSessions={sessions} />;
-          })}
-        
-        {/* Show calibration placeholders if less than 5 total sessions - Only for non-Week views */}
-        {activeFilter !== 'Week' && sessions.length < 5 && (
+        {/* If user has no sessions at all, show single empty card with message */}
+        {sessions.length === 0 ? (
           <>
-            {Array.from({ length: 5 - sessions.length }, (_, i) => (
-              <EmptySessionCard 
-                key={`placeholder-${sessions.length + i + 1}`}
-                title="Upcoming Session"
-              />
-            ))}
-          </>
-        )}
-
-        {/* Empty state for filtered views */}
-        {filteredSessions.length === 0 && sessions.length > 0 && activeFilter !== 'Week' && (
-          <div className="text-center py-8">
-            <div className="text-graytxt text-sm">
-              No sessions found for {activeFilter.toLowerCase()}
+            <EmptySessionCard title="Upcoming Session" />
+            <div className="text-center py-2">
+              <div className="text-graytxt text-sm">
+                Track climbs to see session metrics.
+              </div>
             </div>
-          </div>
+          </>
+        ) : (
+          <>
+            {/* Sort sessions by timestamp (most recent first) and show them */}
+            {[...filteredSessions]
+              .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+              .map((session, i) => (
+                <SessionCard key={session.id || i} session={session} index={i} profile={profile} allSessions={sessions} />
+              ))}
+            
+            {/* Empty state for filtered views when user has sessions but none match the filter */}
+            {filteredSessions.length === 0 && (
+              <div className="text-center py-8">
+                <div className="text-graytxt text-sm">
+                  No sessions found for {activeFilter.toLowerCase()}
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>

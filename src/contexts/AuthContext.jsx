@@ -297,6 +297,47 @@ export function AuthProvider({ children }) {
     // Profile loading is now handled automatically in auth state change
   }
 
+  // Manual profile refresh - used after onboarding completes
+  const refreshProfile = async (forceUserId = null) => {
+    const targetUserId = forceUserId || user?.id
+    
+    if (!targetUserId) {
+      console.warn('🔐 refreshProfile: No user ID available')
+      return { success: false, error: 'No user ID' }
+    }
+    
+    try {
+      console.log('🔐 Refreshing profile for user:', targetUserId)
+      
+      // Step 1: Load profile
+      const { data: profileData, error: profileError } = await database.users.getById(targetUserId)
+      
+      if (profileError || !profileData) {
+        console.error('🔐 Profile refresh error:', profileError)
+        return { success: false, error: profileError }
+      }
+      
+      console.log('🔐 Profile refreshed:', profileData.name, 'Onboarding completed:', profileData.onboarding_completed)
+      setProfile(profileData)
+      localStorage.setItem('userProfile', JSON.stringify(profileData))
+      
+      // Step 2: Load sessions
+      await loadUserData(targetUserId)
+      
+      // Step 3: Update userData
+      setUserData({
+        totalSessions: profileData.total_sessions || 0,
+        totalClimbs: profileData.total_climbs || 0
+      })
+      
+      console.log('🔐 ✅ Profile refresh complete')
+      return { success: true, profile: profileData }
+    } catch (error) {
+      console.error('🔐 Failed to refresh profile:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   // Supabase auth methods
   const signUp = async (email, password) => {
     try {
@@ -528,7 +569,8 @@ export function AuthProvider({ children }) {
     updateProfile,
     updateEmail,
     updatePassword,
-    loadProfile
+    loadProfile,
+    refreshProfile
   }), [user, profile, sessions, userData, isInitializing])
 
   return (

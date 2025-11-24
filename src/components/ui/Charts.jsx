@@ -37,16 +37,17 @@ export const BarChart = ({ values = [10, 20, 30], labels = [], height = 90, onCl
 // Line Chart Component for session grade progression with smooth curves
 export const LineChart = ({ values = [4, 4.2, 4.1], labels = [], height = 120, isExceptional = false, formatType = 'grade' }) => {
   const padding = 24;
-  const rightPadding = 16;
+  const rightPadding = 20;
   const width = 328;
   const minVal = Math.min(...values);
   const maxVal = Math.max(...values);
   const range = maxVal - minVal;
 
   // Add padding based on the range - smaller ranges need more padding
+  // Handle edge case where all values are identical (range = 0)
   const paddingPercent = range < 2 ? 0.3 : 0.1;
-  const chartMin = Math.max(0, minVal - range * paddingPercent);
-  const chartMax = maxVal + range * paddingPercent;
+  const chartMin = range === 0 ? Math.max(0, minVal - 2) : Math.max(0, minVal - range * paddingPercent);
+  const chartMax = range === 0 ? maxVal + 2 : maxVal + range * paddingPercent;
   const chartRange = chartMax - chartMin;
 
   const stepX = (width - padding - rightPadding) / (values.length - 1);

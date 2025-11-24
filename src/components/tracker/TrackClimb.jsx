@@ -1,5 +1,7 @@
 import { useState, useMemo } from 'react';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { GRADES, WALLS, STYLES, RPES } from '../../constants/climbing.js';
+import { getGradesForSystem, toStorageGrade } from '../../utils/gradeConversion.js';
 import { 
   Section, 
   ButtonGrid, 
@@ -14,6 +16,10 @@ import Header from '../ui/Header.jsx';
 import '../../styles/tracker-animations.css';
 
 const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToAccount, onLogout }) => {
+  const { profile } = useAuth();
+  const userGradeSystem = profile?.grade_system || 'v-scale';
+  const displayGrades = getGradesForSystem(userGradeSystem);
+  
   // State
   const [type, setType] = useState("BOULDER");
   const [grade, setGrade] = useState(null);
@@ -35,10 +41,17 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
   const handleLog = async () => {
     if (!canLog || saving) return;
     setSaving(true);
+    
+    // Convert grade to V-scale for storage
+    const storageGrade = toStorageGrade(grade, userGradeSystem);
+    
     const payload = { 
-      type, grade, wall, 
+      type, 
+      grade: storageGrade, 
+      wall, 
       styles: Array.from(styles), 
-      rpe, attempts, 
+      rpe, 
+      attempts, 
       timestamp: Date.now() 
     };
     
@@ -134,12 +147,12 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
         {/* Grade */}
         <Section title="GRADE">
           <ButtonGrid cols={5}>
-            {GRADES.map((g) => (
+            {displayGrades.map((g) => (
               <GradeButton 
                 key={g} 
                 label={g} 
                 selected={grade === g} 
-                onClick={() => setGrade(grade === g ? null : g)} 
+                onClick={() => setGrade(grade === g ? null : g)}
               />
             ))}
           </ButtonGrid>

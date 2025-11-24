@@ -10,8 +10,8 @@ import AccountPage from './components/account/AccountPage.jsx';
 import TrackClimb from './components/tracker/TrackClimb.jsx';
 import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
 import LoadingScreen from './components/ui/LoadingScreen.jsx';
-import ReadinessInfoPage from './components/dashboard/ReadinessInfoPage.jsx';
-import LoadRatioInfoPage from './components/dashboard/LoadRatioInfoPage.jsx';
+import LoadRatioModal from './components/ui/LoadRatioModal.jsx';
+import ReadinessModal from './components/ui/ReadinessModal.jsx';
 import ChartTestingPage from './components/dashboard/ChartTestingPage.jsx';
 import StatsTestingPage from './components/progress/StatsTestingPage.jsx';
 import LoadRatioTestingPage from './components/dashboard/LoadRatioTestingPage.jsx';
@@ -32,12 +32,10 @@ const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Don't show on tracker, onboarding, or info pages
+  // Don't show on tracker or onboarding
   if (
     location.pathname === '/tracker' || 
-    location.pathname === '/onboarding' ||
-    location.pathname === '/readiness-info' ||
-    location.pathname === '/load-ratio-info'
+    location.pathname === '/onboarding'
   ) {
     return null;
   }
@@ -121,17 +119,33 @@ const AppContent = () => {
   const [loadRatioData, setLoadRatioData] = useState(null);
   const [recommendedTraining, setRecommendedTraining] = useState(null);
   
+  // Modal states
+  const [showLoadRatioModal, setShowLoadRatioModal] = useState(false);
+  const [showReadinessModal, setShowReadinessModal] = useState(false);
+  
   // Minimum loading screen display time (for full animation)
+  // Use sessionStorage to only show Pogo animation on cold starts (after force quit)
   const [minLoadingComplete, setMinLoadingComplete] = useState(false);
   
-  // Ensure loading screen shows for minimum animation duration (3.3 seconds)
+  // Ensure loading screen shows ONLY on cold starts (not after onboarding completion)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setMinLoadingComplete(true);
-      console.log('⏱️ Minimum loading time complete');
-    }, 3300);
+    const hasShownLoadingScreen = sessionStorage.getItem('hasShownLoadingScreen');
     
-    return () => clearTimeout(timer);
+    if (!hasShownLoadingScreen) {
+      // First time this session - show full Pogo animation
+      console.log('🎬 Cold start detected - showing Pogo animation');
+      const timer = setTimeout(() => {
+        setMinLoadingComplete(true);
+        sessionStorage.setItem('hasShownLoadingScreen', 'true');
+        console.log('⏱️ Pogo animation complete');
+      }, 3300); // 3.3 seconds for full animation
+      
+      return () => clearTimeout(timer);
+    } else {
+      // Already shown this session - skip animation
+      console.log('⏭️ Warm start - skipping Pogo animation');
+      setMinLoadingComplete(true);
+    }
   }, []);
   
   // Calculate CRS and Load Ratio when sessions or userData changes
@@ -164,15 +178,17 @@ const AppContent = () => {
     }
     
     // Calculate recommended training based on freshly calculated metrics
+    // Pass profile data for personalized recommendations for new users
     const recommendations = getCapacityRecommendations(
       calculatedCRS,
       calculatedLoadRatio,
-      sessions
+      sessions,
+      profile // Pass profile for new user recommendations
     );
     setRecommendedTraining(recommendations);
     console.log('📊 Recommended Training:', recommendations);
     
-  }, [sessions, userData.totalSessions, userData.totalClimbs]);
+  }, [sessions, userData.totalSessions, userData.totalClimbs, profile]);
   
   // Session loading is now handled by useDataHydration hook
   
@@ -403,7 +419,7 @@ const AppContent = () => {
         totalClimbs: prev.totalClimbs + 1
       }));
       
-      // Refresh profile data to sync with database totals for calibration card
+      // Refresh profile data to sync with database totals
       try {
         await loadProfile(user.id);
       } catch (profileError) {
@@ -467,8 +483,8 @@ const AppContent = () => {
                         recommendedTraining={recommendedTraining}
                         onNavigateToTracker={() => navigate('/tracker')}
                         onNavigateToProgress={() => navigate('/progress')}
-                        onNavigateToReadinessInfo={() => navigate('/readiness-info')}
-                        onNavigateToLoadRatioInfo={() => navigate('/load-ratio-info')}
+                        onShowReadinessModal={() => setShowReadinessModal(true)}
+                        onShowLoadRatioModal={() => setShowLoadRatioModal(true)}
                         onLogout={handleLogout}
                       />
                     } />
@@ -510,22 +526,6 @@ const AppContent = () => {
                       />
                     } />
                     
-                    <Route path="/readiness-info" element={
-                      <ReadinessInfoPage 
-                        score={crsData?.score || 77}
-                        onBack={() => navigate('/')}
-                        onTrackClimbs={() => navigate('/tracker')}
-                      />
-                    } />
-                    
-                    <Route path="/load-ratio-info" element={
-                      <LoadRatioInfoPage 
-                        loadRatio={loadRatioData?.ratio || 1.0}
-                        onBack={() => navigate('/')}
-                        onTrackClimbs={() => navigate('/tracker')}
-                      />
-                    } />
-                    
         <Route path="/chart-testing" element={<ChartTestingPage />} />
         <Route path="/stats-testing" element={<StatsTestingPage />} />
         <Route path="/loadratio-testing" element={<LoadRatioTestingPage />} />
@@ -537,6 +537,19 @@ const AppContent = () => {
       
       {/* Persistent bottom navigation */}
       <BottomNavigation />
+      
+      {/* Modals */}
+      <LoadRatioModal 
+        isOpen={showLoadRatioModal}
+        loadRatio={loadRatioData?.ratio || 1.0}
+        onClose={() => setShowLoadRatioModal(false)}
+      />
+      
+      <ReadinessModal 
+        isOpen={showReadinessModal}
+        score={crsData?.score || 77}
+        onClose={() => setShowReadinessModal(false)}
+      />
     </div>
   );
 };

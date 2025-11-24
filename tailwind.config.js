@@ -6,6 +6,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        'oswald': ['Oswald', 'sans-serif'],
+      },
       colors: {
         bg: '#0a0a0a',
         card: '#2a2a2a4d', // #2a2a2a at 30% opacity (4d in hex = ~30%) - slightly lighter

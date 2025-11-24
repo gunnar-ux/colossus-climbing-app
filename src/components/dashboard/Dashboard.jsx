@@ -4,7 +4,6 @@ import FAB from '../ui/FAB.jsx';
 
 import { getMetricAvailability, clamp } from '../../utils/index.js';
 
-import CalibrationCard from './CalibrationCard.jsx';
 import TodaysTraining from './TodaysTraining.jsx';
 import TimerCard from './TimerCard.jsx';
 import SessionCard from '../sessions/SessionCard.jsx';
@@ -19,8 +18,6 @@ const Dashboard = ({
   sessions = [],
   profile,
   metricAvailability,
-  isCalibrationDismissed = false,
-  onCalibrationDismiss,
   crsData,
   loadRatioData,
   recommendedTraining,
@@ -30,8 +27,8 @@ const Dashboard = ({
   onNavigateToAccount,
   onViewAchievements,
   onLogout,
-  onNavigateToReadinessInfo,
-  onNavigateToLoadRatioInfo
+  onShowReadinessModal,
+  onShowLoadRatioModal
 }) => {
   const avail = metricAvailability || getMetricAvailability(userData.totalSessions, userData.totalClimbs);
 
@@ -71,14 +68,6 @@ const Dashboard = ({
         onTitleClick={handleScrollToTop}
       />
       
-      {!isCalibrationDismissed && (userData.totalSessions < 5 || userData.totalClimbs < 50) && (
-        <CalibrationCard 
-          sessions={userData.totalSessions} 
-          climbs={userData.totalClimbs} 
-          onDismissCalibration={onCalibrationDismiss}
-        />
-      )}
-      
       {/* Hero Card: Today's Readiness - Primary decision making */}
       <TodaysTraining 
         score={77} 
@@ -89,8 +78,9 @@ const Dashboard = ({
         recommendation={recommendedTraining}
         onStartTraining={handleStartTraining}
         userData={userData}
-        onNavigateToReadinessInfo={onNavigateToReadinessInfo}
-        onNavigateToLoadRatioInfo={onNavigateToLoadRatioInfo}
+        userProfile={profile} // Pass profile for personalized recommendations
+        onShowReadinessModal={onShowReadinessModal}
+        onShowLoadRatioModal={onShowLoadRatioModal}
         onNavigateToProgress={onNavigateToProgress}
       />
       

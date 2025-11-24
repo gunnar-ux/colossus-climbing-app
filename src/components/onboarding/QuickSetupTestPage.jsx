@@ -9,7 +9,7 @@ const QuickSetupTestPage = () => {
   const [typicalVolume, setTypicalVolume] = useState(15);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const grades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15'];
+  const grades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14'];
   const canSubmit = !!flashGrade && !isSubmitting;
 
   const handleSubmit = async () => {

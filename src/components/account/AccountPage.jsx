@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { displayGrade } from '../../utils/gradeConversion.js';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
@@ -43,6 +44,9 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
   const [unitWeight, setUnitWeight] = useState('lbs');
   const [unitApeIndex, setUnitApeIndex] = useState('in');
   
+  // Preferences state
+  const [gradeSystem, setGradeSystem] = useState('v-scale');
+  
   // Tab state
   const [activeTab, setActiveTab] = useState('email');
 
@@ -80,6 +84,8 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
         newEmail: user?.email || '',
         confirmEmail: ''
       });
+
+      setGradeSystem(profile.grade_system || 'v-scale');
     }
     setLoading(false);
   }, [profile, user]);
@@ -214,6 +220,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
     }
   };
 
+
   if (loading) {
     return (
       <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
@@ -250,7 +257,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
 
       {/* Comprehensive Profile Card */}
       <section className="px-5 pt-4">
-        <div className="bg-card border border-border rounded-col p-4 mb-8">
+        <div className="bg-card border border-border rounded-col p-4 mb-4">
           {/* Header with Avatar and Name */}
           <div className="flex items-center gap-4 mb-6">
             <div className="w-16 h-16 bg-border/40 rounded-full flex items-center justify-center">
@@ -275,13 +282,14 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               <div className="text-white font-semibold">
                 {(() => {
                   if (physicalForm.height.feet && physicalForm.height.inches && 
-                      !isNaN(physicalForm.height.feet) && !isNaN(physicalForm.height.inches)) {
+                      !isNaN(physicalForm.height.feet) && !isNaN(physicalForm.height.inches) &&
+                      Number(physicalForm.height.feet) > 0) {
                     return `${physicalForm.height.feet}'${physicalForm.height.inches}"`;
                   }
-                  if (physicalForm.height.cm && !isNaN(physicalForm.height.cm)) {
+                  if (physicalForm.height.cm && !isNaN(physicalForm.height.cm) && Number(physicalForm.height.cm) > 0) {
                     return `${physicalForm.height.cm}cm`;
                   }
-                  if (profile?.height_cm && !isNaN(profile.height_cm)) {
+                  if (profile?.height_cm && !isNaN(profile.height_cm) && profile.height_cm > 0) {
                     const feet = Math.floor(profile.height_cm / 30.48);
                     const inches = Math.round((profile.height_cm / 2.54) % 12);
                     return unitHeight === 'ft' ? `${feet}'${inches}"` : `${profile.height_cm}cm`;
@@ -294,10 +302,10 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               <div className="text-graytxt text-xs mb-1">Ape</div>
               <div className="text-white font-semibold">
                 {(() => {
-                  if (physicalForm.apeIndex && !isNaN(physicalForm.apeIndex)) {
+                  if (physicalForm.apeIndex && !isNaN(physicalForm.apeIndex) && Number(physicalForm.apeIndex) > 0) {
                     return `${physicalForm.apeIndex}"`;
                   }
-                  if (profile?.ape_index_cm && !isNaN(profile.ape_index_cm)) {
+                  if (profile?.ape_index_cm && !isNaN(profile.ape_index_cm) && profile.ape_index_cm > 0) {
                     const apeInches = Math.round(profile.ape_index_cm / 2.54);
                     return unitApeIndex === 'in' ? `${apeInches}"` : `${profile.ape_index_cm}cm`;
                   }
@@ -307,58 +315,119 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
             </div>
           </div>
 
+          {/* Grade System Selector */}
+          <div className="mb-4">
+            <div className="flex bg-border/30 rounded-lg p-1">
+              <button
+                onClick={async () => {
+                  if (gradeSystem === 'v-scale') return; // Already selected
+                  setGradeSystem('v-scale');
+                  setSaving(true);
+                  setError('');
+                  setSuccess('');
+                  try {
+                    const result = await updateProfile({ grade_system: 'v-scale' });
+                    if (!result.success) {
+                      setError(result.error || 'Failed to update grade system');
+                      setGradeSystem(profile?.grade_system || 'v-scale'); // Revert on error
+                    }
+                  } catch (error) {
+                    setError('Something went wrong updating your grade system');
+                    setGradeSystem(profile?.grade_system || 'v-scale'); // Revert on error
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-bold transition-colors ${
+                  gradeSystem === 'v-scale'
+                    ? 'bg-white text-black'
+                    : 'text-graytxt hover:text-white'
+                } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                V-Scale
+              </button>
+              <button
+                onClick={async () => {
+                  if (gradeSystem === 'font') return; // Already selected
+                  setGradeSystem('font');
+                  setSaving(true);
+                  setError('');
+                  setSuccess('');
+                  try {
+                    const result = await updateProfile({ grade_system: 'font' });
+                    if (!result.success) {
+                      setError(result.error || 'Failed to update grade system');
+                      setGradeSystem(profile?.grade_system || 'v-scale'); // Revert on error
+                    }
+                  } catch (error) {
+                    setError('Something went wrong updating your grade system');
+                    setGradeSystem(profile?.grade_system || 'v-scale'); // Revert on error
+                  } finally {
+                    setSaving(false);
+                  }
+                }}
+                disabled={saving}
+                className={`flex-1 py-2 px-3 rounded-md text-sm font-bold transition-colors ${
+                  gradeSystem === 'font'
+                    ? 'bg-white text-black'
+                    : 'text-graytxt hover:text-white'
+                } ${saving ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                Font
+              </button>
+            </div>
+          </div>
 
           {/* Logout Button */}
           <button 
             onClick={onLogout}
-            className="w-full px-4 py-2 bg-white text-black rounded-lg font-semibold hover:opacity-90 active:scale-95 transition min-h-[44px]"
+            className="w-full bg-white text-black font-semibold py-3 rounded-lg hover:bg-gray-100 active:scale-95 transition-all duration-150"
           >
             Sign Out
           </button>
         </div>
       </section>
 
-      <div className="px-5">
-        {/* Tabs */}
-        <div className="mb-8">
-          <div className="flex bg-card border border-border rounded-col p-1">
-            {[
-              { id: 'email', label: 'Email' },
-              { id: 'password', label: 'Password' },
-              { id: 'personal', label: 'Personal' },
-              { id: 'physical', label: 'Physical' }
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition ${
-                  activeTab === tab.id
-                    ? 'bg-white text-black'
-                    : 'text-graytxt hover:text-white'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+      {/* Settings Card */}
+      <section className="px-5 pt-0">
+        <div className="bg-card border border-border rounded-col p-4 mb-4">
+          <h2 className="text-white text-base font-bold mb-4">Settings</h2>
+          
+          {/* Tabs */}
+          <div className="mb-6">
+            <div className="bg-border/30 border border-border/60 rounded-lg p-1 flex gap-1">
+              {[
+                { id: 'email', label: 'Email' },
+                { id: 'password', label: 'Password' },
+                { id: 'stats', label: 'Stats' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
+                    activeTab === tab.id
+                      ? 'bg-cyan-900/60 text-cyan-400 shadow-sm'
+                      : 'text-graytxt'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        {/* Active Form Section */}
-        <div className="space-y-4">
+          {/* Active Form Section */}
+          <div className="space-y-4">
           {activeTab === 'email' && (
             <>
-              <div>
-                <label className="block text-sm text-graytxt mb-2">Current Email</label>
-                <div className="text-white text-base">{user?.email}</div>
-              </div>
-              
               <div>
                 <label className="block text-sm font-medium text-white mb-2">New Email</label>
                 <input 
                   type="email" 
                   value={emailForm.newEmail}
                   onChange={e => updateEmailForm('newEmail', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="new@email.com"
                 />
               </div>
@@ -369,7 +438,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="email" 
                   value={emailForm.confirmEmail}
                   onChange={e => updateEmailForm('confirmEmail', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="Confirm new email"
                 />
               </div>
@@ -377,10 +446,10 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               <button 
                 onClick={saveEmail}
                 disabled={saving || !emailForm.newEmail || emailForm.newEmail === user?.email}
-                className={`w-full py-3 rounded-col font-semibold transition ${
+                className={`w-full py-3 rounded-lg font-semibold transition-all duration-150 ${
                   saving || !emailForm.newEmail || emailForm.newEmail === user?.email
                     ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-white text-black hover:bg-gray-100 active:scale-95'
                 }`}
               >
                 {saving ? 'Updating...' : 'Update Email'}
@@ -396,7 +465,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="password" 
                   value={passwordForm.newPassword}
                   onChange={e => updatePasswordForm('newPassword', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="At least 6 characters"
                 />
               </div>
@@ -407,7 +476,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="password" 
                   value={passwordForm.confirmPassword}
                   onChange={e => updatePasswordForm('confirmPassword', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="Confirm new password"
                 />
               </div>
@@ -415,10 +484,10 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               <button 
                 onClick={savePassword}
                 disabled={saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6}
-                className={`w-full py-3 rounded-col font-semibold transition ${
+                className={`w-full py-3 rounded-lg font-semibold transition-all duration-150 ${
                   saving || !passwordForm.newPassword || passwordForm.newPassword.length < 6
                     ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-white text-black hover:bg-gray-100 active:scale-95'
                 }`}
               >
                 {saving ? 'Updating...' : 'Update Password'}
@@ -426,15 +495,16 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
             </>
           )}
 
-          {activeTab === 'personal' && (
+          {activeTab === 'stats' && (
             <>
+              {/* Personal Info Section */}
               <div>
                 <label className="block text-sm font-medium text-white mb-2">Name</label>
                 <input 
                   type="text" 
                   value={personalForm.name}
                   onChange={e => updatePersonalForm('name', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="Your name"
                 />
               </div>
@@ -446,7 +516,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                     type="number" 
                     value={personalForm.age}
                     onChange={e => updatePersonalForm('age', e.target.value)}
-                    className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                    className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                     placeholder="Age"
                   />
                 </div>
@@ -457,7 +527,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                     <select 
                       value={personalForm.gender}
                       onChange={e => updatePersonalForm('gender', e.target.value)}
-                      className="w-full min-h-[52px] p-4 pr-12 rounded-col bg-card border border-border text-white focus:border-white/30 transition appearance-none"
+                      className="w-full min-h-[52px] p-4 pr-12 rounded-lg bg-card border border-border text-white focus:border-white/30 transition appearance-none"
                     >
                       <option value="">Select</option>
                       <option value="Male">Male</option>
@@ -479,34 +549,19 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="text" 
                   value={personalForm.location}
                   onChange={e => updatePersonalForm('location', e.target.value)}
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="City, State/Country"
                 />
               </div>
 
-              <button 
-                onClick={savePersonalInfo}
-                disabled={saving}
-                className={`w-full py-3 rounded-col font-semibold transition ${
-                  saving
-                    ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-100'
-                }`}
-              >
-                {saving ? 'Updating...' : 'Update Personal Info'}
-              </button>
-            </>
-          )}
-
-          {activeTab === 'physical' && (
-            <>
+              {/* Physical Stats Section */}
               {/* Height */}
               <div>
                 <div className="flex items-center justify-between mb-2">
                   <label className="block text-sm font-medium text-white">Height</label>
                   <div className="flex gap-1 text-xs font-medium">
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitHeight === 'ft' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitHeight('ft')}
@@ -514,7 +569,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                       ft/in
                     </button>
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitHeight === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitHeight('cm')}
@@ -530,7 +585,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                         type="number" 
                         value={physicalForm.height.feet} 
                         onChange={e => updatePhysicalForm('height', {...physicalForm.height, feet: e.target.value})} 
-                        className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                        className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                         placeholder="0"
                       />
                       <label className="text-xs text-graytxt mt-1 block text-center font-medium">feet</label>
@@ -540,7 +595,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                         type="number" 
                         value={physicalForm.height.inches} 
                         onChange={e => updatePhysicalForm('height', {...physicalForm.height, inches: e.target.value})} 
-                        className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                        className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                         placeholder="0"
                       />
                       <label className="text-xs text-graytxt mt-1 block text-center font-medium">inches</label>
@@ -551,7 +606,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                     type="number" 
                     value={physicalForm.height.cm} 
                     onChange={e => updatePhysicalForm('height', {...physicalForm.height, cm: e.target.value})} 
-                    className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                    className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                     placeholder="0"
                   />
                 )}
@@ -563,7 +618,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   <label className="block text-sm font-medium text-white">Weight</label>
                   <div className="flex gap-1 text-xs font-medium">
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitWeight === 'lbs' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitWeight('lbs')}
@@ -571,7 +626,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                       lbs
                     </button>
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitWeight === 'kg' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitWeight('kg')}
@@ -584,7 +639,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="number" 
                   value={physicalForm.weight.value} 
                   onChange={e => updatePhysicalForm('weight', {value: e.target.value, unit: unitWeight})} 
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="0" 
                 />
               </div>
@@ -595,7 +650,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   <label className="block text-sm font-medium text-white">Ape Index</label>
                   <div className="flex gap-1 text-xs font-medium">
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitApeIndex === 'in' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitApeIndex('in')}
@@ -603,7 +658,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                       in
                     </button>
                     <button 
-                      className={`px-3 py-1 rounded-col transition ${
+                      className={`px-3 py-1 rounded-lg transition ${
                         unitApeIndex === 'cm' ? 'bg-white text-black' : 'bg-border/40 text-graytxt hover:bg-border/60'
                       }`} 
                       onClick={() => setUnitApeIndex('cm')}
@@ -616,35 +671,40 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
                   type="number" 
                   value={physicalForm.apeIndex} 
                   onChange={e => updatePhysicalForm('apeIndex', e.target.value)} 
-                  className="w-full min-h-[52px] p-4 rounded-col bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
+                  className="w-full min-h-[52px] p-4 rounded-lg bg-card border border-border text-white placeholder-graytxt focus:border-white/30 transition" 
                   placeholder="0" 
                 />
               </div>
 
               <button 
-                onClick={savePhysicalStats}
+                onClick={async () => {
+                  // Save both personal and physical stats
+                  await savePersonalInfo();
+                  await savePhysicalStats();
+                }}
                 disabled={saving}
-                className={`w-full py-3 rounded-col font-semibold transition ${
+                className={`w-full py-3 rounded-lg font-semibold transition-all duration-150 ${
                   saving
                     ? 'bg-gray-600 text-gray-400 cursor-not-allowed'
-                    : 'bg-white text-black hover:bg-gray-100'
+                    : 'bg-white text-black hover:bg-gray-100 active:scale-95'
                 }`}
               >
-                {saving ? 'Updating...' : 'Update Physical Stats'}
+                {saving ? 'Updating...' : 'Update Stats'}
               </button>
             </>
           )}
+          </div>
         </div>
+      </section>
 
-        {/* Bottom Logo Section - Whoop Style */}
-        <section className="pt-2 pb-32 flex items-center justify-center">
-          <img 
-            src="/asset8.svg" 
-            alt="POGO" 
-            className="w-16 h-16"
-          />
-        </section>
-      </div>
+      {/* Bottom Logo Section - Whoop Style */}
+      <section className="px-5 pt-2 pb-32 flex items-center justify-center">
+        <img 
+          src="/asset8.svg" 
+          alt="POGO" 
+          className="w-16 h-16"
+        />
+      </section>
 
       <FAB onClick={handleFABClick} />
 

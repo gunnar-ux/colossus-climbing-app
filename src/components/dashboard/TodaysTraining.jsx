@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { ChevronRightIcon } from '../ui/Icons.jsx';
 import { readinessTextColor, readinessGradient, loadColor } from '../../utils/index.js';
 import { getCapacityRecommendations } from '../../utils/metrics.js';
@@ -15,8 +14,9 @@ const TodaysTraining = ({
   recommendation,
   onStartTraining,
   userData = { totalSessions: 0, totalClimbs: 0 },
-  onNavigateToReadinessInfo,
-  onNavigateToLoadRatioInfo,
+  userProfile = null, // Profile data for personalized recommendations
+  onShowReadinessModal,
+  onShowLoadRatioModal,
 }) => {
   
   // Determine display state based on CRS data availability
@@ -90,10 +90,12 @@ const TodaysTraining = ({
   };
 
   // Load-based capacity recommendations
+  // Pass profile data for personalized recommendations for new users
   const capacityRec = getCapacityRecommendations(
     userData.totalSessions >= 3 ? crsData : null,
     userData.totalSessions >= 5 ? loadRatioData : null,
-    sessions
+    sessions,
+    userProfile // Pass profile for new user recommendations
   );
 
   const statusInfo = getStatusMessage();
@@ -157,7 +159,7 @@ const TodaysTraining = ({
             className="bg-border/30 border border-border/60 rounded-lg p-2.5 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              onNavigateToReadinessInfo?.();
+              onShowReadinessModal?.();
             }}
           >
             <div className="flex items-center justify-between mb-1.5">
@@ -180,7 +182,7 @@ const TodaysTraining = ({
             className="bg-border/30 border border-border/60 rounded-lg p-2.5 shadow-inner cursor-pointer hover:border-border/80 transition-colors"
             onClick={(e) => {
               e.stopPropagation();
-              onNavigateToLoadRatioInfo?.();
+              onShowLoadRatioModal?.();
             }}
           >
             <div className="flex items-center justify-between mb-1.5">

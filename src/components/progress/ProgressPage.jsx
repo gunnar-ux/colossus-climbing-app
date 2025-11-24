@@ -1,17 +1,23 @@
 import { useState, useRef } from 'react';
+import { useAuth } from '../../contexts/AuthContext.jsx';
+import { displayGrade } from '../../utils/gradeConversion.js';
 import Header from '../ui/Header.jsx';
 import BottomNavigation from '../ui/BottomNavigation.jsx';
 import FAB from '../ui/FAB.jsx';
 import { LineChart, TrendChart, Trend } from '../ui/Charts.jsx';
-import { MountainIcon, LightningIcon, TargetIcon, ChevronDownIcon, ClockIcon, ChartBarIcon, TrophyIcon, LockClosedIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
+import { LockClosedIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
 
 // Progress & Achievements page component
 // Displays climbing progress, achievement milestones, and performance trends
 
 const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker, onNavigateToSessions, onNavigateToDashboard, onNavigateToAccount }) => {
+  const { profile } = useAuth();
+  const userGradeSystem = profile?.grade_system || 'v-scale';
   const containerRef = useRef(null);
   const [isProfileExpanded, setIsProfileExpanded] = useState(false);
   const [activeStatsTab, setActiveStatsTab] = useState('records');
+  const [gradeDistributionTimeframe, setGradeDistributionTimeframe] = useState('all');
+  const [activeTrendChart, setActiveTrendChart] = useState('flash');
 
   const handleBackClick = () => {
     onNavigateBack?.();
@@ -167,38 +173,6 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
   const gradeTrend = calculateTrend(weeklyData.avgGrade);
   const flashRateTrend = calculateTrend(weeklyData.flashRate);
 
-
-  // Achievement milestones
-  const achievements = [
-    {
-      category: 'Boulders Climbed',
-      icon: MountainIcon,
-      milestones: [
-        { target: 50, unlocked: userData.totalClimbs >= 50, current: userData.totalClimbs },
-        { target: 100, unlocked: userData.totalClimbs >= 100, current: userData.totalClimbs },
-        { target: 250, unlocked: userData.totalClimbs >= 250, current: userData.totalClimbs }
-      ]
-    },
-    {
-      category: 'Climbs Flashed',
-      icon: LightningIcon,
-      milestones: [
-        { target: 10, unlocked: userData.totalClimbs >= 15, current: Math.floor(userData.totalClimbs * 0.65) },
-        { target: 25, unlocked: userData.totalClimbs >= 40, current: Math.floor(userData.totalClimbs * 0.65) },
-        { target: 100, unlocked: userData.totalClimbs >= 160, current: Math.floor(userData.totalClimbs * 0.65) }
-      ]
-    },
-    {
-      category: 'Sessions Tracked',
-      icon: TargetIcon,
-      milestones: [
-        { target: 5, unlocked: userData.totalSessions >= 5, current: userData.totalSessions },
-        { target: 25, unlocked: userData.totalSessions >= 25, current: userData.totalSessions },
-        { target: 50, unlocked: userData.totalSessions >= 50, current: userData.totalSessions }
-      ]
-    }
-  ];
-
   // Calculate level and experience points with climbing-grade inspired progression
   const calculateTotalXP = () => {
     // Original formula: Base XP (10) × Grade Multiplier × Flash Bonus (1.2x)
@@ -290,7 +264,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         });
       }
     });
-    return maxGrade > 0 ? `V${maxGrade}` : '--';
+    return maxGrade > 0 ? displayGrade(`V${maxGrade}`, userGradeSystem) : '--';
   };
 
   const calculateMaxFlash = () => {
@@ -306,7 +280,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         });
       }
     });
-    return maxFlash > 0 ? `V${maxFlash}` : '--';
+    return maxFlash > 0 ? displayGrade(`V${maxFlash}`, userGradeSystem) : '--';
   };
 
   const calculateMaxVolume = () => {
@@ -373,8 +347,8 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     return (recentSessions.length / 4).toFixed(1);
   };
 
-  // Calculate lifetime grade distribution
-  const calculateGradeDistribution = () => {
+  // Calculate grade distribution with timeframe filtering
+  const calculateGradeDistribution = (timeframe) => {
     const allGrades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9'];
     
     if (!sessions || sessions.length === 0) {
@@ -384,6 +358,19 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       };
     }
     
+    // Filter sessions by timeframe
+    const now = Date.now();
+    let filteredSessions = sessions;
+    
+    if (timeframe === 'week') {
+      const oneWeekAgo = now - (7 * 24 * 60 * 60 * 1000);
+      filteredSessions = sessions.filter(s => s.timestamp && s.timestamp >= oneWeekAgo);
+    } else if (timeframe === 'month') {
+      const oneMonthAgo = now - (30 * 24 * 60 * 60 * 1000);
+      filteredSessions = sessions.filter(s => s.timestamp && s.timestamp >= oneMonthAgo);
+    }
+    // 'all' uses all sessions (no filter)
+    
     const gradeCounts = {};
     let totalClimbs = 0;
     
@@ -392,8 +379,8 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       gradeCounts[grade] = 0;
     });
     
-    // Count climbs by grade
-    sessions.forEach(session => {
+    // Count climbs by grade from filtered sessions
+    filteredSessions.forEach(session => {
       if (session.climbList && session.climbList.length > 0) {
         session.climbList.forEach(climb => {
           const grade = climb.grade || 'V0';
@@ -419,7 +406,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
     return { distribution, totalClimbs };
   };
 
-  const { distribution: gradeDistribution, totalClimbs: totalGradeClimbs } = calculateGradeDistribution();
+  const { distribution: gradeDistribution, totalClimbs: totalGradeClimbs } = calculateGradeDistribution(gradeDistributionTimeframe);
 
   return (
     <div ref={containerRef} className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
@@ -474,9 +461,30 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
             )}
           </div>
           
+          {/* Timeframe Segmented Control */}
+          <div className="bg-border/30 border border-border/60 rounded-lg p-1 mb-3 flex gap-1">
+            {[
+              { id: 'all', label: 'All-Time' },
+              { id: 'month', label: 'Month' },
+              { id: 'week', label: 'Week' }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setGradeDistributionTimeframe(tab.id)}
+                className={`flex-1 py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
+                  gradeDistributionTimeframe === tab.id
+                    ? 'bg-cyan-900/60 text-cyan-400 shadow-sm'
+                    : 'text-graytxt'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          
           <div>
             {/* Histogram - always show with texture pattern */}
-            <div className="relative h-32 mb-2">
+            <div className="relative h-36 mb-2">
               <div className="flex items-end justify-between gap-1 h-full">
                 {gradeDistribution.map((grade, index) => (
                   <div key={index} className="flex-1 relative h-full">
@@ -517,7 +525,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
               {gradeDistribution.map((grade, index) => (
                 <div key={index} className="flex-1 text-center">
                   <div className={`text-[11px] font-medium ${grade.count > 0 ? 'text-white' : 'text-graytxt/50'}`}>
-                    V{grade.label.replace('V', '')}
+                    {displayGrade(grade.label.startsWith('V') ? grade.label : `V${grade.label}`, userGradeSystem)}
                   </div>
                 </div>
               ))}
@@ -527,7 +535,7 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
       </section>
 
       {/* Performance Stats Card - Tabbed with Segmented Control */}
-      <section className="px-5 pt-4">
+      <section className="px-5 pt-0">
         <div className="bg-card border border-border rounded-col px-4 pt-4 pb-4 mb-4">
           <h2 className="text-white text-base font-bold mb-3">Performance Stats</h2>
           
@@ -731,95 +739,51 @@ const ProgressPage = ({ userData, sessions, onNavigateBack, onNavigateToTracker,
         </div>
       </section>
 
-      {/* Achievement Milestones - With Container */}
-      <section className="px-5 pt-2">
-        <div className="bg-card border border-border rounded-col p-5 mb-4">
-          <h3 className="text-white text-base font-bold mb-4">Achievement Milestones</h3>
-          
-          <div className="space-y-4">
-            {achievements.map((achievement, index) => {
-              const currentMilestone = achievement.milestones.find(m => !m.unlocked) || achievement.milestones[achievement.milestones.length - 1];
-              const previousMilestone = achievement.milestones.find(m => m.unlocked && m.target < currentMilestone.target) || { target: 0 };
-              const progress = Math.min(100, ((currentMilestone.current - previousMilestone.target) / (currentMilestone.target - previousMilestone.target)) * 100);
-              
-              return (
-                <div key={index}>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center space-x-2">
-                      <achievement.icon className="w-4 h-4 text-graytxt" />
-                      <span className="text-white text-sm font-medium">{achievement.category}</span>
-                    </div>
-                    <span className="text-graytxt text-sm">
-                      {currentMilestone.current} / {currentMilestone.target}
-                    </span>
-                  </div>
-                  
-                  <div className="h-2 bg-border rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-cyan-900 to-cyan-400 transition-all duration-300" 
-                      style={{width: `${Math.max(0, progress)}%`}}
-                    ></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </section>
+      {/* Performance Trends - Combined with Tabs */}
+      <section className="px-5 pt-0 pb-8 relative">
+        <div className={`${!performanceTrendsUnlocked ? 'blur-sm' : ''}`}>
+          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-4">
+            <h2 className="text-white text-base font-bold mb-3">Performance Trends</h2>
+            
+            {/* Chart Type Segmented Control */}
+            <div className="bg-border/30 border border-border/60 rounded-lg p-1 mb-3 flex gap-1">
+              {[
+                { id: 'flash', label: 'Skill' },
+                { id: 'grade', label: 'Intensity' },
+                { id: 'volume', label: 'Volume' }
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTrendChart(tab.id)}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-xs font-bold uppercase tracking-wide transition-all ${
+                    activeTrendChart === tab.id
+                      ? 'bg-cyan-900/60 text-cyan-400 shadow-sm'
+                      : 'text-graytxt'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
 
-      {/* Performance Graphs */}
-      <section className="px-5 pt-6 space-y-4 pb-8 relative">
-        <h2 className="text-base font-bold mb-4 text-white">Performance Trends</h2>
-        
-        <div className={`space-y-4 ${!performanceTrendsUnlocked ? 'blur-sm' : ''}`}>
-          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
-            <div className="text-sm mb-2">
-              <span className="font-semibold text-white">Weekly Volume (Capacity)</span>
-            </div>
-            <div className="flex justify-center mb-2">
-              <TrendChart values={weeklyData.volume} labels={weekLabels} height={110} formatType="number" />
-            </div>
+            {/* Chart Display */}
             <div className="flex justify-center">
-              <Trend dir={volumeTrend.direction}>
-                {performanceTrendsUnlocked 
-                  ? `${volumeTrend.percentage >= 0 ? '+' : ''}${volumeTrend.percentage}% in 6 weeks`
-                  : '+72% in 6 weeks'
-                }
-              </Trend>
+              {activeTrendChart === 'volume' && (
+                <TrendChart values={weeklyData.volume} labels={weekLabels} height={110} formatType="number" />
+              )}
+              {activeTrendChart === 'grade' && (
+                <TrendChart values={weeklyData.avgGrade} labels={weekLabels} height={110} formatType="decimal" />
+              )}
+              {activeTrendChart === 'flash' && (
+                <TrendChart values={weeklyData.flashRate} labels={weekLabels} height={110} formatType="percentage" />
+              )}
             </div>
-          </div>
 
-          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
-            <div className="text-sm mb-2">
-              <span className="font-semibold text-white">Weekly Avg Grade (Intensity)</span>
-            </div>
-            <div className="flex justify-center mb-2">
-              <TrendChart values={weeklyData.avgGrade} labels={weekLabels} height={110} formatType="decimal" />
-            </div>
-            <div className="flex justify-center">
-              <Trend dir={gradeTrend.direction}>
-                {performanceTrendsUnlocked
-                  ? `${gradeTrend.change >= 0 ? '+' : ''}${gradeTrend.change.toFixed(1)} grades`
-                  : '+0.6 grades'
-                }
-              </Trend>
-            </div>
-          </div>
-
-          <div className="bg-card border border-border rounded-col px-4 pt-4 pb-3">
-            <div className="text-sm mb-2">
-              <span className="font-semibold text-white">Weekly Flash Rate (Skill)</span>
-            </div>
-            <div className="flex justify-center mb-2">
-              <TrendChart values={weeklyData.flashRate} labels={weekLabels} height={110} formatType="percentage" />
-            </div>
-            <div className="flex justify-center">
-              <Trend dir={flashRateTrend.direction}>
-                {performanceTrendsUnlocked
-                  ? `${flashRateTrend.change >= 0 ? '+' : ''}${flashRateTrend.change}% success rate`
-                  : '+19% success rate'
-                }
-              </Trend>
+            {/* Chart Caption */}
+            <div className="text-center text-xs text-graytxt mt-2">
+              {activeTrendChart === 'volume' && 'Total Climbs Per Week'}
+              {activeTrendChart === 'grade' && 'Average Grade Per Week'}
+              {activeTrendChart === 'flash' && 'Flash Rate Per Week'}
             </div>
           </div>
         </div>

@@ -5,9 +5,13 @@ import Header from '../ui/Header.jsx';
 // Provides detailed explanation of macro (weekly) load ratio scoring
 
 const LoadRatioInfoPage = ({ 
-  loadRatio = 1.0, 
+  loadRatio = 1.0,
+  loadRatioData = null, // Full load ratio object with frequency, confidence, etc.
   onBack 
 }) => {
+  // Extract additional context if available
+  const frequency = loadRatioData?.frequency || null;
+  const confidence = loadRatioData?.confidence || 'establishing';
   return (
     <div className="w-full h-screen overflow-y-auto hide-scrollbar relative bg-bg">
       <div 
@@ -31,17 +35,22 @@ const LoadRatioInfoPage = ({
 
       {/* Main content */}
       <div className="px-8 py-4 pb-20 space-y-8">
-        {/* 1. What it is section */}
+        {/* 1. What it is & How it works - Combined */}
         <div className="border border-border/30 rounded-lg p-6">
           <div className="text-white font-bold mb-3 text-sm">What it is</div>
-          <div className="text-graytxt text-base leading-relaxed">
+          <div className="text-graytxt text-sm leading-relaxed mb-4">
             Your weekly training load fluctuation that compares recent volume to your typical training pattern.
+          </div>
+          
+          <div className="text-white font-bold mb-3 text-sm">How it works</div>
+          <div className="text-graytxt text-sm leading-relaxed">
+            Compares your recent 7-day training volume to your 28-day average baseline. Values above 1.3x indicate potential overtraining, while values below 0.8x suggest you can safely increase volume.
           </div>
         </div>
 
-        {/* 2. Big metric section */}
+        {/* 2. Big metric section & Ranges - Combined */}
         <div className="border border-border/30 rounded-lg p-6">
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center mb-6">
             <div className={`text-7xl font-extrabold ${loadColor(loadRatio)} mb-6 text-center`}>
               {loadRatio.toFixed(1)}x
             </div>
@@ -69,18 +78,7 @@ const LoadRatioInfoPage = ({
               <span>1.5x</span>
             </div>
           </div>
-        </div>
 
-        {/* 3. How it works section */}
-        <div className="border border-border/30 rounded-lg p-6">
-          <div className="text-white font-bold mb-3 text-sm">How it works</div>
-          <div className="text-graytxt text-base leading-relaxed">
-            Compares your recent 7-day training volume to your 28-day average baseline. Values above 1.3x indicate potential overtraining, while values below 0.8x suggest you can safely increase volume.
-          </div>
-        </div>
-
-        {/* 4. Ranges section */}
-        <div className="border border-border/30 rounded-lg p-6">
           <div className="text-white font-bold mb-4 text-sm">Load Ratio Ranges</div>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -97,6 +95,35 @@ const LoadRatioInfoPage = ({
             </div>
           </div>
         </div>
+
+        {/* 3. Your Training Pattern - NEW */}
+        {frequency && (
+          <div className="border border-border/30 rounded-lg p-6">
+            <div className="text-white font-bold mb-4 text-sm">Your Training Pattern</div>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-graytxt">Typical Frequency</span>
+                <span className="text-white font-medium">{frequency} sessions/week</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-graytxt">Confidence Level</span>
+                <span className={`font-medium ${
+                  confidence === 'high' ? 'text-green' : 
+                  confidence === 'establishing' ? 'text-yellow' : 'text-graytxt'
+                }`}>
+                  {confidence === 'high' ? 'High' : confidence === 'establishing' ? 'Building' : 'Low'}
+                </span>
+              </div>
+            </div>
+            <div className="mt-4 text-xs text-graytxt leading-relaxed">
+              Your load ratio is normalized for your training frequency. 
+              {frequency < 2 ? ' Light climbers need different baselines than frequent climbers.' :
+               frequency < 3 ? ' Weekend warriors have patterns recognized by the system.' :
+               frequency < 4 ? ' Regular training pattern detected and accounted for.' :
+               ' High frequency training pattern detected and accounted for.'}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -20,8 +20,9 @@ export function calculateSessionLoad(session) {
       climb.style.toLowerCase().includes('power') ? 1.2 :
       climb.style.toLowerCase().includes('technical') ? 1.0 : 0.8;
     
-    // Attempt factor - more attempts = higher load
-    const attemptFactor = 1 + ((climb.attempts - 1) * 0.1);
+    // FIXED: Exponential attempt factor - projecting is much more fatiguing than flashing
+    // 1 att = 1.0x, 2 att = 1.15x, 3 att = 1.32x, 4 att = 1.52x, 5 att = 1.75x
+    const attemptFactor = Math.pow(1.15, climb.attempts - 1);
     
     return total + (gradePoints * climb.rpe * styleMultiplier * attemptFactor);
   }, 0);
@@ -31,6 +32,8 @@ export function calculateSessionLoad(session) {
  * Calculate load recovery component for CRS
  * @param {Array} sessions - Recent sessions array
  * @returns {number} - Recovery score (0-100)
+ * 
+ * FIXED: Recovery now peaks at 48h then decays to account for detraining
  */
 function calculateLoadRecovery(sessions) {
   if (sessions.length === 0) return 50;
@@ -41,7 +44,16 @@ function calculateLoadRecovery(sessions) {
   const hoursSince = (Date.now() - lastSession.timestamp) / (1000 * 60 * 60);
   const optimalRecovery = 48; // 48 hours optimal recovery
   
-  return Math.min(100, (hoursSince / optimalRecovery) * 100);
+  // Build up to peak recovery at 48 hours
+  if (hoursSince <= optimalRecovery) {
+    return (hoursSince / optimalRecovery) * 100;
+  } else {
+    // After 48h, start decaying for detraining effects
+    // 100% at 48h → 85% at 7 days → 70% at 14 days
+    const daysOver = (hoursSince - optimalRecovery) / 24;
+    const decayRate = 2.14; // Points lost per day (~15% loss over 7 days)
+    return Math.max(50, 100 - (daysOver * decayRate));
+  }
 }
 
 /**
@@ -50,7 +62,7 @@ function calculateLoadRecovery(sessions) {
  * @param {Array} baseline - Baseline 28-day sessions
  * @returns {number} - Trend score (0-100)
  * 
- * Note: For CRS (readiness), low load = high readiness (fully recovered)
+ * FIXED: Now penalizes both extremes - detraining AND overtraining
  */
 function calculateLoadTrend(recent, baseline) {
   if (baseline.length === 0) return 75; // Default middle score
@@ -62,29 +74,47 @@ function calculateLoadTrend(recent, baseline) {
   
   const ratio = recentLoad / (baselineAvg * 7);
   
-  // CRS measures readiness, not training adherence
-  // Low ratio = low fatigue = HIGH readiness
-  if (ratio < 0.3) return 100;  // Very low load = fully recovered = maximum readiness
-  if (ratio < 0.8) return 90;   // Low load = well recovered = high readiness
-  if (ratio <= 1.3) return 100; // Optimal load = balanced readiness
-  if (ratio <= 1.5) return 50;  // Elevated load = reduced readiness
-  return 20; // High load = overreaching = low readiness
+  // IMPROVED CURVE - optimal training zone peaks, both extremes penalized
+  if (ratio < 0.4) return 60;   // Detraining zone - not optimal, losing conditioning
+  if (ratio < 0.7) return 85;   // Low load - good recovery but slightly undertrained
+  if (ratio <= 1.3) return 100; // Optimal training zone - sweet spot
+  if (ratio <= 1.5) return 70;  // Slightly elevated - manageable but watch closely
+  if (ratio <= 1.8) return 45;  // Overreaching territory - fatigue accumulating
+  return 25;                     // Danger zone - high overtraining risk
 }
 
 /**
- * Calculate RPE recovery component for CRS
- * @param {Array} sessions - Recent sessions
- * @returns {number} - RPE recovery score (0-100)
+ * Calculate cumulative fatigue component for CRS
+ * @param {Array} sessions - Recent sessions (should be all sessions for proper weighting)
+ * @returns {number} - Fatigue recovery score (0-100)
+ * 
+ * FIXED: Now tracks cumulative fatigue across recent sessions, not just last session
+ * Uses exponential weighting - recent sessions matter more
  */
-function calculateRPERecovery(sessions) {
+function calculateCumulativeFatigue(sessions) {
   if (sessions.length === 0) return 50;
   
-  const lastSession = sessions[sessions.length - 1];
-  const lastRPE = lastSession.avgRPE || 5;
+  // Take up to last 7 sessions for cumulative fatigue calculation
+  const recentSessions = sessions.slice(-7);
   
-  // Higher RPE = more fatigue = longer recovery needed
-  const fatigueComponent = (10 - lastRPE) * 10;
-  return Math.max(0, Math.min(100, fatigueComponent));
+  let weightedRPE = 0;
+  let totalWeight = 0;
+  
+  // Weight recent sessions more heavily (exponential decay)
+  recentSessions.forEach((session, index) => {
+    const weight = Math.pow(0.75, index); // More recent = higher weight
+    const sessionRPE = session.avgRPE || 5;
+    weightedRPE += sessionRPE * weight;
+    totalWeight += weight;
+  });
+  
+  const avgWeightedRPE = totalWeight > 0 ? weightedRPE / totalWeight : 5;
+  
+  // Convert to recovery score (high RPE = low recovery)
+  // RPE 10 = 0% recovered, RPE 5 = 50% recovered, RPE 1 = 90% recovered
+  const recoveryScore = Math.max(0, Math.min(100, 100 - (avgWeightedRPE * 10)));
+  
+  return recoveryScore;
 }
 
 /**
@@ -162,17 +192,17 @@ export function calculateCRS(sessionCount, climbCount, sessions) {
   const baselineSessions = validSessions.filter(s => s.timestamp > twentyEightDaysAgo);
   
   // Calculate components
-  // Load Recovery and RPE Recovery should use ALL sessions to find most recent,
+  // Load Recovery and Cumulative Fatigue should use ALL sessions,
   // not just sessions within the 7-day window
   const loadRecovery = calculateLoadRecovery(validSessions);
   const loadTrend = calculateLoadTrend(recentSessions, baselineSessions);
-  const rpeRecovery = calculateRPERecovery(validSessions);
+  const cumulativeFatigue = calculateCumulativeFatigue(validSessions);
   const volumePattern = calculateVolumePattern(recentSessions);
   
   const score = Math.round(
     loadRecovery * 0.35 +
     loadTrend * 0.25 +
-    rpeRecovery * 0.20 +
+    cumulativeFatigue * 0.20 +
     volumePattern * 0.20
   );
   
@@ -184,7 +214,7 @@ export function calculateCRS(sessionCount, climbCount, sessions) {
     components: {
       loadRecovery,
       loadTrend,
-      rpeRecovery,
+      cumulativeFatigue,
       volumePattern
     }
   };
@@ -218,6 +248,8 @@ function getLoadMessage(ratio) {
  * Calculate Load Baseline (ACWR - Acute:Chronic Workload Ratio)
  * @param {Array} sessions - All sessions with timestamps
  * @returns {Object|null} - Load ratio data or null if insufficient data
+ * 
+ * FIXED: Now accounts for training frequency and sets minimum baseline threshold
  */
 export function calculateLoadRatio(sessions) {
   // Only show after 5 sessions
@@ -238,21 +270,34 @@ export function calculateLoadRatio(sessions) {
     return {
       ratio: 0,
       status: 'insufficient',
-      message: 'Need more training history for accurate load tracking.'
+      message: 'Need more training history for accurate load tracking.',
+      confidence: 'establishing'
     };
   }
   
   // Calculate loads
   const acuteLoad = acuteSessions.reduce((sum, s) => sum + calculateSessionLoad(s), 0);
   const chronicLoad = chronicSessions.reduce((sum, s) => sum + calculateSessionLoad(s), 0);
-  const chronicDaily = chronicLoad / 28;
   
-  const ratio = chronicDaily > 0 ? acuteLoad / (chronicDaily * 7) : 0;
+  // FIXED: Calculate training frequency to normalize for sporadic climbers
+  const avgSessionsPerWeek = (chronicSessions.length / 28) * 7;
+  
+  // FIXED: Use session-based average instead of daily average
+  // This prevents weekend warriors from being falsely flagged
+  const avgLoadPerSession = chronicSessions.length > 0 ? chronicLoad / chronicSessions.length : 0;
+  const expectedWeeklyLoad = avgLoadPerSession * avgSessionsPerWeek;
+  
+  // FIXED: Minimum baseline threshold to prevent false positives with very low training
+  const minExpectedLoad = 50; // Minimum expected weekly load
+  const adjustedExpectedLoad = Math.max(expectedWeeklyLoad, minExpectedLoad);
+  
+  const ratio = adjustedExpectedLoad > 0 ? acuteLoad / adjustedExpectedLoad : 0;
   
   return {
     ratio: parseFloat(ratio.toFixed(2)),
     status: getLoadStatus(ratio),
     message: getLoadMessage(ratio),
+    frequency: parseFloat(avgSessionsPerWeek.toFixed(1)), // sessions per week
     confidence: sessions.length >= 7 ? 'high' : 'establishing'
   };
 }
@@ -274,46 +319,158 @@ function reduceVolume(volume) {
 }
 
 /**
- * Calculate personal baseline from user's session history
+ * Calculate conservative profile-based baseline for new users
+ * SAFETY-FIRST: Assumes potential detraining and builds in safety margins
+ * @param {Object} profile - User profile with flash_grade and typical_volume
+ * @returns {Object} - Conservative baseline metrics
+ */
+function calculateProfileBasedBaseline(profile) {
+  if (!profile || !profile.flash_grade || !profile.typical_volume) {
+    return null; // Fall back to defaults if profile incomplete
+  }
+
+  // Parse grade (e.g., "V5" -> 5)
+  const gradeNum = parseInt(profile.flash_grade.replace('V', ''));
+  
+  // EXPERIENCE-ADJUSTED VOLUME: Higher volume users get less conservative reduction
+  // Reasoning: High-volume climbers (20+) are likely experienced and well-conditioned
+  // Low-volume climbers (< 15) might be beginners who overestimate
+  let conservativeMultiplier;
+  if (profile.typical_volume >= 25) {
+    conservativeMultiplier = 0.90; // 90% for high-volume (22-24 climbs from 25)
+  } else if (profile.typical_volume >= 20) {
+    conservativeMultiplier = 0.88; // 88% for moderate-high (17-18 from 20)
+  } else if (profile.typical_volume >= 15) {
+    conservativeMultiplier = 0.85; // 85% for moderate (12-13 from 15)
+  } else {
+    conservativeMultiplier = 0.80; // 80% for low-volume (8 from 10, 6 from 8)
+  }
+  
+  const baseVolume = Math.round(profile.typical_volume * conservativeMultiplier);
+  
+  // Minimum floor and maximum cap for safety
+  const avgVolume = Math.max(6, Math.min(25, baseVolume)); // Clamp between 6-25
+  
+  // CONSERVATIVE RPE: Cap at 7 for all new users
+  // Reasoning: Allows moderate intensity while preventing max effort before real data
+  const avgRPE = 7.0;
+  
+  // Grade-adjusted load estimate (conservative)
+  // Lower grades = lower load per climb, higher grades = higher load per climb
+  const gradeLoadFactor = 1 + (gradeNum * 0.08); // Gentler scaling than real sessions
+  const avgSessionLoad = Math.round(avgVolume * avgRPE * gradeLoadFactor);
+  
+  return {
+    avgSessionLoad,
+    avgVolume,
+    avgRPE,
+    confidence: 'profile-based',
+    source: 'onboarding',
+    isConservative: true
+  };
+}
+
+/**
+ * Calculate personal baseline from user's session history OR profile
  * @param {Array} sessions - User's session history
+ * @param {Object} userProfile - Optional user profile for new users
  * @returns {Object} - Personal baseline metrics
  */
-export function calculatePersonalBaseline(sessions) {
-  if (!sessions || sessions.length === 0) {
-    return {
-      avgSessionLoad: 120, // Conservative default
-      avgVolume: 12,
-      avgRPE: 6.5,
-      confidence: 'none'
-    };
+export function calculatePersonalBaseline(sessions, userProfile = null) {
+  // Priority 1: Use session history if we have enough data (3+ sessions)
+  if (sessions && sessions.length >= 3) {
+    const recentSessions = sessions.slice(0, Math.min(10, sessions.length));
+    const validSessions = recentSessions.filter(s => s.climbList && s.climbList.length > 0);
+
+    if (validSessions.length >= 3) {
+      // Calculate averages from real session data
+      const totalLoad = validSessions.reduce((sum, s) => sum + calculateSessionLoad(s), 0);
+      const totalVolume = validSessions.reduce((sum, s) => sum + s.climbList.length, 0);
+      const totalRPE = validSessions.reduce((sum, s) => {
+        const sessionRPE = s.climbList.reduce((rpeSum, c) => rpeSum + c.rpe, 0) / s.climbList.length;
+        return sum + sessionRPE;
+      }, 0);
+
+      return {
+        avgSessionLoad: Math.round(totalLoad / validSessions.length),
+        avgVolume: Math.round(totalVolume / validSessions.length),
+        avgRPE: Math.round((totalRPE / validSessions.length) * 2) / 2, // Round to 0.5
+        confidence: validSessions.length >= 5 ? 'high' : validSessions.length >= 3 ? 'medium' : 'low',
+        source: 'sessions'
+      };
+    }
   }
-
-  // Use last 5-10 sessions for baseline calculation
-  const recentSessions = sessions.slice(0, Math.min(10, sessions.length));
-  const validSessions = recentSessions.filter(s => s.climbList && s.climbList.length > 0);
-
-  if (validSessions.length === 0) {
-    return {
-      avgSessionLoad: 120,
-      avgVolume: 12, 
-      avgRPE: 6.5,
-      confidence: 'none'
-    };
+  
+  // Priority 2: Use profile-based baseline if available (new users with onboarding data)
+  if (userProfile) {
+    const profileBaseline = calculateProfileBasedBaseline(userProfile);
+    if (profileBaseline) {
+      return profileBaseline;
+    }
   }
-
-  // Calculate averages
-  const totalLoad = validSessions.reduce((sum, s) => sum + calculateSessionLoad(s), 0);
-  const totalVolume = validSessions.reduce((sum, s) => sum + s.climbList.length, 0);
-  const totalRPE = validSessions.reduce((sum, s) => {
-    const sessionRPE = s.climbList.reduce((rpeSum, c) => rpeSum + c.rpe, 0) / s.climbList.length;
-    return sum + sessionRPE;
-  }, 0);
-
+  
+  // Priority 3: Fall back to conservative defaults (no data at all)
   return {
-    avgSessionLoad: Math.round(totalLoad / validSessions.length),
-    avgVolume: Math.round(totalVolume / validSessions.length),
-    avgRPE: Math.round((totalRPE / validSessions.length) * 2) / 2, // Round to 0.5
-    confidence: validSessions.length >= 5 ? 'high' : validSessions.length >= 3 ? 'medium' : 'low'
+    avgSessionLoad: 120,
+    avgVolume: 12,
+    avgRPE: 6.5,
+    confidence: 'none',
+    source: 'default'
+  };
+}
+
+/**
+ * Get profile-based recommendations for new users (< 3 sessions)
+ * SAFETY-FIRST: Conservative recommendations assuming potential detraining
+ * @param {Object} baseline - Profile-based baseline metrics
+ * @param {Object} userProfile - User profile data
+ * @returns {Object} - Conservative capacity recommendations
+ */
+function getProfileBasedRecommendations(baseline, userProfile) {
+  const gradeNum = parseInt(userProfile.flash_grade.replace('V', ''));
+  const volume = baseline.avgVolume;
+  
+  // Conservative volume range: 86-94% of conservative baseline
+  // Baseline is 85% of stated, so total = ~73-80% of stated typical volume
+  // Primary safety is RPE ≤7 cap, not volume reduction
+  const volumeMin = Math.max(5, Math.round(volume * 0.86));
+  const volumeMax = Math.round(volume * 0.94);
+  
+  // RPE capped at 7 for all new users
+  // Reasoning: Allows moderate intensity while preventing max effort before real data
+  const rpeCap = '≤7';
+  
+  // Experience-based focus messaging (but same conservative caps)
+  let focus, style, welcomeMessage;
+  
+  if (gradeNum <= 2) {
+    // Beginner: V0-V2
+    focus = 'Establish movement patterns and consistency';
+    style = 'technical';
+    welcomeMessage = 'Building your baseline - start conservatively';
+  } else if (gradeNum <= 5) {
+    // Intermediate: V3-V5
+    focus = 'Build capacity while establishing baseline';
+    style = 'endurance';
+    welcomeMessage = 'Building your baseline - ease in gradually';
+  } else {
+    // Advanced: V6+
+    focus = 'Maintain technique while establishing baseline';
+    style = 'technical'; // Keep it technical/controlled for safety
+    welcomeMessage = 'Building your baseline - start controlled';
+  }
+  
+  return {
+    type: 'Calibration',
+    volumeCap: `${volumeMin}-${volumeMax}`,
+    rpeCap,
+    focus,
+    style,
+    baselineLoad: baseline.avgSessionLoad,
+    targetLoad: baseline.avgSessionLoad,
+    isProfileBased: true,
+    calibrationMessage: welcomeMessage,
+    note: 'Personalized from your profile • Will adapt after 3 sessions'
   };
 }
 
@@ -322,19 +479,26 @@ export function calculatePersonalBaseline(sessions) {
  * @param {Object|null} crs - CRS calculation result
  * @param {Object|null} loadRatio - Load ratio calculation result
  * @param {Array} sessions - User's session history
+ * @param {Object} userProfile - Optional user profile for new users
  * @returns {Object} - Capacity-based recommendations
  */
-export function getCapacityRecommendations(crs, loadRatio, sessions) {
-  const baseline = calculatePersonalBaseline(sessions);
+export function getCapacityRecommendations(crs, loadRatio, sessions, userProfile = null) {
+  const baseline = calculatePersonalBaseline(sessions, userProfile);
   
-  // No data state - conservative defaults
+  // No CRS data BUT we have profile data - use profile-based recommendations
+  if (!crs && baseline.source === 'onboarding' && userProfile) {
+    return getProfileBasedRecommendations(baseline, userProfile);
+  }
+  
+  // No data at all - generic conservative defaults
   if (!crs) {
     return {
       type: 'Start Easy',
       volumeCap: '8-12',
-      rpeCap: '≤6',
+      rpeCap: '≤7',
       focus: 'Build your baseline safely',
-      style: 'mixed'
+      style: 'mixed',
+      note: 'Complete onboarding for personalized recommendations'
     };
   }
 

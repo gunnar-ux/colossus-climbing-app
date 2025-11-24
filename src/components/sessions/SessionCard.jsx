@@ -1,13 +1,15 @@
 import { useState } from 'react';
 import { ChevronDownIcon, LightningIcon, RocketLaunchIcon } from '../ui/Icons.jsx';
 import { LineChart } from '../ui/Charts.jsx';
-import { roundRPE } from '../../utils/index.js';
+import { roundRPE, getSessionDisplayDate } from '../../utils/index.js';
+import { displayGrade } from '../../utils/gradeConversion.js';
 
 // SessionCard component - Clean, minimal design optimized for social sharing
 // Key features: Grade progression chart, powered by POGO attribution, streamlined metrics
 
 const SessionCard = ({ session, index, profile, allSessions }) => {
   const [open, setOpen] = useState(false);
+  const userGradeSystem = profile?.grade_system || 'v-scale';
   
   const getFlashRateColor = (rate) => {
     if (rate >= 85) return 'text-cyan-400';
@@ -102,7 +104,7 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
         {/* Subtitle Row: Date and XP */}
         <div className="flex items-center justify-between mb-0.5">
           <div className="text-sm text-graytxt">
-            {session.date === 'Now' ? 'Current Session' : session.date}
+            {getSessionDisplayDate(session, allSessions)}
           </div>
           <div className="text-sm text-graytxt">
             +{sessionXP.toLocaleString()} XP
@@ -117,7 +119,6 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
                 values={chartData.values}
                 labels={chartData.labels}
                 height={120}
-                isExceptional={isExceptionalSession}
               />
             </div>
           </div>
@@ -125,9 +126,9 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
 
         {/* Single Climb - Custom visualization */}
         {chartData.values.length === 1 && (
-          <div className="px-2 py-0 mb-4">
-            <div className="flex justify-center relative" style={{ height: '140px' }}>
-              <svg width="300" height="140" className="overflow-visible">
+          <div className="mb-2">
+            <div className="flex justify-center">
+              <svg width="328" height="120" className="overflow-visible">
                 <defs>
                   <linearGradient id="singleClimbGradient" x1="0%" y1="0%" x2="0%" y2="100%">
                     <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.1" />
@@ -136,25 +137,23 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
                 </defs>
                 
                 {[8, 4, 0].map((grade, i) => {
-                  const y = 20 + (i * 40);
+                  const y = 24 + (i * 36);
                   return (
                     <g key={grade}>
-                      <line x1="30" y1={y} x2="270" y2={y} stroke="#374151" strokeWidth="1" opacity="0.3" />
-                      <text x="25" y={y + 4} textAnchor="end" className="fill-slate-400 text-xs">V{grade}</text>
+                      <line x1="24" y1={y} x2="308" y2={y} stroke="#2a2a2a" strokeWidth="1" strokeDasharray="4 4" />
+                      <text x="16" y={y + 4} textAnchor="end" className="fill-gray-500 text-[9px] font-medium">{displayGrade(`V${grade}`, userGradeSystem)}</text>
                     </g>
                   );
                 })}
                 
                 {(() => {
                   const climbGrade = chartData.values[0];
-                  const y = 20 + ((8 - climbGrade) / 8) * 80;
+                  const y = 24 + ((8 - climbGrade) / 8) * 72;
                   return (
                     <g>
-                      <circle cx="150" cy={y} r="6" fill="#22d3ee" opacity="0.2" />
-                      <circle cx="150" cy={y} r="4" fill="#22d3ee" opacity="0.3" />
-                      <circle cx="150" cy={y} r="3" fill="#22d3ee" stroke="#0891b2" strokeWidth="1" />
-                      <text x="150" y={y - 12} textAnchor="middle" className="fill-white text-xs font-medium">
-                        V{climbGrade}
+                      <circle cx="166" cy={y} r="4" className="fill-cyan-400" />
+                      <text x="166" y={y - 10} textAnchor="middle" className="fill-white text-xs font-medium">
+                        {displayGrade(`V${climbGrade}`, userGradeSystem)}
                       </text>
                     </g>
                   );
@@ -175,7 +174,7 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
         
         {/* Metrics row - Hardest & Flash Rate */}
         <div className="text-sm text-graytxt mb-2">
-          Hardest: <span className={isExceptionalSession ? 'text-cyan-300 font-medium' : 'text-white font-medium'}>{session.peakGrade || 'V0'}</span> • Flash Rate: <span className={`font-medium ${isExceptionalSession ? 'text-cyan-300' : getFlashRateColor(session.flashRate || 0)}`}>{session.flashRate || 0}%</span>
+          Hardest: <span className={isExceptionalSession ? 'text-cyan-300 font-medium' : 'text-white font-medium'}>{displayGrade(session.peakGrade || 'V0', userGradeSystem)}</span> • Flash Rate: <span className={`font-medium ${isExceptionalSession ? 'text-cyan-300' : getFlashRateColor(session.flashRate || 0)}`}>{session.flashRate || 0}%</span>
         </div>
         
         {/* Powered by POGO footer */}
@@ -191,13 +190,28 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
       {/* Expandable content */}
       {open && (
         <div className={`mt-4 pt-4 space-y-4 ${isExceptionalSession ? 'border-t border-cyan-700/40' : 'border-t border-border/50'}`}>
+          {/* High Performance Banner - Only shown for exceptional sessions */}
+          {isExceptionalSession && (
+            <div className="rounded-lg p-3 border border-cyan-700/40 flex items-center gap-3">
+              <svg className="w-5 h-5 text-cyan-400 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 013 3h-15a3 3 0 013-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 01-.982-3.172M9.497 14.25a7.454 7.454 0 00.981-3.172M5.25 4.236c-.982.143-1.954.317-2.916.52A6.003 6.003 0 007.73 9.728M5.25 4.236V4.5c0 2.108.966 3.99 2.48 5.228M5.25 4.236V2.721C7.456 2.41 9.71 2.25 12 2.25c2.291 0 4.545.16 6.75.47v1.516M7.73 9.728a6.726 6.726 0 002.748 1.35m8.272-6.842V4.5c0 2.108-.966 3.99-2.48 5.228m2.48-5.492a46.32 46.32 0 012.916.52 6.003 6.003 0 01-5.395 4.972m0 0a6.726 6.726 0 01-2.749 1.35m0 0a6.772 6.772 0 01-3.044 0" />
+              </svg>
+              <div>
+                <div className="text-white font-semibold text-sm">High Performance Session</div>
+                <div className="text-cyan-300 text-sm">
+                  {session.flashRate}% Flash Rate • {totalClimbs} Climbs
+                </div>
+              </div>
+            </div>
+          )}
+          
           {/* Grade Distribution */}
           <div className={`rounded-lg p-3 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/50'}`}>
             <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
             {(session.grades || []).map((g, i) => (
               <div key={i} className="mb-2">
                 <div className="flex justify-between text-sm mb-1">
-                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{g.label}</span>
+                  <span className={isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}>{displayGrade(g.label, userGradeSystem)}</span>
                   <span>{g.val}% ({g.count || 0})</span>
                 </div>
                 <div className={`w-full h-2 rounded-full overflow-hidden ${isExceptionalSession ? 'bg-cyan-900/30' : 'bg-border'}`}>
@@ -275,7 +289,7 @@ const SessionCard = ({ session, index, profile, allSessions }) => {
               {(session.climbList || []).map((c, i) => (
                 <li key={i} className={`flex items-center justify-between rounded-lg px-3 py-2 ${isExceptionalSession ? 'border border-cyan-700/40' : 'border border-border/60'}`}>
                   <div className="flex items-center gap-2">
-                    <div className={`text-lg font-bold ${isExceptionalSession ? 'text-cyan-400' : 'text-white'}`}>{c.grade}</div>
+                    <div className={`text-lg font-bold ${isExceptionalSession ? 'text-cyan-400' : 'text-white'}`}>{displayGrade(c.grade, userGradeSystem)}</div>
                     <div className={`text-sm px-1.5 py-0.5 rounded border border-border/40 ${isExceptionalSession ? 'text-slate-200' : 'text-graytxt'}`}>
                       {c.type === 'BOARD' ? 'Board' : 'Boulder'}
                     </div>
