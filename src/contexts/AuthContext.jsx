@@ -2,6 +2,8 @@
 import { createContext, useContext, useEffect, useState, useRef, useMemo } from 'react'
 import { supabase, auth, database } from '../lib/supabase.js'
 import { calculateSessionStats } from '../utils/sessionCalculations.js'
+import { SignInWithApple } from '@capacitor-community/apple-sign-in'
+import { Capacitor } from '@capacitor/core'
 
 const AuthContext = createContext({})
 
@@ -423,6 +425,92 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const signInWithApple = async () => {
+    try {
+      console.log('🍎 Apple Sign In starting')
+      
+      const isNative = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios'
+      
+      if (isNative) {
+        console.log('🍎 Native iOS flow')
+        
+        // Generate random nonce
+        const generateNonce = (length = 32) => {
+          const charset = '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._'
+          let result = ''
+          const randomValues = new Uint8Array(length)
+          crypto.getRandomValues(randomValues)
+          for (let i = 0; i < length; i++) {
+            result += charset[randomValues[i] % charset.length]
+          }
+          return result
+        }
+        
+        // SHA256 hash
+        const sha256 = async (str) => {
+          const encoder = new TextEncoder()
+          const data = encoder.encode(str)
+          const hashBuffer = await crypto.subtle.digest('SHA-256', data)
+          const hashArray = Array.from(new Uint8Array(hashBuffer))
+          return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
+        }
+        
+        const rawNonce = generateNonce()
+        const hashedNonce = await sha256(rawNonce)
+        
+        console.log('🍎 Nonce generated')
+        
+        // Call native Apple Sign In with hashed nonce
+        const result = await SignInWithApple.authorize({
+          clientId: 'com.gunnarautterson.pogo',
+          redirectURI: 'https://jamyscybvyyfnzqqiovi.supabase.co/auth/v1/callback',
+          scopes: 'email name',
+          nonce: hashedNonce
+        })
+        
+        console.log('🍎 Apple auth complete')
+        
+        if (!result.response.identityToken) {
+          return { success: false, error: 'No identity token' }
+        }
+        
+        // Exchange with Supabase using raw nonce
+        const { data, error } = await supabase.auth.signInWithIdToken({
+          provider: 'apple',
+          token: result.response.identityToken,
+          nonce: rawNonce
+        })
+        
+        if (error) {
+          console.error('🍎 Supabase error:', error.message)
+          return { success: false, error: error.message }
+        }
+        
+        console.log('🍎 Success!')
+        return { success: true, user: data.user }
+        
+      } else {
+        // Web OAuth fallback
+        const { data, error } = await supabase.auth.signInWithOAuth({
+          provider: 'apple',
+          options: {
+            redirectTo: `${window.location.origin}`
+          }
+        })
+        
+        if (error) {
+          return { success: false, error: error.message }
+        }
+        
+        return { success: true }
+      }
+      
+    } catch (error) {
+      console.error('🍎 Error:', error)
+      return { success: false, error: error.message }
+    }
+  }
+
   const signOut = async () => {
     try {
       console.log('🚪 Signing out...')
@@ -564,6 +652,7 @@ export function AuthProvider({ children }) {
     // Methods
     signUp,
     signIn,
+    signInWithApple,
     signOut,
     createProfile,
     updateProfile,

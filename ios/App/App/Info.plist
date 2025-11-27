@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleDisplayName</key>
-        <string>POGO</string>
+	<string>POGO</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -18,8 +18,35 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fb1840929596840822</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.gunnarautterson.pogo</string>
+			</array>
+		</dict>
+	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>FacebookAppID</key>
+	<string>1840929596840822</string>
+	<key>FacebookClientToken</key>
+	<string>018b2eef6004e3209fac31724458c0e1</string>
+	<key>FacebookDisplayName</key>
+	<string>POGO</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>instagram-stories</string>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
@@ -45,32 +72,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
-	
-	<!-- Facebook App ID for Instagram Stories sharing -->
-	<key>FacebookAppID</key>
-	<string>1840929596840822</string>
-	<key>FacebookClientToken</key>
-	<string>018b2eef6004e3209fac31724458c0e1</string>
-	<key>FacebookDisplayName</key>
-	<string>POGO</string>
-	
-	<!-- URL Schemes for Facebook SDK -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>fb1840929596840822</string>
-			</array>
-		</dict>
-	</array>
-	
-	<!-- Instagram Stories URL Scheme -->
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>instagram-stories</string>
-		<string>fbapi</string>
-		<string>fb-messenger-share-api</string>
-	</array>
 </dict>
 </plist>

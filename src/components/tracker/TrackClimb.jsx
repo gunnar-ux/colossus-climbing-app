@@ -18,7 +18,10 @@ import '../../styles/tracker-animations.css';
 const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateToSessions, onNavigateToProgress, onNavigateToAccount, onLogout }) => {
   const { profile } = useAuth();
   const userGradeSystem = profile?.grade_system || 'v-scale';
-  const displayGrades = getGradesForSystem(userGradeSystem);
+  // Limit tracker to V0-V14 (or equivalent in Font) for better grid layout
+  const displayGrades = getGradesForSystem(userGradeSystem).filter(grade => 
+    userGradeSystem === 'v-scale' ? grade !== 'V15' : grade !== '8c'
+  );
   
   // State
   const [type, setType] = useState("BOULDER");

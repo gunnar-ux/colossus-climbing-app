@@ -54,3 +54,7 @@ temp/
 
 # Local netlify folder
 .netlify/
+
+# Apple Sign-In private keys
+AuthKey_*.p8
+*.p8
