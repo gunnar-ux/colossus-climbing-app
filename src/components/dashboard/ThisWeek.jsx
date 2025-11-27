@@ -9,6 +9,7 @@ import { getCapacityRecommendations, calculatePersonalBaseline } from '../../uti
 
 const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => {
   const [open, setOpen] = useState(false);
+  const [weeksAgo, setWeeksAgo] = useState(0); // 0 = current week, 1 = last week, etc.
   
   // Get flash rate color based on performance ranges (same as SessionCard)
   const getFlashRateColor = (rate) => {
@@ -17,21 +18,24 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
   };
   
   // Calculate real weekly data from sessions with recommendation lines
-  const calculateWeeklyData = () => {
+  const calculateWeeklyData = (weekOffset = 0) => {
     if (!available || !sessions || sessions.length === 0) {
       return {
         weeklyVolume: [0, 0, 0, 0, 0, 0, 0], // Empty state
         recommendationLines: [0, 0, 0, 0, 0, 0, 0], // No recommendations
         flashRate: 0,
-        totalClimbs: 0
+        totalClimbs: 0,
+        grades: [],
+        styles: [],
+        angles: []
       };
     }
 
-    // Get current week boundaries (Sunday to Saturday)
+    // Get week boundaries (Sunday to Saturday) with offset
     const now = new Date();
     const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
     const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - currentDay);
+    startOfWeek.setDate(now.getDate() - currentDay - (weekOffset * 7)); // Apply week offset
     startOfWeek.setHours(0, 0, 0, 0);
     
     const endOfWeek = new Date(startOfWeek);
@@ -48,6 +52,11 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
     const recommendationLines = [0, 0, 0, 0, 0, 0, 0];
     let totalClimbs = 0;
     let totalFlashes = 0;
+    
+    // Initialize distribution counters
+    const gradeCounts = {};
+    const styleCounts = {};
+    const angleCounts = {};
 
     // Get user baseline for recommendations
     const baseline = calculatePersonalBaseline(sessions);
@@ -62,11 +71,23 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
         weeklyVolume[dayOfWeek] += session.climbList.length;
         totalClimbs += session.climbList.length;
 
-        // Count flashes (attempts === 1)
+        // Count flashes (attempts === 1) and distributions
         session.climbList.forEach(climb => {
           if (climb.attempts === 1) {
             totalFlashes++;
           }
+          
+          // Count grades
+          const grade = climb.grade || 'V0';
+          gradeCounts[grade] = (gradeCounts[grade] || 0) + 1;
+          
+          // Count styles
+          const style = climb.style || 'Technical';
+          styleCounts[style] = (styleCounts[style] || 0) + 1;
+          
+          // Count angles
+          const angle = climb.angle || 'Vertical';
+          angleCounts[angle] = (angleCounts[angle] || 0) + 1;
         });
 
         // Calculate what the recommendation would have been for that day
@@ -81,40 +102,74 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
       }
     });
 
-    // For today only, calculate actual recommendation if we have CRS data
-    const today = new Date();
-    const todayOfWeek = today.getDay();
-    if (todayOfWeek >= 0 && todayOfWeek <= 6 && recommendationLines[todayOfWeek] === 0) {
-      // Apply same day-based multiplier for consistency
-      let dayMultiplier = 1.0;
-      if (todayOfWeek === 0 || todayOfWeek === 6) dayMultiplier = 0.8; // Weekend - lighter
-      else if (todayOfWeek === 2 || todayOfWeek === 4) dayMultiplier = 1.2; // Tue/Thu - heavier
-      else dayMultiplier = 1.0; // Mon/Wed/Fri - moderate
-      
-      recommendationLines[todayOfWeek] = Math.round(baseline.avgVolume * dayMultiplier);
+    // For today only, calculate actual recommendation if we have CRS data (only when viewing current week)
+    if (weekOffset === 0) {
+      const today = new Date();
+      const todayOfWeek = today.getDay();
+      if (todayOfWeek >= 0 && todayOfWeek <= 6 && recommendationLines[todayOfWeek] === 0) {
+        // Apply same day-based multiplier for consistency
+        let dayMultiplier = 1.0;
+        if (todayOfWeek === 0 || todayOfWeek === 6) dayMultiplier = 0.8; // Weekend - lighter
+        else if (todayOfWeek === 2 || todayOfWeek === 4) dayMultiplier = 1.2; // Tue/Thu - heavier
+        else dayMultiplier = 1.0; // Mon/Wed/Fri - moderate
+        
+        recommendationLines[todayOfWeek] = Math.round(baseline.avgVolume * dayMultiplier);
+      }
     }
 
     const flashRate = totalClimbs > 0 ? Math.round((totalFlashes / totalClimbs) * 100) : 0;
+
+    // Convert distributions to percentages
+    const grades = Object.entries(gradeCounts)
+      .map(([label, count]) => ({
+        label,
+        count,
+        val: Math.round((count / totalClimbs) * 100)
+      }))
+      .sort((a, b) => {
+        const aNum = parseInt(a.label.replace('V', ''));
+        const bNum = parseInt(b.label.replace('V', ''));
+        return aNum - bNum;
+      });
+    
+    const styles = Object.entries(styleCounts)
+      .map(([label, count]) => ({
+        label,
+        count,
+        val: Math.round((count / totalClimbs) * 100)
+      }))
+      .sort((a, b) => b.val - a.val);
+    
+    const angles = Object.entries(angleCounts)
+      .map(([label, count]) => ({
+        label,
+        count,
+        val: Math.round((count / totalClimbs) * 100)
+      }))
+      .sort((a, b) => b.val - a.val);
 
     return {
       weeklyVolume,
       recommendationLines,
       flashRate,
-      totalClimbs
+      totalClimbs,
+      grades,
+      styles,
+      angles
     };
   };
 
-  const weeklyData = calculateWeeklyData();
+  const weeklyData = calculateWeeklyData(weeksAgo);
   const weeklyVolume = weeklyData.weeklyVolume;
   const total = weeklyData.totalClimbs;
   const avgRPE = available ? roundRPE(6.8) : 0;
   
-  // Get current week date range (Sunday to Saturday)
-  const getWeekDateRange = () => {
+  // Get week date range (Sunday to Saturday) with offset
+  const getWeekDateRange = (weekOffset = 0) => {
     const now = new Date();
     const currentDay = now.getDay(); // 0 = Sunday
     const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - currentDay);
+    startOfWeek.setDate(now.getDate() - currentDay - (weekOffset * 7)); // Apply week offset
     
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
@@ -127,22 +182,16 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
     
     return `${formatDate(startOfWeek)} - ${formatDate(endOfWeek)}`;
   };
-  const grades = available ? [
-    {label:'V3', val:20}, {label:'V4', val:40}, {label:'V5', val:30}, {label:'V6', val:10},
-  ] : [
-    {label:'V3', val:25}, {label:'V4', val:25}, {label:'V5', val:25}, {label:'V6', val:25},
+  
+  // Use calculated distributions from weeklyData
+  const grades = available && weeklyData.grades.length > 0 ? weeklyData.grades : [
+    {label:'V3', val:25, count:0}, {label:'V4', val:25, count:0}, {label:'V5', val:25, count:0}, {label:'V6', val:25, count:0},
   ];
-  // Style distribution for this week
-  const styles = available ? [
-    {label:'Power', val:40}, {label:'Technical', val:35}, {label:'Endurance', val:25},
-  ] : [
-    {label:'Power', val:33}, {label:'Technical', val:33}, {label:'Endurance', val:34},
+  const styles = available && weeklyData.styles.length > 0 ? weeklyData.styles : [
+    {label:'Power', val:33, count:0}, {label:'Technical', val:33, count:0}, {label:'Endurance', val:34, count:0},
   ];
-  // Wall angle distribution for this week
-  const angles = available ? [
-    {label:'Overhang', val:45}, {label:'Vertical', val:40}, {label:'Slab', val:15},
-  ] : [
-    {label:'Overhang', val:33}, {label:'Vertical', val:34}, {label:'Slab', val:33},
+  const angles = available && weeklyData.angles.length > 0 ? weeklyData.angles : [
+    {label:'Overhang', val:33, count:0}, {label:'Vertical', val:34, count:0}, {label:'Slab', val:33, count:0},
   ];
   
   return (
@@ -150,20 +199,60 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
       <div className="mx-5 bg-card border border-border rounded-col px-5 pt-5 pb-4 cursor-pointer" onClick={() => setOpen(!open)}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <h3 className="font-bold text-base">This Week</h3>
+            <h3 className="font-bold text-base">{weeksAgo === 0 ? 'This Week' : `${weeksAgo} Week${weeksAgo > 1 ? 's' : ''} Ago`}</h3>
             {!available && <LockClosedIcon className="w-4 h-4 text-graytxt/60" />}
           </div>
           <div className="text-sm text-graytxt">
-            {getWeekDateRange()}
+            {getWeekDateRange(weeksAgo)}
           </div>
         </div>
-        <div className="mt-3 flex justify-center">
-          <BarChart 
-            values={weeklyVolume} 
-            recommendationLines={[]}
-            labels={["S","M","T","W","T","F","S"]} 
-            height={110} 
-          />
+        
+        {/* Bar Chart with Navigation Arrows */}
+        <div className="mt-3 flex items-center justify-center gap-1 px-2">
+          {/* Left Arrow - Only show when available */}
+          {available ? (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setWeeksAgo(prev => prev + 1);
+              }}
+              className="p-1.5 hover:bg-border/30 rounded-lg transition-colors active:scale-95 flex-shrink-0"
+              aria-label="Previous week"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          ) : <div className="w-9" />}
+          
+          {/* Chart - Key forces re-render to prevent animation artifacts */}
+          <div key={weeksAgo} className="flex-shrink-0">
+            <BarChart 
+              values={weeklyVolume} 
+              recommendationLines={[]}
+              labels={["S","M","T","W","T","F","S"]} 
+              height={110} 
+            />
+          </div>
+          
+          {/* Right Arrow - Only show when available */}
+          {available ? (
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setWeeksAgo(prev => Math.max(0, prev - 1));
+              }}
+              disabled={weeksAgo === 0}
+              className={`p-1.5 rounded-lg transition-colors active:scale-95 flex-shrink-0 ${
+                weeksAgo === 0 ? 'opacity-30 cursor-not-allowed' : 'hover:bg-border/30'
+              }`}
+              aria-label="Next week"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          ) : <div className="w-9" />}
         </div>
         
         {/* Metrics row */}
@@ -191,7 +280,7 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
                   <div className="text-sm text-white font-semibold mb-3 text-center">Grade Distribution</div>
                   {grades.map((g, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}% ({Math.round(total * g.val / 100)})</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{g.label}</span><span>{g.val}% ({g.count || 0})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                         <div className="h-full bg-white/70" style={{width: `${g.val}%`}}></div>
                       </div>
@@ -203,7 +292,7 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
                   <div className="text-sm text-white font-semibold mb-3 text-center">Style Distribution</div>
                   {styles.map((s, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}% ({Math.round(total * s.val / 100)})</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{s.label}</span><span>{s.val}% ({s.count || 0})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                         <div className="h-full bg-white/70" style={{width: `${s.val}%`}}></div>
                       </div>
@@ -215,7 +304,7 @@ const ThisWeek = ({ available = false, currentSessions = 0, sessions = [] }) => 
                   <div className="text-sm text-white font-semibold mb-3 text-center">Wall Angle Distribution</div>
                   {angles.map((a, i) => (
                     <div key={i} className="mb-2">
-                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}% ({Math.round(total * a.val / 100)})</span></div>
+                      <div className="flex justify-between text-sm mb-1"><span className="text-graytxt">{a.label}</span><span>{a.val}% ({a.count || 0})</span></div>
                       <div className="w-full h-2 bg-border rounded-full overflow-hidden">
                         <div className="h-full bg-white/70" style={{width: `${a.val}%`}}></div>
                       </div>
