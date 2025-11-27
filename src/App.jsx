@@ -12,12 +12,6 @@ import OnboardingApp from './components/onboarding/OnboardingApp.jsx';
 import LoadingScreen from './components/ui/LoadingScreen.jsx';
 import LoadRatioModal from './components/ui/LoadRatioModal.jsx';
 import ReadinessModal from './components/ui/ReadinessModal.jsx';
-import ChartTestingPage from './components/dashboard/ChartTestingPage.jsx';
-import StatsTestingPage from './components/progress/StatsTestingPage.jsx';
-import LoadRatioTestingPage from './components/dashboard/LoadRatioTestingPage.jsx';
-import ReadinessLoadTestingPage from './components/dashboard/ReadinessLoadTestingPage.jsx';
-import ReadinessLoadV2TestingPage from './components/dashboard/ReadinessLoadV2TestingPage.jsx';
-import QuickSetupTestPage from './components/onboarding/QuickSetupTestPage.jsx';
 import { HomeIcon, ListIcon, TrendingIcon, UserIcon } from './components/ui/Icons.jsx';
 
 // Utils & Services
@@ -525,13 +519,6 @@ const AppContent = () => {
                         onLogout={handleLogout}
                       />
                     } />
-                    
-        <Route path="/chart-testing" element={<ChartTestingPage />} />
-        <Route path="/stats-testing" element={<StatsTestingPage />} />
-        <Route path="/loadratio-testing" element={<LoadRatioTestingPage />} />
-        <Route path="/readiness-load-testing" element={<ReadinessLoadTestingPage />} />
-        <Route path="/readiness-load-v2" element={<ReadinessLoadV2TestingPage />} />
-        <Route path="/quick-setup-test" element={<QuickSetupTestPage />} />
         </Routes>
       </div>
       
