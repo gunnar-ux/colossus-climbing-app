@@ -2,6 +2,22 @@
 // Implements CRS, Load Baseline (ACWR), and Recommended Training
 
 /**
+ * Get board angle multiplier based on degrees
+ * Steeper angles are more dynamic and finger-intensive
+ * @param {string} angle - Angle string like "35°"
+ * @returns {number} - Angle multiplier
+ */
+function getBoardAngleMultiplier(angle) {
+  // Extract numeric value from angle string (e.g., "35°" -> 35)
+  const degrees = parseInt(angle);
+  if (isNaN(degrees)) return 1.0;
+  
+  if (degrees <= 15) return 0.95;  // Low angle, slightly easier
+  if (degrees <= 35) return 1.0;   // Moderate angle, vertical equivalent
+  return 1.15;                     // Steep 40-60°, very dynamic & finger-intensive
+}
+
+/**
  * Calculate session load based on climbs data
  * @param {Object} session - Session with climbs array
  * @returns {number} - Total session load score
@@ -24,7 +40,15 @@ export function calculateSessionLoad(session) {
     // 1 att = 1.0x, 2 att = 1.15x, 3 att = 1.32x, 4 att = 1.52x, 5 att = 1.75x
     const attemptFactor = Math.pow(1.15, climb.attempts - 1);
     
-    return total + (gradePoints * climb.rpe * styleMultiplier * attemptFactor);
+    // Type multiplier: Board climbing is more finger-intensive than regular bouldering
+    const typeMultiplier = climb.type === 'BOARD' ? 1.1 : 1.0;
+    
+    // Board angle multiplier: Steeper boards are significantly harder
+    const angleMultiplier = climb.type === 'BOARD' && climb.angle 
+      ? getBoardAngleMultiplier(climb.angle) 
+      : 1.0;
+    
+    return total + (gradePoints * climb.rpe * styleMultiplier * attemptFactor * typeMultiplier * angleMultiplier);
   }, 0);
 }
 

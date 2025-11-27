@@ -11,20 +11,17 @@ const ReadinessModal = ({
   const getZoneInfo = (s) => {
     if (s >= 77) {
       return {
-        zone: 'GREEN ZONE',
-        color: 'text-green',
+        zone: 'Optimal Readiness',
         message: 'Body is recovered and ready for high-intensity training. Can handle high RPE (8-9) climbing and limit boulders.'
       };
     } else if (s >= 45) {
       return {
-        zone: 'BLUE ZONE',
-        color: 'text-cyan-400',
+        zone: 'Balanced Training Recommended',
         message: 'Body is partially recovered. Moderate training recommended. Keep RPE moderate (6-7) and focus on volume over intensity.'
       };
     } else {
       return {
-        zone: 'RED ZONE',
-        color: 'text-red',
+        zone: 'Rest Recommended',
         message: 'Elevated fatigue detected. Body needs recovery. Low intensity only (RPE ≤5) or consider a rest day.'
       };
     }
@@ -65,7 +62,7 @@ const ReadinessModal = ({
         </div>
 
         {/* Zone label */}
-        <div className={`text-sm font-bold uppercase tracking-wide mb-6 ${zoneInfo.color}`}>
+        <div className="text-sm font-bold uppercase tracking-wide mb-6 text-white">
           {zoneInfo.zone}
         </div>
 

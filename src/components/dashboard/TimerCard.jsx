@@ -378,15 +378,16 @@ const TimerCard = () => {
 
   // Get phase color
   const getPhaseColor = () => {
-    // Only show ice blue when timer is actively running
-    if (!isRunning) return 'text-white';
-    return currentPhase === 'work' ? 'text-cyan-400' : 'text-cyan-400';
+    if (!isRunning) return 'text-white'; // White when stopped
+    if (currentPhase === 'work') return 'text-green'; // Green when running work
+    return 'text-cyan-400'; // Blue when rest
   };
 
   // Get phase background
   const getPhaseBackground = () => {
     if (!isRunning && timeRemaining === 0) return 'bg-border';
-    return currentPhase === 'work' ? 'bg-cyan-400' : 'bg-cyan-400';
+    if (currentPhase === 'work') return 'bg-green'; // Green for work
+    return 'bg-cyan-400'; // Blue for rest
   };
 
   return (
@@ -398,15 +399,16 @@ const TimerCard = () => {
           <div className="flex items-center gap-1">
             {!isRestOnlyMode && Array.from({ length: parseInt(totalRounds) || 0 }, (_, index) => {
               const roundNumber = index + 1;
-              // Only show ice blue dots when timer is actively running and for completed/current rounds
+              // Show green dots for work phase, blue for rest
               const isActiveOrCompleted = isRunning && timeRemaining > 0 && roundNumber <= currentRound;
+              const dotColor = isActiveOrCompleted 
+                ? (currentPhase === 'work' ? 'bg-green' : 'bg-cyan-400')
+                : 'bg-border';
               
               return (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${
-                    isActiveOrCompleted ? 'bg-cyan-400' : 'bg-border'
-                  }`}
+                  className={`w-2 h-2 rounded-full transition-colors duration-200 ${dotColor}`}
                 />
               );
             })}
@@ -470,11 +472,11 @@ const TimerCard = () => {
               </span>
             ) : selectedPreset || (workTime !== '' && restTime !== '' && totalRounds !== '') ? (
               <span>
-                <span className={`${isRunning && currentPhase === 'work' ? 'text-cyan-400 font-semibold' : 'text-graytxt'}`}>
+                <span className={`${isRunning && currentPhase === 'work' ? 'text-green font-semibold' : 'text-graytxt'}`}>
                   Work: {convertToSeconds(workTime, workTimeUnit)}s
                 </span>
                 <span className="text-graytxt"> • </span>
-                <span className={`${isRunning && currentPhase === 'rest' ? 'text-white font-semibold' : 'text-graytxt'}`}>
+                <span className={`${isRunning && currentPhase === 'rest' ? 'text-cyan-400 font-semibold' : 'text-graytxt'}`}>
                   Rest: {convertToSeconds(restTime, restTimeUnit)}s
                 </span>
                 <span className="text-graytxt"> • {totalRounds || 0} Rounds</span>

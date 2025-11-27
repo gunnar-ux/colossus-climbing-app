@@ -7,30 +7,26 @@ const LoadRatioModal = ({
 }) => {
   if (!isOpen) return null;
 
-  // Get status and message (Whoop-style: neutral, factual)
+  // Get status and message (neutral, factual)
   const getLoadInfo = (ratio) => {
     if (ratio < 0.8) {
       return {
-        status: 'LOW LOAD',
-        color: 'text-cyan-400',
+        status: 'Volume Below Baseline',
         message: 'Your recent training volume is below your typical pattern. You can safely increase training volume or intensity if desired.'
       };
     } else if (ratio <= 1.3) {
       return {
-        status: 'OPTIMAL LOAD',
-        color: 'text-cyan-400',
+        status: 'Training Load Optimal',
         message: 'Your recent training volume is well-balanced with your typical pattern. This is the sweet spot for consistent progress.'
       };
     } else if (ratio <= 1.5) {
       return {
-        status: 'ELEVATED LOAD',
-        color: 'text-yellow',
+        status: 'Elevated Training Load',
         message: 'Your recent training volume is elevated compared to your baseline. Monitor recovery and consider reducing volume if this persists.'
       };
     } else {
       return {
-        status: 'HIGH LOAD',
-        color: 'text-red',
+        status: 'Recovery Needed',
         message: 'Your recent training volume is significantly elevated. High risk of overtraining if sustained. Consider reducing volume or taking rest days.'
       };
     }
@@ -71,7 +67,7 @@ const LoadRatioModal = ({
         </div>
 
         {/* Status */}
-        <div className={`text-sm font-bold uppercase tracking-wide mb-6 ${loadInfo.color}`}>
+        <div className="text-sm font-bold uppercase tracking-wide mb-6 text-white">
           {loadInfo.status}
         </div>
 

@@ -8,7 +8,7 @@ import '../../styles/tracker-animations.css';
 // Modern design with tracker-style interactions and light theme
 
 const QuickSetup = ({ userId, onComplete, onSkip }) => {
-  const { refreshProfile, signOut } = useAuth();
+  const { refreshProfile } = useAuth();
   const [gradeSystem, setGradeSystem] = useState('v-scale');
   const [flashGrade, setFlashGrade] = useState(null);
   const [typicalVolume, setTypicalVolume] = useState(15);
@@ -73,15 +73,6 @@ const QuickSetup = ({ userId, onComplete, onSkip }) => {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      console.log('🚪 Logging out from onboarding...');
-      await signOut();
-      // signOut in AuthContext handles navigation and state clearing
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
-  };
 
   // Tracker-style button component
   const GradeButton = ({ grade, selected, onClick }) => (
@@ -151,17 +142,6 @@ const QuickSetup = ({ userId, onComplete, onSkip }) => {
           </div>
         </div>
       )}
-
-      {/* Logout button - top right */}
-      <div className="absolute top-6 right-6 z-10">
-        <button 
-          onClick={handleLogout}
-          className="text-black hover:text-gray-700 text-sm font-semibold transition-colors px-4 py-2"
-          disabled={isSubmitting}
-        >
-          Logout
-        </button>
-      </div>
 
       {/* Content */}
       <div className="flex-1 px-6 pt-20 pb-32 space-y-4 max-w-2xl mx-auto">

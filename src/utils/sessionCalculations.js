@@ -14,6 +14,8 @@ export function calculateSessionStats(climbList) {
     if (angle === 'SLAB') return 'Slab';
     if (angle === 'VERTICAL') return 'Vertical';
     if (angle === 'OVERHANG') return 'Overhang';
+    // Board angles come through as degrees (e.g., "30°")
+    if (angle.includes('°')) return angle; // Return as-is for board angles
     return angle;
   };
 
@@ -24,11 +26,8 @@ export function calculateSessionStats(climbList) {
     'Technical': 0,
     'Simple': 0
   };
-  const angleCounts = {
-    'Slab': 0,
-    'Vertical': 0,
-    'Overhang': 0
-  };
+  // angleCounts now dynamically handles both boulder angles and board degrees
+  const angleCounts = {};
   const typeCounts = {
     'BOULDER': 0,
     'BOARD': 0
@@ -38,7 +37,7 @@ export function calculateSessionStats(climbList) {
     return {
       grades: [],
       styles: Object.entries(styleCounts).map(([label, count]) => ({ label, count, val: 0 })),
-      angles: Object.entries(angleCounts).map(([label, count]) => ({ label, count, val: 0 })),
+      angles: [],
       types: Object.entries(typeCounts).map(([label, count]) => ({ 
         label: label === 'BOARD' ? 'Board' : 'Boulder', 
         count, 
@@ -67,11 +66,8 @@ export function calculateSessionStats(climbList) {
     // Count angles (normalize first)
     const rawAngle = climb.angle || climb.wall || 'Unknown';
     const normalizedAngle = normalizeAngle(rawAngle);
-    if (angleCounts.hasOwnProperty(normalizedAngle)) {
-      angleCounts[normalizedAngle]++;
-    } else {
-      angleCounts[normalizedAngle] = 1;
-    }
+    // Dynamically add angle keys as we encounter them
+    angleCounts[normalizedAngle] = (angleCounts[normalizedAngle] || 0) + 1;
 
     // Count types
     const type = climb.type || 'BOULDER';

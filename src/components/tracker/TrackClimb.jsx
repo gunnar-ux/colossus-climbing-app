@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import { GRADES, WALLS, STYLES, RPES } from '../../constants/climbing.js';
+import { GRADES, WALLS, BOARD_ANGLES, STYLES, RPES } from '../../constants/climbing.js';
 import { getGradesForSystem, toStorageGrade } from '../../utils/gradeConversion.js';
 import { 
   Section, 
@@ -27,18 +27,28 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
   const [type, setType] = useState("BOULDER");
   const [grade, setGrade] = useState(null);
   const [wall, setWall] = useState(null);
+  const [boardAngle, setBoardAngle] = useState(45); // Default board angle (industry standard)
   const [styles, setStyles] = useState(new Set());
   const [rpe, setRpe] = useState(null);
   const [attempts, setAttempts] = useState(null);
   const [saving, setSaving] = useState(false);
   
-  const canLog = useMemo(() => !!type && !!grade && !!wall && styles.size > 0 && !!rpe && !!attempts, [type, grade, wall, styles, rpe, attempts]);
+  // Get the effective wall value based on type
+  const effectiveWall = type === "BOARD" ? `${boardAngle}°` : wall;
+  
+  const canLog = useMemo(() => !!type && !!grade && !!effectiveWall && styles.size > 0 && !!rpe && !!attempts, [type, grade, effectiveWall, styles, rpe, attempts]);
 
   // Helpers
   const toggleStyle = (s) => {
     const next = new Set(styles);
     next.has(s) ? next.delete(s) : next.add(s);
     setStyles(next);
+  };
+  
+  // Reset wall angle when switching between boulder and board
+  const handleTypeChange = (newType) => {
+    setType(newType);
+    setWall(null); // Reset wall selection
   };
 
   const handleLog = async () => {
@@ -51,7 +61,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
     const payload = { 
       type, 
       grade: storageGrade, 
-      wall, 
+      wall: effectiveWall, // Use effectiveWall (either SLAB/VERTICAL/OVERHANG or degrees)
       styles: Array.from(styles), 
       rpe, 
       attempts, 
@@ -141,7 +151,7 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
                 key={t} 
                 label={t} 
                 selected={type === t} 
-                onClick={() => setType(type === t ? null : t)} 
+                onClick={() => handleTypeChange(t)} 
               />
             ))}
           </ButtonGrid>
@@ -161,18 +171,40 @@ const TrackClimb = ({ onBack, onClimbLogged, onNavigateToDashboard, onNavigateTo
           </ButtonGrid>
         </Section>
 
-        {/* Wall Angle */}
-        <Section title="WALL ANGLE">
-          <ButtonGrid cols={3}>
-            {WALLS.map((w) => (
-              <WallButton 
-                key={w} 
-                selected={wall === w} 
-                label={w} 
-                onClick={() => setWall(w)} 
-              />
-            ))}
-          </ButtonGrid>
+        {/* Wall Angle - Conditional based on type */}
+        <Section title={type === "BOARD" ? "BOARD ANGLE" : "WALL ANGLE"}>
+          {type === "BOARD" ? (
+            // Simplified slider for board angles
+            <div className="flex items-center gap-4">
+              <div className="flex-1 py-3">
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  step="5"
+                  value={boardAngle}
+                  onChange={(e) => setBoardAngle(parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-300 rounded-full appearance-none cursor-pointer accent-black slider-black"
+                  style={{
+                    background: `linear-gradient(to right, black 0%, black ${(boardAngle / 60) * 100}%, #d1d5db ${(boardAngle / 60) * 100}%, #d1d5db 100%)`
+                  }}
+                />
+              </div>
+              <span className="text-2xl font-black text-black min-w-[60px] text-right">{boardAngle}°</span>
+            </div>
+          ) : (
+            // Buttons for boulder wall angles
+            <ButtonGrid cols={3}>
+              {WALLS.map((w) => (
+                <WallButton 
+                  key={w} 
+                  selected={wall === w} 
+                  label={w} 
+                  onClick={() => setWall(w)} 
+                />
+              ))}
+            </ButtonGrid>
+          )}
         </Section>
 
         {/* Effort */}
