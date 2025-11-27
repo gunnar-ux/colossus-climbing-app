@@ -302,10 +302,12 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
               <div className="text-graytxt text-xs mb-1">Ape</div>
               <div className="text-white font-semibold">
                 {(() => {
-                  if (physicalForm.apeIndex && !isNaN(physicalForm.apeIndex) && Number(physicalForm.apeIndex) > 0) {
+                  // Check if physicalForm has a valid ape index (including 0)
+                  if (physicalForm.apeIndex !== '' && physicalForm.apeIndex !== null && physicalForm.apeIndex !== undefined && !isNaN(physicalForm.apeIndex)) {
                     return `${physicalForm.apeIndex}"`;
                   }
-                  if (profile?.ape_index_cm && !isNaN(profile.ape_index_cm) && profile.ape_index_cm > 0) {
+                  // Check if profile has a valid ape index (including 0)
+                  if (profile?.ape_index_cm !== null && profile?.ape_index_cm !== undefined && !isNaN(profile.ape_index_cm)) {
                     const apeInches = Math.round(profile.ape_index_cm / 2.54);
                     return unitApeIndex === 'in' ? `${apeInches}"` : `${profile.ape_index_cm}cm`;
                   }
