@@ -15,6 +15,17 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
+  // Auto-dismiss success/error messages after 3 seconds
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+        setError('');
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
   // Form state for different sections
   const [emailForm, setEmailForm] = useState({
     newEmail: '',
@@ -245,7 +256,7 @@ const AccountPage = ({ onNavigateBack, onNavigateToDashboard, onNavigateToSessio
 
       {/* Status Messages */}
       {(success || error) && (
-        <div className={`mx-5 mt-4 p-3 rounded-col border-l-4 mb-6 ${
+        <div className={`mx-5 mt-4 p-3 rounded-col border mb-6 ${
           success ? 'bg-green/5 border-green text-green' : 'bg-red-500/5 border-red-400 text-red-400'
         }`}>
           <div className="flex items-start gap-2">
